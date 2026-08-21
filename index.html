@@ -610,8 +610,15 @@ function findColIncludes(headers, substr) {
 }
 
 // ──────────────────────────────────────────────
-// J&T — SLA same-day (== process_jt)
-// Regra validada por Renato em 2026-05-16: saiu em rota dia X E entregue dia X.
+// J&T — SLA same-day (== process_jt) — também é a base do SLA por motorista
+// (ver driversForCarrier: a aba "SLA Real (J&T)" usa os drivers calculados aqui).
+// Regra validada por Renato em 2026-05-16, reconfirmada em 21/08/2026: pra estar
+// dentro do prazo, "Horário da entrega" tem que ser do mesmo dia (D0) que a
+// coluna "Tempo de entrega" — que é a mesma coisa que "Horário de Saída para
+// Entrega" no relatório Entrega realizada (é a data/hora que o pacote foi bipado
+// pro entregador; confirmado batendo pedido a pedido: mesmo valor exato nos dois
+// relatórios). Se não foi entregue no mesmo dia da saída, por qualquer motivo
+// (atrasou, nunca foi entregue, etc.), conta como fora do prazo.
 // ──────────────────────────────────────────────
 function processJt(rows) {
   const total = rows.length;
@@ -1190,12 +1197,17 @@ function driversForCarrier(carrier, filtered) {
     const sources = [];
     if ((carrier === 'pllugo' || carrier === 'jt') && day.jt) sources.push({ list: day.jt.drivers, carrier: 'J&T' });
     if ((carrier === 'pllugo' || carrier === 'imile') && day.imile) sources.push({ list: day.imile.drivers, carrier: 'iMile' });
-    if (carrier === 'jt_real' && day.jt_real) {
-      const realDrivers = (day.jt_real.drivers || []).map(d => ({
-        ...d,
-        name: (d.name || '').replace(/\|[\d]+$/, '').trim()
-      }));
-      sources.push({ list: realDrivers, carrier: 'SLA Real (J&T)' });
+    if (carrier === 'jt_real' && day.jt) {
+      // Regra validada por Renato em 2026-08-21: o campo "Entregador" do relatório
+      // "Entrega realizada" (SLA Real) pode atribuir pacotes a um motorista que não
+      // bateu o pacote naquele dia — ex.: Lucas Ronas Pereira apareceu com 78 pacotes
+      // no SLA Real (35.9%), mas só 28 desses batem com o bipagem do mesmo dia; os
+      // outros 50 não aparecem sob nome nenhum no bipagem. Por isso o ranking por
+      // motorista da aba SLA Real (J&T) usa o "Monitoramento de bipagem" (jt) como
+      // fonte de verdade pra quebra por motorista — o SLA Real agregado do dia
+      // (número geral, sem quebra por motorista) continua vindo do relatório de
+      // Entrega realizada normalmente, sem mudança nenhuma.
+      sources.push({ list: day.jt.drivers, carrier: 'SLA Real (J&T)' });
     }
     for (const s of sources) {
       for (const d of s.list) {

@@ -113,3 +113,36 @@ Se um dia quiser adicionar uma nova transportadora, o padrão é o mesmo do
 Python: escrever uma função que recebe as linhas do Excel e devolve
 `{total, entregues, pendentes, problematicos, sla, drivers}`, e plugar no
 `classifyAndProcess` do `index.html`.
+
+## SLA por motorista na aba "SLA Real (J&T)" — de onde vem (regra 21/08/2026)
+
+O campo "Entregador" do relatório **Entrega realizada** (usado pro SLA Real)
+às vezes atribui pacotes a um motorista que não bateu esse pacote naquele
+dia — confirmado cruzando pedido a pedido com o **Monitoramento de
+bipagem**: motorista Lucas Ronas Pereira aparecia com 78 pacotes no SLA
+Real (35,9%), mas só 28 desses 78 batiam com o bipagem do mesmo dia; os
+outros 50 não apareciam sob nenhum motorista no bipagem.
+
+Por isso, a partir de 21/08/2026:
+- O **número geral do dia** na aba SLA Real (total, SLA%, SLA same-day,
+  desconsiderados) continua vindo 100% do relatório Entrega realizada, sem
+  mudança nenhuma.
+- O **ranking por motorista** dessa mesma aba passou a vir do relatório de
+  bipagem (mesma fonte já usada na aba J&T normal), não mais do Entrega
+  realizada. Isso significa que, num dia em que só o Entrega realizada foi
+  importado (sem o bipagem correspondente), a tabela de motoristas da aba
+  SLA Real fica vazia pra aquele dia — é esperado, não é bug. Pra ver o
+  ranking de motorista de um dia na aba SLA Real, sempre importe os dois
+  relatórios (bipagem + Entrega realizada) daquele dia juntos.
+
+**Regra de "dentro do prazo" pro SLA motorista (confirmada por Renato em
+21/08/2026):** um pacote só conta como entregue dentro do prazo se a coluna
+"Horário da entrega" for do mesmo dia (D0) que a coluna que registra quando
+o pacote saiu bipado pro entregador. No relatório de bipagem essa coluna se
+chama "Tempo de entrega"; no Entrega realizada, a mesma informação vem na
+coluna "Horário de Saída para Entrega" — são o mesmo dado (confirmado
+batendo valor a valor, pedido por pedido, entre os dois relatórios). Se o
+pacote não foi entregue no mesmo dia da saída — atrasou, nunca foi
+entregue, qualquer motivo — conta como fora do prazo. É exatamente essa
+regra que já está implementada no cálculo do bipagem (`processJt`), que é
+a fonte do SLA motorista desde a mudança acima.
