@@ -501,7 +501,14 @@ function canonicalizeName(name) {
   return NAME_ALIASES_RAW[_nameKey(name)] || name;
 }
 function titleCaseName(s) {
-  return String(s == null ? '' : s).toLowerCase().replace(/\b\p{L}/gu, c => c.toUpperCase());
+  // Capitaliza só a 1ª letra de cada sequência de letras Unicode. Antes usava
+  // `\b\p{L}` (limite de palavra \b é baseado em \w, que só reconhece A-Z0-9_ —
+  // uma letra acentuada logo depois de outra letra conta como "fronteira" pro
+  // \b e virava maiúscula no meio da palavra, ex: "joão" -> "JoÃO"). Isso fazia
+  // a mesma pessoa gerar nomes finais diferentes dependendo da grafia original
+  // (tudo maiúsculo vs. capitalizado), quebrando o agrupamento por motorista.
+  // Corrigido em 21/08/2026 junto com o fix de duplicidade em sla_drivers.
+  return String(s == null ? '' : s).toLowerCase().replace(/\p{L}+/gu, w => w.charAt(0).toUpperCase() + w.slice(1));
 }
 function stripFPrefix(s) {
   return String(s == null ? '' : s).replace(/^F\s+/, '');
@@ -641,17 +648,24 @@ function processJt(rows) {
 
     const rawName = r['Entregador'];
     if (rawName == null || String(rawName).trim() === '') continue; // pandas groupby() ignora NaN por padrão (dropna=True)
-    const key = String(rawName);
-    if (!driverAgg.has(key)) driverAgg.set(key, { total: 0, delivered: 0, problems: 0 });
-    const a = driverAgg.get(key);
+    // Agrupa por chave accent/case-insensitive (_nameKey) — não pelo nome exibido
+    // nem pela string crua. Duas grafias do mesmo motorista (ex: "F JOAO SILVA"
+    // sem acento vs "F João Silva" com acento, ou tudo maiúsculo vs capitalizado)
+    // não podem virar duas linhas com o mesmo driver_name final — isso quebra o
+    // upsert no Supabase (unique constraint sla_drivers_pkey). Bug encontrado e
+    // corrigido em 21/08/2026.
+    const name = canonicalizeName(titleCaseName(stripFPrefix(String(rawName)).trim()));
+    const gkey = _nameKey(name);
+    if (!driverAgg.has(gkey)) driverAgg.set(gkey, { name, total: 0, delivered: 0, problems: 0 });
+    const a = driverAgg.get(gkey);
     a.total++;
     if (noPrazo) a.delivered++;
     if (hasProblem) a.problems++;
   }
 
   const drivers = [];
-  for (const [raw, a] of driverAgg) {
-    const name = canonicalizeName(titleCaseName(stripFPrefix(raw).trim()));
+  for (const [, a] of driverAgg) {
+    const { name } = a;
     drivers.push({
       name, total: a.total, delivered: a.delivered,
       pendentes: a.total - a.delivered, problems: a.problems,
@@ -729,16 +743,21 @@ function processJtReal(rows) {
       const byDriver = new Map();
       for (const x of g) {
         if (x.entregador == null || String(x.entregador).trim() === '') continue; // pandas groupby() ignora NaN por padrão
-        const key = String(x.entregador);
-        if (!byDriver.has(key)) byDriver.set(key, []);
-        byDriver.get(key).push(x);
+        // Agrupa por chave accent/case-insensitive (_nameKey) — tira também o
+        // "|telefone" que às vezes vem colado no fim do campo Entregador. Mesmo
+        // motivo do fix em processJt: evita duas linhas finais com o mesmo
+        // driver_name (bug 21/08/2026).
+        const name = canonicalizeName(titleCaseName(stripFPrefix(String(x.entregador).replace(/\|\d+$/, '')).trim()));
+        const gkey = _nameKey(name);
+        if (!byDriver.has(gkey)) byDriver.set(gkey, { name, sub: [] });
+        byDriver.get(gkey).sub.push(x);
       }
-      for (const [rawName, sub] of byDriver) {
+      for (const [, group] of byDriver) {
+        const { name, sub } = group;
         const dTotal = sub.length;
         const dDelivered = sub.filter(x => x.noPrazo).length;
         const occ = {};
         for (const x of sub) { if (x.problemStr !== '') occ[x.problemStr] = (occ[x.problemStr] || 0) + 1; }
-        const name = canonicalizeName(titleCaseName(stripFPrefix(rawName).trim()));
         drv_rows.push({
           name, total: dTotal, delivered: dDelivered,
           pendentes: dTotal - dDelivered,
@@ -767,7 +786,13 @@ function processJtReal(rows) {
 function computeImileResult(rows) {
   let total = 0, entregues = 0, problematicos = 0;
   const hasUploadProblem = rows.length > 0 && Object.prototype.hasOwnProperty.call(rows[0], 'Upload Problem');
-  const drivers = [];
+  // Normalmente cada linha do relatório iMile já é o total diário de UM motorista,
+  // mas se o mesmo motorista (nome canonicalizado) aparecer em mais de uma linha no
+  // mesmo dia, agrupa em vez de gerar duas linhas com o mesmo driver_name — isso
+  // quebraria o upsert no Supabase (unique constraint sla_drivers_pkey). Bug
+  // encontrado e corrigido em 21/08/2026 (mesma classe de bug do jt/jt_real).
+  const driverAgg = new Map();
+  const order = [];
   for (const r of rows) {
     const ofd = Number(r['OFD']) || 0;
     const delivered = Number(r['Delivered']) || 0;
@@ -775,12 +800,24 @@ function computeImileResult(rows) {
     entregues += delivered;
     if (hasUploadProblem) problematicos += Number(r['Upload Problem']) || 0;
     const dldNum = parseFloat(String(r['Dld%'] ?? '').replace('%', '')) || 0;
-    drivers.push({
-      name: canonicalizeName(titleCaseName(String(r['DA'] ?? ''))),
-      total: ofd, delivered, pendentes: ofd - delivered, problems: 0,
-      sla: round1(dldNum),
-    });
+    const name = canonicalizeName(titleCaseName(String(r['DA'] ?? '')));
+    const gkey = _nameKey(name);
+    if (!driverAgg.has(gkey)) { driverAgg.set(gkey, { name, total: 0, delivered: 0, slaSum: 0, rows: 0 }); order.push(gkey); }
+    const a = driverAgg.get(gkey);
+    a.total += ofd;
+    a.delivered += delivered;
+    a.slaSum += dldNum;
+    a.rows++;
   }
+  const drivers = order.map(gkey => {
+    const a = driverAgg.get(gkey);
+    return {
+      name: a.name, total: a.total, delivered: a.delivered, pendentes: a.total - a.delivered, problems: 0,
+      // caso comum (1 linha só): usa o Dld% do próprio relatório, igual sempre foi.
+      // só recalcula a partir de total/delivered no caso raro de mais de 1 linha.
+      sla: a.rows === 1 ? round1(a.slaSum) : (a.total ? round1(100 * a.delivered / a.total) : 0),
+    };
+  });
   return {
     total, entregues, pendentes: total - entregues, problematicos,
     sla: total ? round1(100 * entregues / total) : 0,
@@ -920,6 +957,33 @@ function chunkArray(arr, n) {
   return out;
 }
 
+// Rede de segurança final antes de gravar no Supabase: se por qualquer motivo
+// (mesmo depois dos fixes de agrupamento acima) duas linhas de driverRows
+// tiverem a mesma chave (date, source, driver_name), funde as duas em vez de
+// deixar o insert() quebrar com "duplicate key value violates unique
+// constraint sla_drivers_pkey". Bug encontrado e corrigido em 21/08/2026.
+function dedupeDriverRows(rows) {
+  const map = new Map();
+  const order = [];
+  for (const r of rows) {
+    const k = `${r.date}|${r.source}|${r.driver_name}`;
+    if (!map.has(k)) { map.set(k, { ...r }); order.push(k); continue; }
+    const m = map.get(k);
+    m.total += r.total;
+    m.delivered += r.delivered;
+    m.pendentes += r.pendentes;
+    m.problems = (m.problems || 0) + (r.problems || 0);
+    m.sla = m.total ? +(100 * m.delivered / m.total).toFixed(1) : 0;
+    if (r.occurrences) {
+      m.occurrences = m.occurrences || {};
+      for (const [label, val] of Object.entries(r.occurrences)) {
+        m.occurrences[label] = (m.occurrences[label] || 0) + (Number(val) || 0);
+      }
+    }
+  }
+  return order.map(k => map.get(k));
+}
+
 async function upsertResults(results) {
   const dayRows = [];
   const driverRows = [];
@@ -959,7 +1023,8 @@ async function upsertResults(results) {
     const { error } = await sb.from('sla_drivers').delete().eq('date', date).eq('source', source);
     if (error) throw error;
   }
-  for (const part of chunkArray(driverRows, 500)) {
+  const dedupedDriverRows = dedupeDriverRows(driverRows);
+  for (const part of chunkArray(dedupedDriverRows, 500)) {
     const { error } = await sb.from('sla_drivers').insert(part);
     if (error) throw error;
   }

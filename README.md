@@ -146,3 +146,24 @@ pacote não foi entregue no mesmo dia da saída — atrasou, nunca foi
 entregue, qualquer motivo — conta como fora do prazo. É exatamente essa
 regra que já está implementada no cálculo do bipagem (`processJt`), que é
 a fonte do SLA motorista desde a mudança acima.
+
+## Erro "duplicate key value violates unique constraint sla_drivers_pkey" (corrigido 21/08/2026)
+
+Esse erro aparecia às vezes ao clicar em Atualizar Dashboard, e quando
+acontecia **nenhum dado daquele dia era salvo** (o card ficava zerado). A
+causa: o mesmo motorista podia aparecer no relatório com grafias diferentes
+(tudo maiúsculo vs. capitalizado, com ou sem acento, com ou sem o telefone
+colado no fim do nome no relatório Entrega realizada) e virava duas linhas
+diferentes na tabela — o Supabase recusa duas linhas pro mesmo motorista no
+mesmo dia na mesma fonte.
+
+Duas correções foram aplicadas:
+1. O agrupamento por motorista agora usa uma chave que ignora acento e
+   maiúsculo/minúsculo, então qualquer grafia da mesma pessoa vira uma linha
+   só (com os números somados). Isso também corrigiu um bug separado na
+   função que capitalizava nomes, que bagunçava letras acentuadas no meio da
+   palavra (ex: "João" virava "JoÃO").
+2. Como rede de segurança extra, se ainda assim sobrar alguma duplicata na
+   hora de salvar, o dashboard funde as linhas automaticamente em vez de
+   travar a importação.
+Coberto por testes automáticos em `logic_test.js` e `smoke_test.js`.
