@@ -1083,17 +1083,43 @@ function mergePllugo(jt, imile) {
   return { total: t, entregues: e, pendentes: p, problematicos: pr, desconsiderados: exc, desconsiderados_pedidos: pedidos, sla: t ? round1(100 * e / t) : 0 };
 }
 
+// O Supabase (PostgREST) limita cada select a no máximo 1000 linhas por
+// padrão, mesmo sem LIMIT explícito no código — é o "Max Rows" da API,
+// configurável em Project Settings > API, mas 1000 é o valor padrão de
+// qualquer projeto novo. Bug encontrado em 24/08/2026: sla_drivers já
+// passou de 1000 linhas, e um select('*') sem paginação sempre devolvia só
+// as primeiras 1000 (as datas mais antigas, pela ordem física da chave
+// primária) — o dia mais recente importado (o que o Renato tinha acabado
+// de subir) nunca aparecia no dashboard, mesmo tendo sido gravado com
+// sucesso no banco (conferido direto no Table Editor do Supabase). Sem essa
+// paginação, esse bug ia voltar toda vez que qualquer uma das 4 tabelas
+// passasse de 1000 linhas — sla_drivers é a primeira a bater nesse limite
+// porque tem uma linha por motorista por dia por fonte, mas com o tempo
+// tower_snapshots (uma linha por motorista por atualização do dia) e as
+// outras também vão bater.
+async function fetchAllRows(table, extra) {
+  const PAGE = 1000;
+  let out = [];
+  for (let from = 0; ; from += PAGE) {
+    let q = sb.from(table).select('*').range(from, from + PAGE - 1);
+    if (extra) q = extra(q);
+    const { data, error } = await q;
+    if (error) throw error;
+    out = out.concat(data || []);
+    if (!data || data.length < PAGE) break; // última página (parcial ou vazia)
+  }
+  return out;
+}
+
 async function fetchHistoryFromSupabase() {
   if (!sb) return { history: [], generated_at: null, offline: true };
-  const [daysRes, driversRes] = await Promise.all([
-    sb.from('sla_days').select('*'),
-    sb.from('sla_drivers').select('*'),
+  const [daysData, driversData] = await Promise.all([
+    fetchAllRows('sla_days'),
+    fetchAllRows('sla_drivers'),
   ]);
-  if (daysRes.error) throw daysRes.error;
-  if (driversRes.error) throw driversRes.error;
 
   const driversByDaySource = new Map();
-  for (const d of driversRes.data) {
+  for (const d of driversData) {
     const key = `${d.date}|${d.source}`;
     if (!driversByDaySource.has(key)) driversByDaySource.set(key, []);
     const entry = { name: d.driver_name, total: d.total, delivered: d.delivered, pendentes: d.pendentes, problems: d.problems, sla: Number(d.sla) };
@@ -1103,7 +1129,7 @@ async function fetchHistoryFromSupabase() {
 
   const byDate = new Map();
   let latestUpdate = null;
-  for (const row of daysRes.data) {
+  for (const row of daysData) {
     if (!byDate.has(row.date)) byDate.set(row.date, { date: row.date, jt: null, imile: null, jt_real: null });
     const entry = byDate.get(row.date);
     const src = {
@@ -1189,9 +1215,10 @@ async function fetchExistingByDates(table, dates) {
   if (!dates.length) return [];
   const out = [];
   for (const part of chunkArray(dates, 200)) {
-    const { data, error } = await sb.from(table).select('*').in('date', part);
-    if (error) throw error;
-    out.push(...(data || []));
+    // paginado (ver fetchAllRows) — mesmo motivo: sem isso, um lote de
+    // reimportação que toque muitos motoristas/dias de uma vez pode passar
+    // das 1000 linhas por request e perder linhas silenciosamente.
+    out.push(...await fetchAllRows(table, q => q.in('date', part)));
   }
   return out;
 }
