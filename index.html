@@ -76,6 +76,16 @@
   .btn-update .spin { display: none; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
   .btn-update.loading .spin { display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  /* Limpar Dados — botão de uso temporário, só pra zerar a base durante os testes */
+  .btn-clear { font-family: inherit; font-size: 13px; font-weight: 600; padding: 9px 16px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); background: var(--gray-0); color: var(--gray-600); cursor: pointer; transition: all 0.15s; }
+  .btn-clear:hover { border-color: var(--pllugo-red); color: var(--pllugo-red); }
+  .btn-clear:disabled { color: var(--gray-300); cursor: wait; }
+
+  /* Modo: SLA Geral vs SLA Motoristas */
+  .mode-tabs { display: flex; gap: 8px; margin: 1.25rem 0 0.75rem; }
+  .mode-tab { font-family: inherit; font-size: 13.5px; font-weight: 600; padding: 9px 18px; border: 1px solid var(--gray-200); background: var(--gray-0); color: var(--gray-600); border-radius: 999px; cursor: pointer; transition: all 0.15s; }
+  .mode-tab:hover { border-color: var(--pllugo-red); color: var(--pllugo-red); }
+  .mode-tab.active { background: var(--pllugo-red); border-color: var(--pllugo-red); color: #fff; }
   #import-status-bar { display: none; font-size: 12.5px; padding: 10px 0; border-bottom: 1px solid var(--gray-200); }
   #import-status-bar.show { display: block; }
   #import-status-bar.ok { background: var(--success-50); color: #0f6b46; }
@@ -254,6 +264,7 @@
         <span id="last-update">Carregando…</span>
       </div>
       <input type="file" id="upload-input" accept=".xlsx" multiple style="display:none">
+      <button class="btn-clear" id="btn-clear-data" title="Apaga TODOS os dados salvos — uso temporário, só pra testar do zero">Limpar Dados</button>
       <button class="btn-update" id="btn-update-dash">
         <span class="spin"></span>
         <span id="btn-update-label">Atualizar Dashboard</span>
@@ -294,11 +305,14 @@
 <main>
   <div class="container">
 
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="geral">SLA Geral</button>
+      <button class="mode-tab" data-mode="motoristas">SLA Motoristas</button>
+    </div>
     <div class="carrier-tabs">
-      <button class="tab active" data-carrier="pllugo">Pllugo (Geral)</button>
-      <button class="tab" data-carrier="jt">J&T Express</button>
+      <button class="tab active" data-carrier="pllugo">Pllugo</button>
+      <button class="tab" data-carrier="jt_real">J&T</button>
       <button class="tab" data-carrier="imile">iMile</button>
-      <button class="tab" data-carrier="jt_real" id="tab-jt-real" style="display:none">SLA Real (J&T)</button>
     </div>
 
     <div class="hero" id="hero-section">
@@ -617,8 +631,10 @@ function findColIncludes(headers, substr) {
 }
 
 // ──────────────────────────────────────────────
-// J&T — SLA same-day (== process_jt) — também é a base do SLA por motorista
-// (ver driversForCarrier: a aba "SLA Real (J&T)" usa os drivers calculados aqui).
+// J&T — SLA same-day (== process_jt). NÃO é mais a fonte do SLA por motorista
+// (era até 21/08/2026 — ver processJtReal pra entender por quê mudou). Ainda é
+// usada pro agregado "SLA Geral > Pllugo" (soma com iMile) e como referência
+// secundária de contexto na aba "SLA Geral > J&T" ("SLA mesmo-dia seria X%").
 // Regra validada por Renato em 2026-05-16, reconfirmada em 21/08/2026: pra estar
 // dentro do prazo, "Horário da entrega" tem que ser do mesmo dia (D0) que a
 // coluna "Tempo de entrega" — que é a mesma coisa que "Horário de Saída para
@@ -755,7 +771,15 @@ function processJtReal(rows) {
       for (const [, group] of byDriver) {
         const { name, sub } = group;
         const dTotal = sub.length;
-        const dDelivered = sub.filter(x => x.noPrazo).length;
+        // SLA por motorista = exatamente o que saiu em rota com ele (dTotal, um
+        // pacote só entra aqui se teve "Horário de Saída para Entrega") contra o
+        // que ele entregou no mesmo dia da saída (regra D0 — ver processJt).
+        // Usa x.sameday (saída x entrega no mesmo dia), não x.noPrazo (que é a
+        // regra "Entregue no prazo？" + exceção de triagem, usada só no
+        // agregado do dia) — pedido explícito de Renato em 21/08/2026: o
+        // motorista tem que ser cobrado exatamente pelo volume que pegou pra
+        // entregar, sem as exceções que suavizam o número do dia inteiro.
+        const dDelivered = sub.filter(x => x.sameday).length;
         const occ = {};
         for (const x of sub) { if (x.problemStr !== '') occ[x.problemStr] = (occ[x.problemStr] || 0) + 1; }
         drv_rows.push({
@@ -984,6 +1008,40 @@ function dedupeDriverRows(rows) {
   return order.map(k => map.get(k));
 }
 
+// ──────────────────────────────────────────────
+// Escrita incremental: reimportar um relatório (mesmo já importado antes)
+// sempre é permitido — pode ter informação nova — mas só grava no Supabase o
+// que é NOVO ou MUDOU. Linha idêntica à que já existe não gera write nenhum
+// (evita sobrecarregar o banco/gastar cota do plano grátis toda vez que
+// alguém reimporta sem mudança nenhuma). Pedido de Renato em 21/08/2026.
+// ──────────────────────────────────────────────
+function rowsEqual(a, b, fields) {
+  for (const f of fields) {
+    const av = a[f], bv = b[f];
+    const aIsObj = av != null && typeof av === 'object';
+    const bIsObj = bv != null && typeof bv === 'object';
+    if (aIsObj || bIsObj) {
+      if (JSON.stringify(av ?? null) !== JSON.stringify(bv ?? null)) return false;
+    } else if ((av ?? null) !== (bv ?? null)) {
+      return false;
+    }
+  }
+  return true;
+}
+const DAY_FIELDS = ['total', 'entregues', 'pendentes', 'problematicos', 'sla', 'sla_sameday', 'desconsiderados', 'desconsiderados_pedidos'];
+const DRIVER_FIELDS = ['total', 'delivered', 'pendentes', 'problems', 'sla', 'occurrences'];
+
+async function fetchExistingByDates(table, dates) {
+  if (!dates.length) return [];
+  const out = [];
+  for (const part of chunkArray(dates, 200)) {
+    const { data, error } = await sb.from(table).select('*').in('date', part);
+    if (error) throw error;
+    out.push(...(data || []));
+  }
+  return out;
+}
+
 async function upsertResults(results) {
   const dayRows = [];
   const driverRows = [];
@@ -1011,22 +1069,71 @@ async function upsertResults(results) {
     }
   }
 
-  for (const part of chunkArray(dayRows, 200)) {
+  const dates = [...new Set(results.map(r => r.date))];
+
+  // sla_days: só grava linha nova ou diferente da que já está salva.
+  const existingDays = await fetchExistingByDates('sla_days', dates);
+  const existingDaysMap = new Map(existingDays.map(r => [`${r.date}|${r.source}`, r]));
+  const dayRowsToWrite = dayRows.filter(r => {
+    const existing = existingDaysMap.get(`${r.date}|${r.source}`);
+    return !existing || !rowsEqual(existing, r, DAY_FIELDS);
+  });
+  for (const part of chunkArray(dayRowsToWrite, 200)) {
     const { error } = await sb.from('sla_days').upsert(part, { onConflict: 'date,source' });
     if (error) throw error;
   }
-  // Apaga motoristas antigos do mesmo (data,fonte) antes de inserir os novos: se um
-  // motorista sumiu do relatório reimportado, upsert puro deixaria uma linha fantasma.
-  const daySourcePairs = [...new Set(results.map(r => `${r.date}|${r.source}`))];
-  for (const pair of daySourcePairs) {
-    const [date, source] = pair.split('|');
-    const { error } = await sb.from('sla_drivers').delete().eq('date', date).eq('source', source);
+
+  // sla_drivers: mesma lógica — só grava quem é novo ou mudou. Motorista que
+  // existia antes nesse (data,fonte) mas sumiu do relatório reimportado (ex:
+  // relatório corrigido sem aquele pacote) é apagado explicitamente, não só
+  // deixado desatualizado.
+  const dedupedDriverRows = dedupeDriverRows(driverRows);
+  const existingDrivers = await fetchExistingByDates('sla_drivers', dates);
+  const existingDriversMap = new Map(existingDrivers.map(r => [`${r.date}|${r.source}|${r.driver_name}`, r]));
+  const newDriverKeys = new Set(dedupedDriverRows.map(r => `${r.date}|${r.source}|${r.driver_name}`));
+  const driverRowsToWrite = dedupedDriverRows.filter(r => {
+    const existing = existingDriversMap.get(`${r.date}|${r.source}|${r.driver_name}`);
+    return !existing || !rowsEqual(existing, r, DRIVER_FIELDS);
+  });
+  const touchedDaySourcePairs = new Set(results.map(r => `${r.date}|${r.source}`));
+  const driversToDelete = existingDrivers.filter(r =>
+    touchedDaySourcePairs.has(`${r.date}|${r.source}`) && !newDriverKeys.has(`${r.date}|${r.source}|${r.driver_name}`)
+  );
+  for (const row of driversToDelete) {
+    const { error } = await sb.from('sla_drivers').delete().eq('date', row.date).eq('source', row.source).eq('driver_name', row.driver_name);
     if (error) throw error;
   }
-  const dedupedDriverRows = dedupeDriverRows(driverRows);
-  for (const part of chunkArray(dedupedDriverRows, 500)) {
-    const { error } = await sb.from('sla_drivers').insert(part);
+  for (const part of chunkArray(driverRowsToWrite, 500)) {
+    const { error } = await sb.from('sla_drivers').upsert(part, { onConflict: 'date,source,driver_name' });
     if (error) throw error;
+  }
+}
+
+// ──────────────────────────────────────────────
+// Limpar Dados — botão temporário só pra testes (Renato, 21/08/2026): apaga
+// TUDO do banco (sla_days e sla_drivers) pra recomeçar do zero.
+// ──────────────────────────────────────────────
+async function clearAllData() {
+  if (!sb) { setImportStatus('Supabase não configurado — nada pra limpar.', 'err'); return; }
+  const ok = confirm('Isso vai APAGAR TODOS os dados salvos do dashboard — todos os dias, todas as transportadoras, todo o histórico de motoristas. Essa ação não pode ser desfeita. Confirma?');
+  if (!ok) return;
+  const btn = $('#btn-clear-data');
+  if (btn) btn.disabled = true;
+  setImportStatus('Limpando todos os dados...', 'busy');
+  try {
+    const { error: e1 } = await sb.from('sla_drivers').delete().gte('date', '1900-01-01');
+    if (e1) throw e1;
+    const { error: e2 } = await sb.from('sla_days').delete().gte('date', '1900-01-01');
+    if (e2) throw e2;
+    DASH_DATA.history = [];
+    DASH_DATA.generated_at = null;
+    state.selectedDriver = null;
+    applyLoadedData();
+    setImportStatus('Dados limpos. Base zerada, pronta pra novos testes.', 'ok');
+  } catch (e) {
+    setImportStatus(`Erro ao limpar dados: ${e.message || e}`, 'err');
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -1128,7 +1235,7 @@ function slaCategory(sla) {
   return { cls: 'crit', label: 'Crítico', color: '#F04A4F' };
 }
 
-let state = { period: 1, customDay: null, customStart: null, customEnd: null, carrier: 'pllugo', selectedDriver: null, sort: { col: 'sla', dir: 'asc' } };
+let state = { mode: 'geral', period: 1, customDay: null, customStart: null, customEnd: null, carrier: 'pllugo', selectedDriver: null, sort: { col: 'sla', dir: 'asc' } };
 let charts = { sla: null, vol: null, detail: null };
 
 function dateInRange(d) {
@@ -1262,17 +1369,18 @@ function driversForCarrier(carrier, filtered) {
     const sources = [];
     if ((carrier === 'pllugo' || carrier === 'jt') && day.jt) sources.push({ list: day.jt.drivers, carrier: 'J&T' });
     if ((carrier === 'pllugo' || carrier === 'imile') && day.imile) sources.push({ list: day.imile.drivers, carrier: 'iMile' });
-    if (carrier === 'jt_real' && day.jt) {
-      // Regra validada por Renato em 2026-08-21: o campo "Entregador" do relatório
-      // "Entrega realizada" (SLA Real) pode atribuir pacotes a um motorista que não
-      // bateu o pacote naquele dia — ex.: Lucas Ronas Pereira apareceu com 78 pacotes
-      // no SLA Real (35.9%), mas só 28 desses batem com o bipagem do mesmo dia; os
-      // outros 50 não aparecem sob nome nenhum no bipagem. Por isso o ranking por
-      // motorista da aba SLA Real (J&T) usa o "Monitoramento de bipagem" (jt) como
-      // fonte de verdade pra quebra por motorista — o SLA Real agregado do dia
-      // (número geral, sem quebra por motorista) continua vindo do relatório de
-      // Entrega realizada normalmente, sem mudança nenhuma.
-      sources.push({ list: day.jt.drivers, carrier: 'SLA Real (J&T)' });
+    if (carrier === 'jt_real' && day.jt_real) {
+      // Histórico dessa regra (21/08/2026): tentamos usar o bipagem (jt) como
+      // fonte do ranking por motorista aqui, achando que o Entrega realizada
+      // "inventava" volume pros motoristas (ex.: Lucas Ronas Pereira aparecia
+      // com 78 pacotes no SLA Real contra só 28 no bipagem). Renato corrigiu o
+      // entendimento: os 78 são reais — é exatamente a quantidade que saiu em
+      // rota com ele ("Horário de Saída para Entrega" preenchido); o bipagem
+      // que estava incompleto, sem registrar os pacotes que saíram mas não
+      // foram entregues. Voltou a usar os drivers do próprio processJtReal,
+      // que já contam exatamente "saiu em rota" (total) x "entregue no mesmo
+      // dia da saída" (delivered) — ver comentário em processJtReal.
+      sources.push({ list: day.jt_real.drivers, carrier: 'J&T' });
     }
     for (const s of sources) {
       for (const d of s.list) {
@@ -1336,7 +1444,7 @@ function driversForCarrier(carrier, filtered) {
 
 function renderHero(agg, drivers) {
   const cat = slaCategory(agg.sla);
-  const carrierLabels = { pllugo: 'Pllugo (Geral)', jt: 'J&T Express', imile: 'iMile', jt_real: 'SLA Real (J&T)' };
+  const carrierLabels = { pllugo: 'Pllugo', jt: 'J&T', imile: 'iMile', jt_real: 'J&T' };
   const carrierName = carrierLabels[state.carrier] || 'Pllugo';
   const periodLabel = state.period === 'custom' ? 'Personalizado' : state.period === 'day' ? 'Dia' : state.period === 1 ? 'Hoje' : `${state.period} dias`;
   $('#hero-label').textContent = `SLA ${carrierName} · ${periodLabel}`;
@@ -1409,7 +1517,7 @@ function renderOfensores(drivers) {
 function renderDesconsiderados(agg) {
   const section = $('#descons-section');
   if (!section) return;
-  const show = state.carrier === 'jt_real' && agg.desconsiderados > 0;
+  const show = state.mode === 'geral' && state.carrier === 'jt_real' && agg.desconsiderados > 0;
   section.style.display = show ? '' : 'none';
   if (!show) return;
   $('#descons-count').textContent = fmt(agg.desconsiderados);
@@ -1593,6 +1701,18 @@ function showDriverDetail() {
   renderOccurrenceBreakdown(found);
 }
 
+// Mostra hero+gráficos (SLA Geral) OU ofensores+ranking (SLA Motoristas), nunca
+// os dois juntos — separação pedida por Renato em 21/08/2026.
+function applyModeVisibility() {
+  const isGeral = state.mode === 'geral';
+  const heroSection = $('#hero-section'), chartsRow = $('#charts-row');
+  const ofensoresSection = $('#ofensores-section'), rankingSection = $('#ranking-section');
+  if (heroSection) heroSection.style.display = isGeral ? '' : 'none';
+  if (chartsRow) chartsRow.style.display = isGeral ? '' : 'none';
+  if (ofensoresSection) ofensoresSection.style.display = isGeral ? 'none' : '';
+  if (rankingSection) rankingSection.style.display = isGeral ? 'none' : '';
+}
+
 function refresh() {
   const filtered = filteredHistory();
   const agg = aggregate(filtered, state.carrier);
@@ -1604,6 +1724,7 @@ function refresh() {
   } else {
     $('#window-info').textContent = '—';
   }
+  applyModeVisibility();
   renderHero(agg, drivers);
   renderCharts(agg);
   renderDesconsiderados(agg);
@@ -1613,6 +1734,13 @@ function refresh() {
   renderRanking(visibleDrivers);
   renderIndividualList(visibleDrivers);
   if (state.selectedDriver) showDriverDetail();
+}
+
+function selectMode(m) {
+  state.mode = m;
+  state.selectedDriver = null;
+  $$('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
+  refresh();
 }
 
 function selectCarrier(c) {
@@ -1648,6 +1776,9 @@ function selectPeriod(p) {
 $$('.tab').forEach(t => t.addEventListener('click', () => {
   if (t.dataset.carrier) selectCarrier(t.dataset.carrier);
 }));
+$$('.mode-tab').forEach(t => t.addEventListener('click', () => {
+  if (t.dataset.mode) selectMode(t.dataset.mode);
+}));
 $$('.period-btn').forEach(b => b.addEventListener('click', () => selectPeriod(b.dataset.period)));
 
 $('#date-day').addEventListener('change', e => { state.customDay = e.target.value; refresh(); });
@@ -1672,9 +1803,6 @@ function applyLoadedData() {
     $('#last-update').textContent = DASH_DATA.history.length ? 'Atualizado' : 'Sem dados ainda';
   }
 
-  const tabReal = $('#tab-jt-real');
-  if (tabReal) tabReal.style.display = DASH_DATA.history.some(d => d.jt_real) ? '' : 'none';
-
   const allDates = DASH_DATA.history.map(h => h.date).sort();
   if (allDates.length) {
     $('#date-day').min = allDates[0];
@@ -1688,6 +1816,7 @@ function applyLoadedData() {
 }
 
 $('#btn-update-dash').addEventListener('click', () => $('#upload-input').click());
+$('#btn-clear-data').addEventListener('click', clearAllData);
 $('#upload-input').addEventListener('change', (e) => {
   handleFilesSelected(e.target.files);
   e.target.value = ''; // permite selecionar os mesmos arquivos de novo depois

@@ -114,38 +114,45 @@ Python: escrever uma função que recebe as linhas do Excel e devolve
 `{total, entregues, pendentes, problematicos, sla, drivers}`, e plugar no
 `classifyAndProcess` do `index.html`.
 
-## SLA por motorista na aba "SLA Real (J&T)" — de onde vem (regra 21/08/2026)
+## SLA por motorista na aba "SLA Real (J&T)" — de onde vem (regra final 21/08/2026)
 
-O campo "Entregador" do relatório **Entrega realizada** (usado pro SLA Real)
-às vezes atribui pacotes a um motorista que não bateu esse pacote naquele
-dia — confirmado cruzando pedido a pedido com o **Monitoramento de
-bipagem**: motorista Lucas Ronas Pereira aparecia com 78 pacotes no SLA
-Real (35,9%), mas só 28 desses 78 batiam com o bipagem do mesmo dia; os
-outros 50 não apareciam sob nenhum motorista no bipagem.
+**Fonte: o próprio relatório Entrega realizada** (não o bipagem). Motivo e
+histórico da decisão abaixo, porque já mudou de direção uma vez nesse mesmo
+dia:
 
-Por isso, a partir de 21/08/2026:
+Percebemos que o campo "Entregador" do Entrega realizada podia mostrar um
+motorista com muito mais pacotes do que ele tinha no bipagem — ex.: Lucas
+Ronas Pereira aparecia com 78 pacotes no SLA Real (35,9%) contra só 28 no
+bipagem do mesmo dia. Na primeira tentativa de correção, concluímos (errado)
+que os 50 pacotes "a mais" eram uma atribuição incorreta do Entrega
+realizada, e trocamos a fonte do ranking por motorista pra usar o bipagem.
+
+Renato corrigiu esse entendimento: os 78 pacotes são reais — é exatamente a
+quantidade que **saiu em rota** com aquele motorista (todos os 78 têm a
+coluna "Horário de Saída para Entrega" preenchida). O bipagem é que estava
+**incompleto**: ele não registra os pacotes que saíram em rota mas não
+foram entregues — só entram no bipagem os que efetivamente foram bipados na
+entrega. Por isso um motorista com vários pacotes não entregues aparecia
+"perfeito" (100%) no bipagem, simplesmente porque os pacotes problemáticos
+dele nem apareciam lá.
+
+Regra final, a partir de 21/08/2026:
+- **Total do motorista** = exatamente a quantidade de pacotes que saíram em
+  rota com ele (todo pacote do Entrega realizada onde "Horário de Saída
+  para Entrega" está preenchido e o campo Entregador tem o nome dele).
+- **Entregue** = desse total, quantos foram entregues no mesmo dia (D0) da
+  saída — comparando "Horário de Saída para Entrega" com "Horário da
+  entrega". **Não** usa a coluna "Entregue no prazo？" nem a exceção de
+  triagem aqui (essas duas só valem pro número agregado do dia inteiro) —
+  o motorista é cobrado pela regra D0 pura e simples, sem suavização.
+- Tudo que saiu e não foi entregue no mesmo dia (atrasou, nunca entregou,
+  qualquer motivo) conta contra o motorista.
 - O **número geral do dia** na aba SLA Real (total, SLA%, SLA same-day,
-  desconsiderados) continua vindo 100% do relatório Entrega realizada, sem
-  mudança nenhuma.
-- O **ranking por motorista** dessa mesma aba passou a vir do relatório de
-  bipagem (mesma fonte já usada na aba J&T normal), não mais do Entrega
-  realizada. Isso significa que, num dia em que só o Entrega realizada foi
-  importado (sem o bipagem correspondente), a tabela de motoristas da aba
-  SLA Real fica vazia pra aquele dia — é esperado, não é bug. Pra ver o
-  ranking de motorista de um dia na aba SLA Real, sempre importe os dois
-  relatórios (bipagem + Entrega realizada) daquele dia juntos.
+  desconsiderados) continua vindo do agregado do relatório Entrega
+  realizada, sem mudança — só o ranking por motorista usa a regra D0 acima.
 
-**Regra de "dentro do prazo" pro SLA motorista (confirmada por Renato em
-21/08/2026):** um pacote só conta como entregue dentro do prazo se a coluna
-"Horário da entrega" for do mesmo dia (D0) que a coluna que registra quando
-o pacote saiu bipado pro entregador. No relatório de bipagem essa coluna se
-chama "Tempo de entrega"; no Entrega realizada, a mesma informação vem na
-coluna "Horário de Saída para Entrega" — são o mesmo dado (confirmado
-batendo valor a valor, pedido por pedido, entre os dois relatórios). Se o
-pacote não foi entregue no mesmo dia da saída — atrasou, nunca foi
-entregue, qualquer motivo — conta como fora do prazo. É exatamente essa
-regra que já está implementada no cálculo do bipagem (`processJt`), que é
-a fonte do SLA motorista desde a mudança acima.
+Essa regra está implementada em `processJtReal` (campo `x.sameday` na
+agregação por motorista) — ver comentário no código pra detalhes.
 
 ## Erro "duplicate key value violates unique constraint sla_drivers_pkey" (corrigido 21/08/2026)
 
@@ -167,3 +174,52 @@ Duas correções foram aplicadas:
    hora de salvar, o dashboard funde as linhas automaticamente em vez de
    travar a importação.
 Coberto por testes automáticos em `logic_test.js` e `smoke_test.js`.
+
+## SLA Geral x SLA Motoristas (21/08/2026)
+
+O topo do dashboard agora tem dois níveis de navegação:
+
+1. **Modo** — `SLA Geral` ou `SLA Motoristas`. Geral mostra o card principal
+   (SLA%, entregues/pendentes/volume) e os gráficos de tendência. Motoristas
+   mostra os ofensores e o ranking por motorista. Nunca os dois juntos.
+2. **Transportadora** — `Pllugo`, `J&T` ou `iMile`, dentro de qualquer um dos
+   dois modos.
+
+O que cada combinação mostra:
+
+|                  | SLA Geral                                   | SLA Motoristas                          |
+|------------------|----------------------------------------------|------------------------------------------|
+| Pllugo           | agregado J&T (bipagem) + iMile, sem SLA Real | ranking combinando bipagem + iMile        |
+| J&T              | agregado do **Entrega realizada** (SLA Real), com o painel de desconsiderados; o same-day do bipagem aparece só como linha de contexto ("SLA mesmo-dia seria X%") | ranking do Entrega realizada (ver regra D0 acima) |
+| iMile            | agregado iMile                               | ranking iMile                             |
+
+A antiga aba separada "SLA Real (J&T)" deixou de existir — ela virou a
+combinação `SLA Geral > J&T` (pro agregado do dia) + `SLA Motoristas > J&T`
+(pro ranking). A antiga "J&T Express" (same-day) também não é mais uma aba
+própria — o dado do bipagem continua sendo usado (compõe o Pllugo e aparece
+como referência secundária dentro de J&T), só não tem mais uma aba dedicada
+pra ele sozinho.
+
+## Reimportar sem duplicar e sem sobrecarregar o banco (21/08/2026)
+
+Reimportar um relatório já importado antes **sempre é permitido** — pode ter
+chegado informação nova (ex: relatório corrigido, mais pacotes bipados desde
+a última vez). Mas o dashboard agora só grava no Supabase o que realmente é
+**novo ou diferente** do que já está salvo: antes de cada `upsert`, ele busca
+o que já existe pra aquele(s) dia(s) e compara campo a campo — linha idêntica
+não gera nenhum write. Isso evita gastar a cota do plano grátis do Supabase
+com writes repetidos toda vez que alguém reimporta o mesmo arquivo sem
+mudança nenhuma. Quando um motorista some do relatório reimportado (ex:
+pacote removido/corrigido), a linha antiga dele é apagada explicitamente, não
+só deixada desatualizada. Coberto por testes em `smoke_test.js`.
+
+## Botão "Limpar Dados" — temporário, só pra testes (21/08/2026)
+
+Enquanto a ferramenta ainda está sendo validada, tem um botão **Limpar
+Dados** no topo, do lado do "Atualizar Dashboard". Ele apaga **tudo** que
+está salvo no Supabase (`sla_days` e `sla_drivers`, todos os dias, todas as
+transportadoras) depois de um pop-up de confirmação — serve pra zerar a base
+e reimportar tudo do zero durante os testes. É uma ação destrutiva e não tem
+desfazer. Quando a ferramenta estiver validada e em uso normal, esse botão
+deve ser removido do `index.html` (é só apagar o bloco `.btn-clear` no HTML,
+a função `clearAllData` e o listener do `#btn-clear-data` no JS).
