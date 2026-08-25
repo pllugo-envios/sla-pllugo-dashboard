@@ -668,7 +668,9 @@ function titleCaseName(s) {
   return String(s == null ? '' : s).toLowerCase().replace(/\p{L}+/gu, w => w.charAt(0).toUpperCase() + w.slice(1));
 }
 function stripFPrefix(s) {
-  return String(s == null ? '' : s).replace(/^F\s+/, '');
+  return String(s == null ? '' : s)
+    .replace(/\|\d+\s*$/, '')
+    .replace(/^F\s+/, '');
 }
 function round1(n) {
   return Math.round(n * 10) / 10;
@@ -840,17 +842,23 @@ function processJt(rows) {
 
 // ──────────────────────────────────────────────
 // J&T — SLA Real detalhado (== process_jt_real)
-// Regra operacional V2: base = coluna "Entregue no prazo" (Y/N), retirando da base elegível
-// Erro de triagem / Expedida mas não chegou quando comprovados no mesmo dia da previsão.
+// Regra operacional V2: base = coluna "Entregue no prazo" (Y/N), retirando da
+// base elegível Erro de triagem / Expedida mas não chegou quando estiverem fora
+// do prazo.
 // ──────────────────────────────────────────────
-const EXCEPTION_PREFIXES = ['Erro.de.triagem.', 'Encomenda.expedida.mas.n'];
+function isJtRealOperationalException(problemStr) {
+  const s = normalizeSearchText(problemStr).replace(/[^A-Z0-9]+/g, ' ');
+  return s.includes('ERRO DE TRIAGEM')
+    || s.includes('ENCOMENDA EXPEDIDA MAS NAO CHEGOU')
+    || s.includes('EXPEDIDA MAS NAO CHEGOU')
+    || s.includes('EXPEDIDO MAS NAO CHEGOU');
+}
 
 function processJtReal(rows) {
   if (!rows.length) return {};
   const headers = Object.keys(rows[0]);
   const colEntrega = findColIncludes(headers, 'rio da entrega');
   const colSaida = findColIncludes(headers, 'da para entrega');
-  const colProbdt = findColIncludes(headers, 'registro pacote');
   const colProblem = findColIncludes(headers, 'tipo problem');
   const colPrazo = headers.find(h => lc(h).includes('prazo') && !lc(h).includes('data')) || null;
   const colPedido = findColIncludes(headers, 'remessa') || headers[0];
@@ -862,7 +870,6 @@ function processJtReal(rows) {
     if (!prevista) continue;
     const entrega = colEntrega ? toDate(r[colEntrega]) : null;
     const saida = colSaida ? toDate(r[colSaida]) : null;
-    const probdt = colProbdt ? toDate(r[colProbdt]) : null;
     const problemRaw = colProblem ? r[colProblem] : null;
     const problemStr = (problemRaw == null || String(problemRaw).trim() === '' || String(problemRaw) === 'nan')
       ? '' : String(problemRaw);
@@ -874,9 +881,8 @@ function processJtReal(rows) {
     } else {
       baseOnTime = entrega != null && dateOnly(entrega) <= dateOnly(prevista);
     }
-    const isExc = EXCEPTION_PREFIXES.some(p => problemStr.startsWith(p));
-    const sameDayP = probdt != null && dateOnly(probdt) === dateOnly(prevista);
-    const desconsiderado = isExc && sameDayP && !baseOnTime;
+    const isExc = isJtRealOperationalException(problemStr);
+    const desconsiderado = isExc && !baseOnTime;
     const noPrazo = baseOnTime || desconsiderado;
     const sameday = entrega != null && saida != null && dateOnly(saida) === dateOnly(entrega);
     const dataRef = dateOnly(prevista);
@@ -903,12 +909,12 @@ function processJtReal(rows) {
     if (colEntregador) {
       const byDriver = new Map();
       for (const x of g) {
-        if (x.entregador == null || String(x.entregador).trim() === '' || !x.saidaValida) continue; // só entra no OFD do motorista se realmente saiu em rota
+        if (x.entregador == null || String(x.entregador).trim() === '' || !x.saidaValida || x.desconsiderado) continue; // só entra no OFD do motorista se realmente saiu em rota e for responsabilidade Pllugo
         // Agrupa por chave accent/case-insensitive (_nameKey) — tira também o
         // "|telefone" que às vezes vem colado no fim do campo Entregador. Mesmo
         // motivo do fix em processJt: evita duas linhas finais com o mesmo
         // driver_name (bug 21/08/2026).
-        const name = canonicalizeName(titleCaseName(stripFPrefix(String(x.entregador).replace(/\|\d+$/, '')).trim()));
+        const name = canonicalizeName(titleCaseName(stripFPrefix(String(x.entregador)).trim()));
         const gkey = _nameKey(name);
         if (!byDriver.has(gkey)) byDriver.set(gkey, { name, sub: [] });
         byDriver.get(gkey).sub.push(x);
@@ -916,15 +922,10 @@ function processJtReal(rows) {
       for (const [, group] of byDriver) {
         const { name, sub } = group;
         const dTotal = sub.length;
-        // SLA por motorista = exatamente o que saiu em rota com ele (dTotal, um
-        // pacote só entra aqui se teve "Horário de Saída para Entrega") contra o
-        // que ele entregou no mesmo dia da saída (regra D0 — ver processJt).
-        // Usa x.sameday (saída x entrega no mesmo dia), não x.noPrazo (que é a
-        // regra "Entregue no prazo？" + exceção de triagem, usada só no
-        // agregado do dia) — pedido explícito de Renato em 21/08/2026: o
-        // motorista tem que ser cobrado exatamente pelo volume que pegou pra
-        // entregar, sem as exceções que suavizam o número do dia inteiro.
-        const dDelivered = sub.filter(x => x.sameday).length;
+        // SLA por motorista segue a mesma regra operacional do SLA Real:
+        // "Entregue no prazo？" = Y conta como entregue; exceções não entram na
+        // base/ofensor Pllugo.
+        const dDelivered = sub.filter(x => x.baseOnTime).length;
         const occ = {};
         for (const x of sub) { if (x.problemStr !== '') occ[x.problemStr] = (occ[x.problemStr] || 0) + 1; }
         drv_rows.push({
