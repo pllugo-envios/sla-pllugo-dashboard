@@ -1233,6 +1233,104 @@ function rowsEqual(a, b, fields) {
 const DAY_FIELDS = ['total', 'entregues', 'pendentes', 'problematicos', 'sla', 'sla_sameday', 'desconsiderados', 'desconsiderados_pedidos', 'by_unit'];
 const DRIVER_FIELDS = ['total', 'delivered', 'pendentes', 'problems', 'sla', 'occurrences'];
 
+function mergeResultInBatch(prev, next) {
+  if (!prev) return next;
+  if (prev.data && next.data && prev.data.by_unit && next.data.by_unit && prev.source === 'jt_real' && next.source === 'jt_real') {
+    const byUnit = { ...(prev.data.by_unit || {}) };
+    for (const [unit, data] of Object.entries(next.data.by_unit || {})) byUnit[unit] = data;
+    const s = summarizeUnits(byUnit);
+    return {
+      ...next,
+      fileSize: Math.max(prev.fileSize || 0, next.fileSize || 0),
+      data: {
+        ...next.data,
+        total: s.total,
+        entregues: s.entregues,
+        pendentes: s.pendentes,
+        problematicos: s.problematicos,
+        sla: s.sla,
+        sla_sameday: s.sla_sameday,
+        desconsiderados: s.desconsiderados,
+        desconsiderados_pedidos: s.desconsiderados_pedidos,
+        by_unit: byUnit,
+      },
+    };
+  }
+  return (next.fileSize || 0) >= (prev.fileSize || 0) ? next : prev;
+}
+function mergeOccurrenceMaps(a, b) {
+  const out = { ...(a || {}) };
+  for (const [label, value] of Object.entries(b || {})) out[label] = (out[label] || 0) + (Number(value) || 0);
+  return out;
+}
+
+function summarizeUnits(byUnit) {
+  const out = { total: 0, entregues: 0, pendentes: 0, problematicos: 0, desconsiderados: 0, desconsiderados_pedidos: [], weightedSamedayDelivered: 0, weightedSamedayTotal: 0 };
+  for (const u of Object.values(byUnit || {})) {
+    if (!u) continue;
+    out.total += Number(u.total) || 0;
+    out.entregues += Number(u.entregues) || 0;
+    out.pendentes += Number(u.pendentes) || 0;
+    out.problematicos += Number(u.problematicos) || 0;
+    out.desconsiderados += Number(u.desconsiderados) || 0;
+    if (Array.isArray(u.desconsiderados_pedidos)) out.desconsiderados_pedidos.push(...u.desconsiderados_pedidos);
+    if (u.sla_sameday != null && (Number(u.total) || 0) > 0) {
+      out.weightedSamedayDelivered += (Number(u.total) || 0) * (Number(u.sla_sameday) || 0) / 100;
+      out.weightedSamedayTotal += Number(u.total) || 0;
+    }
+  }
+  out.sla = out.total ? round1(100 * out.entregues / out.total) : 0;
+  out.sla_sameday = out.weightedSamedayTotal ? round1(100 * out.weightedSamedayDelivered / out.weightedSamedayTotal) : 0;
+  return out;
+}
+
+function mergeDayRowWithExisting(row, existing) {
+  if (!row.by_unit || row.source !== 'jt_real') return row;
+  const byUnit = { ...((existing && existing.by_unit) || {}) };
+  for (const [unit, data] of Object.entries(row.by_unit || {})) byUnit[unit] = data;
+  const s = summarizeUnits(byUnit);
+  return {
+    ...row,
+    total: s.total,
+    entregues: s.entregues,
+    pendentes: s.pendentes,
+    problematicos: s.problematicos,
+    sla: s.sla,
+    sla_sameday: s.sla_sameday,
+    desconsiderados: s.desconsiderados,
+    desconsiderados_pedidos: s.desconsiderados_pedidos,
+    by_unit: byUnit,
+  };
+}
+
+function driverRowsFromMergedDays(dayRows) {
+  const rows = [];
+  for (const r of dayRows) {
+    if (!r.by_unit || r.source !== 'jt_real') continue;
+    const byDriver = new Map();
+    for (const u of Object.values(r.by_unit || {})) {
+      for (const drv of ((u && u.drivers) || [])) {
+        const name = drv.name;
+        const key = _nameKey(name);
+        if (!byDriver.has(key)) byDriver.set(key, { name, total: 0, delivered: 0, pendentes: 0, problems: 0, occurrences: {} });
+        const item = byDriver.get(key);
+        item.total += Number(drv.total) || 0;
+        item.delivered += Number(drv.delivered) || 0;
+        item.pendentes += Number(drv.pendentes) || 0;
+        item.problems += Number(drv.problems) || 0;
+        item.occurrences = mergeOccurrenceMaps(item.occurrences, drv.occurrences);
+      }
+    }
+    for (const d of byDriver.values()) rows.push({
+      date: r.date, source: r.source, driver_name: d.name,
+      total: d.total, delivered: d.delivered, pendentes: d.pendentes, problems: d.problems,
+      sla: d.total ? round1(100 * d.delivered / d.total) : 0,
+      occurrences: d.occurrences,
+    });
+  }
+  return rows;
+}
+
 async function fetchExistingByDates(table, dates) {
   if (!dates.length) return [];
   const out = [];
@@ -1275,16 +1373,24 @@ async function upsertResults(results) {
 
   const dates = [...new Set(results.map(r => r.date))];
 
-  // sla_days: só grava linha nova ou diferente da que já está salva.
+  // sla_days: quando o relatório é separado por unidade (Mauá/RBP), não pode
+  // sobrescrever o outro arquivo já importado. Mescla by_unit e recalcula o
+  // total do dia pela soma das unidades existentes.
   const existingDays = await fetchExistingByDates('sla_days', dates);
   const existingDaysMap = new Map(existingDays.map(r => [`${r.date}|${r.source}`, r]));
-  const dayRowsToWrite = dayRows.filter(r => {
+  const mergedDayRows = dayRows.map(r => mergeDayRowWithExisting(r, existingDaysMap.get(`${r.date}|${r.source}`)));
+  const dayRowsToWrite = mergedDayRows.filter(r => {
     const existing = existingDaysMap.get(`${r.date}|${r.source}`);
     return !existing || !rowsEqual(existing, r, DAY_FIELDS);
   });
   for (const part of chunkArray(dayRowsToWrite, 200)) {
     const { error } = await sb.from('sla_days').upsert(part, { onConflict: 'date,source' });
     if (error) throw error;
+  }
+
+  if (results.some(r => r.source === 'jt_real' && r.data && r.data.by_unit)) {
+    driverRows.length = 0;
+    driverRows.push(...driverRowsFromMergedDays(mergedDayRows));
   }
 
   // sla_drivers: mesma lógica — só grava quem é novo ou mudou. Motorista que
@@ -1389,13 +1495,13 @@ async function handleFilesSelected(fileList) {
     }
   }
 
-  // Se dois arquivos do lote caírem no mesmo (data,fonte), fica o de maior tamanho
-  // (mesmo critério do discover_new_files no gerar_dashboard.py).
+  // Se dois arquivos do lote caírem no mesmo (data,fonte), mescla por unidade
+  // quando houver by_unit. Assim Mauá + RBP importados juntos viram um único
+  // dia consolidado, em vez de o arquivo maior descartar o menor.
   const byKey = new Map();
   for (const r of allResults) {
     const key = `${r.date}|${r.source}`;
-    const prev = byKey.get(key);
-    if (!prev || r.fileSize >= prev.fileSize) byKey.set(key, r);
+    byKey.set(key, mergeResultInBatch(byKey.get(key), r));
   }
   const finalResults = [...byKey.values()];
 
@@ -1498,6 +1604,17 @@ function inferUnitFromRow(row) {
 function computeUnitBreakdown(filename, rows) {
   const groups = { maua: [], rbp: [] };
   for (const row of rows || []) { const u = inferUnitFromRow(row); if (u) groups[u].push(row); }
+
+  // Relatórios separados por unidade às vezes trazem poucas linhas residuais da
+  // outra base. Se uma unidade domina o arquivo, atualiza só ela; isso impede
+  // que uma importação de RBP sobrescreva a base Mauá inteira por causa de ruído.
+  const totalUnitRows = groups.maua.length + groups.rbp.length;
+  if (totalUnitRows > 0) {
+    const dominant = groups.maua.length >= groups.rbp.length ? 'maua' : 'rbp';
+    const other = dominant === 'maua' ? 'rbp' : 'maua';
+    if (groups[dominant].length / totalUnitRows >= 0.95) groups[other] = [];
+  }
+
   const byKey = {}; // `${date}|${source}` -> { maua: data, rbp: data }
   for (const [unit, groupRows] of Object.entries(groups)) {
     if (!groupRows.length) continue;
@@ -2320,6 +2437,9 @@ $('#upload-input').addEventListener('change', (e) => {
 </script>
 </body>
 </html>
+
+
+
 
 
 
