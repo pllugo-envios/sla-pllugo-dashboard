@@ -715,6 +715,16 @@ function dateOnly(d) {
   const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
+function dateOnlyFromCell(v) {
+  if (typeof v === 'string') {
+    const s = v.trim();
+    let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+    m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+    if (m) return `${(m[3].length === 2 ? '20' + m[3] : m[3])}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+  }
+  return dateOnly(toDate(v));
+}
 function modeDate(dates) {
   const freq = new Map();
   for (const d of dates) { if (!d) continue; freq.set(d, (freq.get(d) || 0) + 1); }
@@ -866,8 +876,8 @@ function processJtReal(rows) {
 
   const byDay = new Map();
   for (const r of rows) {
-    const prevista = toDate(r['Data prevista de entrega']);
-    if (!prevista) continue;
+    const previstaDay = dateOnlyFromCell(r['Data prevista de entrega']);
+    if (!previstaDay) continue;
     const entrega = colEntrega ? toDate(r[colEntrega]) : null;
     const saida = colSaida ? toDate(r[colSaida]) : null;
     const problemRaw = colProblem ? r[colProblem] : null;
@@ -879,13 +889,13 @@ function processJtReal(rows) {
       const v = r[colPrazo];
       baseOnTime = String(v == null ? '' : v).trim().toUpperCase() === 'Y';
     } else {
-      baseOnTime = entrega != null && dateOnly(entrega) <= dateOnly(prevista);
+      baseOnTime = entrega != null && dateOnly(entrega) <= previstaDay;
     }
     const isExc = isJtRealOperationalException(problemStr);
     const desconsiderado = isExc && !baseOnTime;
     const noPrazo = baseOnTime || desconsiderado;
     const sameday = entrega != null && saida != null && dateOnly(saida) === dateOnly(entrega);
-    const dataRef = dateOnly(prevista);
+    const dataRef = previstaDay;
 
     if (!byDay.has(dataRef)) byDay.set(dataRef, []);
     byDay.get(dataRef).push({
@@ -1351,7 +1361,7 @@ async function handleFilesSelected(fileList) {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { cellDates: true });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: null, raw: true });
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: null, raw: false });
       const results = classifyAndProcess(file.name, rows);
       if (!results.length) {
         warnings.push(`${file.name}: não reconhecido ou sem data identificável.`);
