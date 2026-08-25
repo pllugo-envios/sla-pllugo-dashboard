@@ -875,6 +875,7 @@ function processJtReal(rows) {
   const colEntregador = headers.find(h => lc(h) === 'entregador') || null;
 
   const byDay = new Map();
+  const driversByRouteDay = new Map();
   for (const r of rows) {
     const previstaDay = dateOnlyFromCell(r['Data prevista de entrega']);
     if (!previstaDay) continue;
@@ -894,20 +895,33 @@ function processJtReal(rows) {
     const isExc = isJtRealOperationalException(problemStr);
     const desconsiderado = isExc && !baseOnTime;
     const noPrazo = baseOnTime || desconsiderado;
-    const sameday = entrega != null && saida != null && dateOnly(saida) === dateOnly(entrega);
+    const saidaDay = saida != null ? dateOnly(saida) : null;
+    const entregaDay = entrega != null ? dateOnly(entrega) : null;
+    const sameday = saidaDay != null && entregaDay === saidaDay;
     const dataRef = previstaDay;
-
-    if (!byDay.has(dataRef)) byDay.set(dataRef, []);
-    byDay.get(dataRef).push({
+    const rowInfo = {
       noPrazo, baseOnTime, sameday, desconsiderado, problemStr, saidaValida: saida != null,
-      driverResponsavel: saida != null && dateOnly(saida) <= previstaDay,
+      saidaDay, entregaDay,
       pedido: String(r[colPedido] ?? ''),
       entregador: colEntregador ? r[colEntregador] : null,
-    });
+    };
+
+    if (!byDay.has(dataRef)) byDay.set(dataRef, []);
+    byDay.get(dataRef).push(rowInfo);
+
+    // SLA de motorista é por data da rota: recebeu no dia X, entregou no dia X.
+    // Não usa Data prevista nem Entregue no prazo, porque esses campos medem o
+    // SLA geral do pedido e podem trazer atraso anterior à atribuição da rota.
+    if (colEntregador && saidaDay && rowInfo.entregador != null && String(rowInfo.entregador).trim() !== '') {
+      if (!driversByRouteDay.has(saidaDay)) driversByRouteDay.set(saidaDay, []);
+      driversByRouteDay.get(saidaDay).push(rowInfo);
+    }
   }
 
   const out = {};
-  for (const [day, g] of byDay) {
+  const allDays = [...new Set([...byDay.keys(), ...driversByRouteDay.keys()])].sort();
+  for (const day of allDays) {
+    const g = byDay.get(day) || [];
     // V2: erro de triagem / expedido mas não chegou deixam de "virar entrega".
     // Eles ficam auditáveis, mas saem do denominador por não serem responsabilidade Pllugo.
     const desconsideradosPedidos = g.filter(x => x.desconsiderado).map(x => x.pedido);
@@ -919,11 +933,7 @@ function processJtReal(rows) {
     const drv_rows = [];
     if (colEntregador) {
       const byDriver = new Map();
-      for (const x of g) {
-        // Só vira base/ofensa do motorista quando a rota foi atribuída no prazo.
-        // Se o pedido já saiu em rota depois da data prevista, a perda é operacional,
-        // não do entregador que recebeu a rota atrasada.
-        if (x.entregador == null || String(x.entregador).trim() === '' || !x.saidaValida || !x.driverResponsavel || x.desconsiderado) continue;
+      for (const x of (driversByRouteDay.get(day) || [])) {
         // Agrupa por chave accent/case-insensitive (_nameKey) — tira também o
         // "|telefone" que às vezes vem colado no fim do campo Entregador. Mesmo
         // motivo do fix em processJt: evita duas linhas finais com o mesmo
@@ -936,16 +946,13 @@ function processJtReal(rows) {
       for (const [, group] of byDriver) {
         const { name, sub } = group;
         const dTotal = sub.length;
-        // SLA por motorista segue a mesma regra operacional do SLA Real:
-        // "Entregue no prazo？" = Y conta como entregue; exceções não entram na
-        // base/ofensor Pllugo.
-        const dDelivered = sub.filter(x => x.baseOnTime).length;
+        const dDelivered = sub.filter(x => x.sameday).length;
         const occ = {};
         for (const x of sub) { if (x.problemStr !== '') occ[x.problemStr] = (occ[x.problemStr] || 0) + 1; }
         drv_rows.push({
           name, total: dTotal, delivered: dDelivered,
           pendentes: dTotal - dDelivered,
-          problems: sub.filter(x => x.problemStr !== '').length,
+          problems: sub.filter(x => !x.sameday).length,
           sla: dTotal ? round1(100 * dDelivered / dTotal) : 0,
           occurrences: occ,
         });
@@ -1556,6 +1563,19 @@ function dateInRange(d) {
 }
 function filteredHistory() { return historyForUnit(state.unit).filter(h => dateInRange(h.date)); }
 
+function aggregateDriversForHero(drivers, filtered) {
+  const out = { total: 0, entregues: 0, pendentes: 0, problematicos: 0, dailySLA: [], dailyEnt: [], dailyPend: [], dailySameday: [], labels: [], desconsiderados: 0, desconsideradosPedidos: [], samedayWeightedDelivered: 0, samedayWeightedTotal: 0 };
+  for (const d of drivers) {
+    out.total += d.total || 0;
+    out.entregues += d.delivered || 0;
+    out.pendentes += d.pendentes || 0;
+    out.problematicos += d.problems || 0;
+  }
+  out.labels = filtered.map(x => x.date);
+  out.sla = out.total ? +(100 * out.entregues / out.total).toFixed(1) : 0;
+  out.volumeBruto = out.total;
+  return out;
+}
 function aggregate(filtered, carrier) {
   const out = { total: 0, entregues: 0, pendentes: 0, problematicos: 0, dailySLA: [], dailyEnt: [], dailyPend: [], dailySameday: [], labels: [], desconsiderados: 0, desconsideradosPedidos: [], samedayWeightedDelivered: 0, samedayWeightedTotal: 0 };
   for (const day of filtered) {
@@ -2170,7 +2190,8 @@ function refresh() {
     $('#window-info').textContent = '—';
   }
   applyModeVisibility();
-  renderHero(agg, drivers);
+  const heroAgg = (state.mode === 'motoristas' || state.mode === 'ofensores') ? aggregateDriversForHero(drivers, filtered) : agg;
+  renderHero(heroAgg, drivers);
   renderCharts(agg);
   renderDesconsiderados(agg);
   renderOfensores(drivers);
@@ -2299,4 +2320,6 @@ $('#upload-input').addEventListener('change', (e) => {
 </script>
 </body>
 </html>
+
+
 
