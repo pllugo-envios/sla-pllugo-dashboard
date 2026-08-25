@@ -900,6 +900,7 @@ function processJtReal(rows) {
     if (!byDay.has(dataRef)) byDay.set(dataRef, []);
     byDay.get(dataRef).push({
       noPrazo, baseOnTime, sameday, desconsiderado, problemStr, saidaValida: saida != null,
+      driverResponsavel: saida != null && dateOnly(saida) <= previstaDay,
       pedido: String(r[colPedido] ?? ''),
       entregador: colEntregador ? r[colEntregador] : null,
     });
@@ -919,7 +920,10 @@ function processJtReal(rows) {
     if (colEntregador) {
       const byDriver = new Map();
       for (const x of g) {
-        if (x.entregador == null || String(x.entregador).trim() === '' || !x.saidaValida || x.desconsiderado) continue; // só entra no OFD do motorista se realmente saiu em rota e for responsabilidade Pllugo
+        // Só vira base/ofensa do motorista quando a rota foi atribuída no prazo.
+        // Se o pedido já saiu em rota depois da data prevista, a perda é operacional,
+        // não do entregador que recebeu a rota atrasada.
+        if (x.entregador == null || String(x.entregador).trim() === '' || !x.saidaValida || !x.driverResponsavel || x.desconsiderado) continue;
         // Agrupa por chave accent/case-insensitive (_nameKey) — tira também o
         // "|telefone" que às vezes vem colado no fim do campo Entregador. Mesmo
         // motivo do fix em processJt: evita duas linhas finais com o mesmo
@@ -2295,3 +2299,4 @@ $('#upload-input').addEventListener('change', (e) => {
 </script>
 </body>
 </html>
+
