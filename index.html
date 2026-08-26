@@ -284,6 +284,28 @@
   .priority-rank { width:24px; height:24px; border-radius:7px; background:#fff; border:1px solid var(--gray-200); display:grid; place-items:center; font-size:10px; font-weight:700; flex:0 0 auto; }
   .priority-item strong { display:block; font-size:11px; }
   .priority-item span { display:block; font-size:9.5px; color:var(--gray-500); margin-top:2px; }
+  .operation-section { border-top:3px solid var(--success); }
+  .operation-head { display:grid; grid-template-columns:minmax(220px,.72fr) minmax(0,1.28fr); gap:14px; align-items:stretch; margin-bottom:12px; }
+  .operation-score { border:1px solid var(--gray-200); border-radius:var(--radius-lg); background:#fff; padding:20px 22px; box-shadow:var(--shadow-sm); }
+  .operation-label { font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--gray-500); }
+  .operation-score-value { font-size:66px; line-height:1; font-weight:800; letter-spacing:-.04em; margin-top:8px; font-variant-numeric:tabular-nums; color:var(--success); }
+  .operation-score-value .pct { font-size:29px; color:var(--gray-400); margin-left:3px; }
+  .operation-score-text { font-size:12px; color:var(--gray-500); line-height:1.45; margin-top:10px; }
+  .operation-flow { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; }
+  .operation-card { border:1px solid var(--gray-200); border-radius:var(--radius-md); background:var(--gray-50); padding:13px 14px; min-width:0; }
+  .operation-card span { display:block; font-size:9.5px; font-weight:800; color:var(--gray-500); text-transform:uppercase; letter-spacing:.055em; }
+  .operation-card strong { display:block; font-size:24px; line-height:1; margin-top:7px; font-variant-numeric:tabular-nums; color:var(--gray-900); }
+  .operation-card small { display:block; font-size:10px; color:var(--gray-500); margin-top:5px; white-space:normal; }
+  .operation-card.primary { border-left:3px solid var(--success); background:#fff; }
+  .operation-card.warn { border-left:3px solid var(--warn); }
+  .operation-card.crit { border-left:3px solid var(--pllugo-red); }
+  .operation-subtabs { display:flex; gap:6px; margin:0 0 12px; border-bottom:1px solid var(--gray-200); }
+  .operation-subtab { font-family:inherit; font-size:12px; font-weight:700; color:var(--gray-500); background:transparent; border:0; border-bottom:2px solid transparent; padding:9px 14px; cursor:pointer; }
+  .operation-subtab.active { color:var(--success); border-bottom-color:var(--success); }
+  .operation-diagnosis { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  .diagnosis-card { border:1px solid var(--gray-200); border-radius:var(--radius-md); padding:13px; background:#fff; }
+  .diagnosis-card strong { display:block; font-size:12px; color:var(--gray-900); }
+  .diagnosis-card span { display:block; font-size:10.5px; color:var(--gray-500); line-height:1.45; margin-top:5px; }
   .tower-section { border-top:3px solid var(--gray-900); }
   .tower-freshness { font-size:10px; color:var(--gray-500); background:var(--gray-100); border-radius:999px; padding:5px 9px; }
   .tower-kpis { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-bottom:12px; }
@@ -307,9 +329,9 @@
   .cause-insight { border:1px solid var(--gray-200); border-radius:var(--radius-md); padding:12px; background:var(--gray-50); font-size:10.5px; color:var(--gray-600); }
   .cause-insight strong { display:block; font-size:12px; color:var(--gray-900); margin-bottom:5px; }
   .neutral-empty { padding:18px; border:1px dashed var(--gray-300); border-radius:var(--radius-md); color:var(--gray-500); font-size:10.5px; background:var(--gray-50); }
-  @media(max-width:1100px){.executive-kpis,.tower-kpis{grid-template-columns:repeat(3,1fr)}.priority-grid{grid-template-columns:1fr 1fr}.tower-driver{grid-template-columns:minmax(180px,1.4fr) repeat(3,1fr) 90px}.tower-hide-md{display:none}}
-  @media(max-width:820px){.overview-grid,.cause-layout{grid-template-columns:1fr}.entity-grid{grid-template-columns:1fr 1fr}.priority-grid{grid-template-columns:1fr}.unit-filter-wrap{width:100%;justify-content:flex-start}.tower-driver{grid-template-columns:1.4fr 1fr 1fr}.tower-hide-sm{display:none}}
-  @media(max-width:560px){.executive-kpis,.tower-kpis{grid-template-columns:1fr 1fr}.entity-grid{grid-template-columns:1fr}.control-status{align-items:flex-start}.control-status-pill{display:none}.tower-driver{grid-template-columns:1fr 1fr}.tower-driver .tower-name-wrap{grid-column:1/-1}.tower-rule-note{width:100%;margin-left:0}}
+  @media(max-width:1100px){.executive-kpis,.tower-kpis{grid-template-columns:repeat(3,1fr)}.priority-grid{grid-template-columns:1fr 1fr}.operation-head{grid-template-columns:1fr}.operation-flow{grid-template-columns:repeat(2,1fr)}.tower-driver{grid-template-columns:minmax(180px,1.4fr) repeat(3,1fr) 90px}.tower-hide-md{display:none}}
+  @media(max-width:820px){.overview-grid,.cause-layout,.operation-diagnosis{grid-template-columns:1fr}.entity-grid{grid-template-columns:1fr 1fr}.priority-grid{grid-template-columns:1fr}.unit-filter-wrap{width:100%;justify-content:flex-start}.tower-driver{grid-template-columns:1.4fr 1fr 1fr}.tower-hide-sm{display:none}}
+  @media(max-width:560px){.executive-kpis,.tower-kpis,.operation-flow{grid-template-columns:1fr 1fr}.entity-grid{grid-template-columns:1fr}.control-status{align-items:flex-start}.control-status-pill{display:none}.operation-score-value{font-size:52px}.tower-driver{grid-template-columns:1fr 1fr}.tower-driver .tower-name-wrap{grid-column:1/-1}.tower-rule-note{width:100%;margin-left:0}}
 
 </style>
 </head>
@@ -383,10 +405,8 @@
 
     <div class="mode-tabs operation-nav">
       <button class="mode-tab active" data-mode="geral">Visão Geral</button>
+      <button class="mode-tab" data-mode="operacao">Visão Operação</button>
       <button class="mode-tab" data-mode="torre">Torre de Controle <span class="nav-alert-badge" id="nav-alert-badge" style="display:none">0</span></button>
-      <button class="mode-tab" data-mode="ofensores">Ofensores</button>
-      <button class="mode-tab" data-mode="motoristas">Motoristas</button>
-      <button class="mode-tab" data-mode="historico">Histórico</button>
     </div>
     <div class="carrier-tabs">
       <button class="tab active" data-carrier="pllugo">Pllugo</button>
@@ -477,6 +497,53 @@
           </div>
         </div>
         <div class="chart-wrap" id="volChartWrap"><canvas id="volChart"></canvas><div class="chart-fallback">Grafico indisponivel. Verifique a conexao com a biblioteca Chart.js.</div></div>
+      </div>
+    </div>
+
+    <div class="section operation-section" id="operation-section" style="display:none">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Visão Operação — realidade do dia</div>
+          <div class="section-sub">Saída em rota, conclusão no mesmo dia e sinais de capacidade operacional</div>
+        </div>
+        <div class="filter-info"><span id="operation-scope">Todas as unidades</span> · <strong id="operation-driver-count">0</strong> motoristas ativos</div>
+      </div>
+      <div class="operation-head">
+        <div class="operation-score">
+          <div class="operation-label">SLA Operacional</div>
+          <div class="operation-score-value"><span id="operation-sla">—</span><span class="pct">%</span></div>
+          <div class="operation-score-text" id="operation-score-text">Pedidos que saíram em rota e foram entregues no mesmo dia.</div>
+        </div>
+        <div class="operation-flow">
+          <div class="operation-card">
+            <span>Recebidos na base</span>
+            <strong id="operation-received">—</strong>
+            <small id="operation-received-sub">disponível após novo import J&T</small>
+          </div>
+          <div class="operation-card primary">
+            <span>Saíram em rota</span>
+            <strong id="operation-route">—</strong>
+            <small id="operation-route-sub">OFD operacional</small>
+          </div>
+          <div class="operation-card primary">
+            <span>Concluídos no dia</span>
+            <strong id="operation-done">—</strong>
+            <small id="operation-done-sub">entregues na data da rota</small>
+          </div>
+          <div class="operation-card warn">
+            <span>Não concluídos</span>
+            <strong id="operation-pending">—</strong>
+            <small id="operation-pending-sub">ficaram para tratar</small>
+          </div>
+        </div>
+      </div>
+      <div class="operation-subtabs">
+        <button class="operation-subtab active" data-op-view="resumo">Resumo</button>
+        <button class="operation-subtab" data-op-view="motoristas">Motoristas</button>
+        <button class="operation-subtab" data-op-view="ofensores">Ofensores</button>
+      </div>
+      <div id="operation-summary">
+        <div class="operation-diagnosis" id="operation-diagnosis"></div>
       </div>
     </div>
 
@@ -869,6 +936,7 @@ function processJtReal(rows) {
   const headers = Object.keys(rows[0]);
   const colEntrega = findColIncludes(headers, 'rio da entrega');
   const colSaida = findColIncludes(headers, 'da para entrega');
+  const colRecebimento = findColIncludes(headers, 'recebimento na base');
   const colProblem = findColIncludes(headers, 'tipo problem');
   const colPrazo = headers.find(h => lc(h).includes('prazo') && !lc(h).includes('data')) || null;
   const colPedido = findColIncludes(headers, 'remessa') || headers[0];
@@ -876,11 +944,13 @@ function processJtReal(rows) {
 
   const byDay = new Map();
   const driversByRouteDay = new Map();
+  const receivedByDay = new Map();
   for (const r of rows) {
     const previstaDay = dateOnlyFromCell(r['Data prevista de entrega']);
     if (!previstaDay) continue;
     const entrega = colEntrega ? toDate(r[colEntrega]) : null;
     const saida = colSaida ? toDate(r[colSaida]) : null;
+    const recebimento = colRecebimento ? toDate(r[colRecebimento]) : null;
     const problemRaw = colProblem ? r[colProblem] : null;
     const problemStr = (problemRaw == null || String(problemRaw).trim() === '' || String(problemRaw) === 'nan')
       ? '' : String(problemRaw);
@@ -909,6 +979,9 @@ function processJtReal(rows) {
     if (!byDay.has(dataRef)) byDay.set(dataRef, []);
     byDay.get(dataRef).push(rowInfo);
 
+    const receivedDay = recebimento != null ? dateOnly(recebimento) : null;
+    if (receivedDay) receivedByDay.set(receivedDay, (receivedByDay.get(receivedDay) || 0) + 1);
+
     // SLA de motorista é por data da rota: recebeu no dia X, entregou no dia X.
     // Não usa Data prevista nem Entregue no prazo, porque esses campos medem o
     // SLA geral do pedido e podem trazer atraso anterior à atribuição da rota.
@@ -919,7 +992,7 @@ function processJtReal(rows) {
   }
 
   const out = {};
-  const allDays = [...new Set([...byDay.keys(), ...driversByRouteDay.keys()])].sort();
+  const allDays = [...new Set([...byDay.keys(), ...driversByRouteDay.keys(), ...receivedByDay.keys()])].sort();
   for (const day of allDays) {
     const g = byDay.get(day) || [];
     // V2: erro de triagem / expedido mas não chegou deixam de "virar entrega".
@@ -962,6 +1035,10 @@ function processJtReal(rows) {
       total, entregues, pendentes: total - entregues, problematicos,
       sla: total ? round1(100 * entregues / total) : 0,
       sla_sameday: total ? round1(100 * samedayOk / total) : 0,
+      recebidos: receivedByDay.get(day) || null,
+      rota_total: drv_rows.reduce((s, d) => s + (Number(d.total) || 0), 0),
+      rota_entregues: drv_rows.reduce((s, d) => s + (Number(d.delivered) || 0), 0),
+      rota_pendentes: drv_rows.reduce((s, d) => s + (Number(d.pendentes) || 0), 0),
       desconsiderados: desconsideradosPedidos.length,
       desconsiderados_pedidos: desconsideradosPedidos,
       drivers: drv_rows,
@@ -1094,15 +1171,19 @@ function classifyAndProcess(filename, rows) {
 // SUPABASE — leitura (monta o formato DASH_DATA.history que o render já espera)
 // ──────────────────────────────────────────────
 function mergePllugo(jt, imile) {
-  let t = 0, e = 0, p = 0, pr = 0, exc = 0;
+  let t = 0, e = 0, p = 0, pr = 0, exc = 0, recebidos = 0, hasRecebidos = false, rotaTotal = 0, rotaEntregues = 0, rotaPendentes = 0;
   const pedidos = [];
   for (const src of [jt, imile]) {
     if (!src) continue;
     t += src.total; e += src.entregues; p += src.pendentes; pr += (src.problematicos || 0);
     exc += (src.desconsiderados || 0);
+    if (src.recebidos != null) { recebidos += Number(src.recebidos) || 0; hasRecebidos = true; }
+    rotaTotal += Number(src.rota_total) || 0;
+    rotaEntregues += Number(src.rota_entregues) || 0;
+    rotaPendentes += Number(src.rota_pendentes) || 0;
     if (src.desconsiderados_pedidos) pedidos.push(...src.desconsiderados_pedidos);
   }
-  return { total: t, entregues: e, pendentes: p, problematicos: pr, desconsiderados: exc, desconsiderados_pedidos: pedidos, sla: t ? round1(100 * e / t) : 0 };
+  return { total: t, entregues: e, pendentes: p, problematicos: pr, desconsiderados: exc, desconsiderados_pedidos: pedidos, recebidos: hasRecebidos ? recebidos : null, rota_total: rotaTotal, rota_entregues: rotaEntregues, rota_pendentes: rotaPendentes, sla: t ? round1(100 * e / t) : 0 };
 }
 
 // O Supabase (PostgREST) limita cada select a no máximo 1000 linhas por
@@ -1165,6 +1246,13 @@ async function fetchHistoryFromSupabase() {
       src.desconsiderados_pedidos = row.desconsiderados_pedidos || [];
     }
     src.by_unit = row.by_unit || null;
+    if (src.by_unit) {
+      const unitSummary = summarizeUnits(src.by_unit);
+      src.recebidos = unitSummary.recebidos;
+      src.rota_total = unitSummary.rota_total;
+      src.rota_entregues = unitSummary.rota_entregues;
+      src.rota_pendentes = unitSummary.rota_pendentes;
+    }
     entry[row.source] = src;
     if (!latestUpdate || row.updated_at > latestUpdate) latestUpdate = row.updated_at;
   }
@@ -1235,7 +1323,7 @@ const DRIVER_FIELDS = ['total', 'delivered', 'pendentes', 'problems', 'sla', 'oc
 
 function mergeResultInBatch(prev, next) {
   if (!prev) return next;
-  if (prev.data && next.data && prev.data.by_unit && next.data.by_unit && prev.source === 'jt_real' && next.source === 'jt_real') {
+  if (prev.data && next.data && prev.data.by_unit && next.data.by_unit && prev.source === next.source) {
     const byUnit = { ...(prev.data.by_unit || {}) };
     for (const [unit, data] of Object.entries(next.data.by_unit || {})) byUnit[unit] = data;
     const s = summarizeUnits(byUnit);
@@ -1250,6 +1338,10 @@ function mergeResultInBatch(prev, next) {
         problematicos: s.problematicos,
         sla: s.sla,
         sla_sameday: s.sla_sameday,
+        recebidos: s.recebidos,
+        rota_total: s.rota_total,
+        rota_entregues: s.rota_entregues,
+        rota_pendentes: s.rota_pendentes,
         desconsiderados: s.desconsiderados,
         desconsiderados_pedidos: s.desconsiderados_pedidos,
         by_unit: byUnit,
@@ -1265,7 +1357,7 @@ function mergeOccurrenceMaps(a, b) {
 }
 
 function summarizeUnits(byUnit) {
-  const out = { total: 0, entregues: 0, pendentes: 0, problematicos: 0, desconsiderados: 0, desconsiderados_pedidos: [], weightedSamedayDelivered: 0, weightedSamedayTotal: 0 };
+  const out = { total: 0, entregues: 0, pendentes: 0, problematicos: 0, desconsiderados: 0, desconsiderados_pedidos: [], recebidos: 0, hasRecebidos: false, rota_total: 0, rota_entregues: 0, rota_pendentes: 0, weightedSamedayDelivered: 0, weightedSamedayTotal: 0 };
   for (const u of Object.values(byUnit || {})) {
     if (!u) continue;
     out.total += Number(u.total) || 0;
@@ -1273,6 +1365,10 @@ function summarizeUnits(byUnit) {
     out.pendentes += Number(u.pendentes) || 0;
     out.problematicos += Number(u.problematicos) || 0;
     out.desconsiderados += Number(u.desconsiderados) || 0;
+    if (u.recebidos != null) { out.recebidos += Number(u.recebidos) || 0; out.hasRecebidos = true; }
+    out.rota_total += Number(u.rota_total) || 0;
+    out.rota_entregues += Number(u.rota_entregues) || 0;
+    out.rota_pendentes += Number(u.rota_pendentes) || 0;
     if (Array.isArray(u.desconsiderados_pedidos)) out.desconsiderados_pedidos.push(...u.desconsiderados_pedidos);
     if (u.sla_sameday != null && (Number(u.total) || 0) > 0) {
       out.weightedSamedayDelivered += (Number(u.total) || 0) * (Number(u.sla_sameday) || 0) / 100;
@@ -1281,11 +1377,13 @@ function summarizeUnits(byUnit) {
   }
   out.sla = out.total ? round1(100 * out.entregues / out.total) : 0;
   out.sla_sameday = out.weightedSamedayTotal ? round1(100 * out.weightedSamedayDelivered / out.weightedSamedayTotal) : 0;
+  out.recebidos = out.hasRecebidos ? out.recebidos : null;
+  delete out.hasRecebidos;
   return out;
 }
 
 function mergeDayRowWithExisting(row, existing) {
-  if (!row.by_unit || row.source !== 'jt_real') return row;
+  if (!row.by_unit) return row;
   const byUnit = { ...((existing && existing.by_unit) || {}) };
   for (const [unit, data] of Object.entries(row.by_unit || {})) byUnit[unit] = data;
   const s = summarizeUnits(byUnit);
@@ -1297,6 +1395,10 @@ function mergeDayRowWithExisting(row, existing) {
     problematicos: s.problematicos,
     sla: s.sla,
     sla_sameday: s.sla_sameday,
+    recebidos: s.recebidos,
+    rota_total: s.rota_total,
+    rota_entregues: s.rota_entregues,
+    rota_pendentes: s.rota_pendentes,
     desconsiderados: s.desconsiderados,
     desconsiderados_pedidos: s.desconsiderados_pedidos,
     by_unit: byUnit,
@@ -1306,7 +1408,7 @@ function mergeDayRowWithExisting(row, existing) {
 function driverRowsFromMergedDays(dayRows) {
   const rows = [];
   for (const r of dayRows) {
-    if (!r.by_unit || r.source !== 'jt_real') continue;
+    if (!r.by_unit) continue;
     const byDriver = new Map();
     for (const u of Object.values(r.by_unit || {})) {
       for (const drv of ((u && u.drivers) || [])) {
@@ -1388,7 +1490,7 @@ async function upsertResults(results) {
     if (error) throw error;
   }
 
-  if (results.some(r => r.source === 'jt_real' && r.data && r.data.by_unit)) {
+  if (results.some(r => r.data && r.data.by_unit)) {
     driverRows.length = 0;
     driverRows.push(...driverRowsFromMergedDays(mergedDayRows));
   }
@@ -1582,6 +1684,9 @@ function saoPauloNow() {
 }
 function normalizeSearchText(v){ return String(v ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); }
 function inferUnitFromRow(row) {
+  const station = normalizeSearchText(row && row.Station).replace(/[^A-Z0-9]+/g, ' ').trim();
+  if (station === 'DS MAU' || /\bDS\s*MAU\b/.test(station)) return 'maua';
+  if (station === 'DS RBI' || /\bDS\s*RBI\b/.test(station)) return 'rbp';
   const values = Object.values(row || {}).filter(v => v != null && String(v).trim() !== '').map(normalizeSearchText);
   const joined = values.join(' | ');
   if (/\bF?\s*MAUA(?:-SP)?\b/.test(joined) || joined.includes('MAUA-SP')) return 'maua';
@@ -1661,7 +1766,7 @@ function unitMapForDay(day) {
   return map;
 }
 
-let state = { mode: 'geral', period: 1, customDay: null, customStart: null, customEnd: null, carrier: 'pllugo', unit: 'all', selectedDriver: null, sort: { col: 'impact', dir: 'desc' } };
+let state = { mode: 'geral', operationView: 'resumo', period: 1, customDay: null, customStart: null, customEnd: null, carrier: 'pllugo', unit: 'all', selectedDriver: null, sort: { col: 'impact', dir: 'desc' } };
 let charts = { sla: null, vol: null, detail: null };
 
 function dateInRange(d) {
@@ -1714,6 +1819,40 @@ function aggregate(filtered, carrier) {
   out.slaSameday = out.samedayWeightedTotal ? +(100 * out.samedayWeightedDelivered / out.samedayWeightedTotal).toFixed(1) : null;
   out.volumeBruto = out.total + out.desconsiderados;
   return out;
+}
+
+function sourceForDay(day, carrier) {
+  return carrier === 'pllugo' ? day.pllugo : (carrier === 'jt' ? day.jt : carrier === 'imile' ? day.imile : day.jt_real);
+}
+
+function operationalMetrics(filtered, drivers) {
+  const routeTotal = drivers.reduce((s, d) => s + (Number(d.total) || 0), 0);
+  const routeDelivered = drivers.reduce((s, d) => s + (Number(d.delivered) || 0), 0);
+  const routePending = Math.max(0, routeTotal - routeDelivered);
+  let received = 0, hasReceived = false;
+  for (const day of filtered) {
+    const src = sourceForDay(day, state.carrier);
+    if (!src || src.recebidos == null) continue;
+    received += Number(src.recebidos) || 0;
+    hasReceived = true;
+  }
+  const activeDrivers = drivers.length;
+  const avgPerDriver = activeDrivers ? routeTotal / activeDrivers : 0;
+  const lowDrivers = drivers.filter(d => d.total >= 5 && d.sla < TARGET_SLA).length;
+  const nonExpedited = hasReceived ? Math.max(0, received - routeTotal) : null;
+  const dispatchRate = hasReceived && received ? round1(100 * routeTotal / received) : null;
+  return {
+    received: hasReceived ? received : null,
+    routeTotal,
+    routeDelivered,
+    routePending,
+    activeDrivers,
+    avgPerDriver,
+    lowDrivers,
+    nonExpedited,
+    dispatchRate,
+    sla: routeTotal ? round1(100 * routeDelivered / routeTotal) : 0,
+  };
 }
 
 const DRIVER_NAME_ALIASES = {
@@ -1943,6 +2082,49 @@ function renderPriorities(agg,drivers) {
   if(!items.length)items.push(['Operação sem prioridade crítica detectada','Continue acompanhando a evolução e a completude dos dados.']);
   $('#priority-counter').textContent=items.length+' prioridade(s)'; box.innerHTML=items.slice(0,4).map((x,i)=>`<div class="priority-item"><div class="priority-rank">${i+1}</div><div><strong>${escapeHTML(x[0])}</strong><span>${escapeHTML(x[1])}</span></div></div>`).join('');
 }
+
+function renderOperation(filtered, drivers) {
+  const op = operationalMetrics(filtered, drivers);
+  const cat = slaCategory(op.sla);
+  const carrierLabels = { pllugo: 'Pllugo', jt: 'J&T', imile: 'iMile', jt_real: 'J&T' };
+  const unitName = state.unit === 'all' ? 'Todas as unidades' : unitLabel(state.unit);
+  $('#operation-scope').textContent = `${unitName} · ${carrierLabels[state.carrier] || 'Pllugo'}`;
+  $('#operation-sla').textContent = op.routeTotal ? op.sla.toFixed(1) : '0.0';
+  const score = document.querySelector('.operation-score-value');
+  if (score) score.style.color = cat.color;
+  $('#operation-score-text').innerHTML = op.routeTotal
+    ? `<strong>${fmt(op.routeDelivered)}</strong> entregues no mesmo dia de <strong>${fmt(op.routeTotal)}</strong> pedidos em rota no recorte atual.`
+    : 'Nenhuma saída em rota encontrada para o filtro selecionado.';
+  $('#operation-driver-count').textContent = fmt(op.activeDrivers);
+  $('#operation-received').textContent = op.received == null ? '—' : fmt(op.received);
+  $('#operation-received-sub').textContent = op.received == null
+    ? 'reimporte J&T para ativar'
+    : `${op.dispatchRate == null ? '—' : op.dispatchRate.toFixed(1).replace('.', ',') + '%'} saiu em rota`;
+  $('#operation-route').textContent = fmt(op.routeTotal);
+  $('#operation-route-sub').textContent = op.received == null ? 'pedidos atribuídos' : `${fmt(op.nonExpedited)} não expedidos`;
+  $('#operation-done').textContent = fmt(op.routeDelivered);
+  $('#operation-done-sub').textContent = op.routeTotal ? `${op.sla.toFixed(1).replace('.', ',')}% de conclusão` : 'sem rota no período';
+  $('#operation-pending').textContent = fmt(op.routePending);
+  $('#operation-pending-sub').textContent = op.lowDrivers ? `${fmt(op.lowDrivers)} motorista(s) abaixo da meta` : 'sem ofensor relevante';
+
+  const dispatchStatus = op.received == null
+    ? ['Expedição ainda sem leitura completa', 'O relatório antigo não gravou recebidos na base. Após novo import J&T, este bloco mostra se deixamos pedido parado antes da rota.']
+    : op.nonExpedited > 0
+      ? ['Expedição abaixo do recebido', `${fmt(op.nonExpedited)} pedido(s) recebidos não aparecem como saída em rota no mesmo filtro.`]
+      : ['Expedição compatível com o recebido', 'O volume em rota cobriu o que entrou na base dentro do filtro selecionado.'];
+  const routeStatus = op.routePending > 0
+    ? ['Conclusão de rota gerou perda', `${fmt(op.routePending)} pedido(s) saíram em rota e não foram concluídos no mesmo dia.`]
+    : ['Rotas concluídas no dia', 'Os pedidos atribuídos em rota foram baixados no mesmo dia.'];
+  const capacityStatus = op.activeDrivers
+    ? ['Capacidade operacional', `${fmt(op.activeDrivers)} motorista(s), média de ${fmt(op.avgPerDriver)} pedido(s) em rota por motorista.`]
+    : ['Capacidade operacional', 'Sem motoristas ativos no filtro selecionado.'];
+  $('#operation-diagnosis').innerHTML = [dispatchStatus, routeStatus, capacityStatus].map(item => `
+    <div class="diagnosis-card">
+      <strong>${escapeHTML(item[0])}</strong>
+      <span>${escapeHTML(item[1])}</span>
+    </div>
+  `).join('');
+}
 // Torre de Controle — snapshots e status guardados no Supabase (tabelas
 // tower_snapshots e tower_status, ver supabase_schema.sql), não mais em
 // localStorage. TOWER_SNAPSHOTS_CACHE é só um cache de leitura em memória
@@ -2093,7 +2275,7 @@ function renderOfensores(drivers) {
 function renderDesconsiderados(agg) {
   const section = $('#descons-section');
   if (!section) return;
-  const show = (state.mode === 'geral' || state.mode === 'ofensores') && (state.carrier === 'jt_real' || state.carrier === 'pllugo') && agg.desconsiderados > 0;
+  const show = state.mode === 'geral' && (state.carrier === 'jt_real' || state.carrier === 'pllugo') && agg.desconsiderados > 0;
   section.style.display = show ? '' : 'none';
   if (!show) return;
   $('#descons-count').textContent = fmt(agg.desconsiderados);
@@ -2284,16 +2466,18 @@ function showDriverDetail() {
 function applyModeVisibility() {
   const mode=state.mode;
   const vis=(sel,show)=>{const el=$(sel);if(el)el.style.display=show?'':'none';};
-  vis('#data-quality-banner', mode==='geral'||mode==='torre'||mode==='ofensores');
+  vis('#data-quality-banner', mode==='geral'||mode==='operacao'||mode==='torre');
   vis('#hero-section', mode==='geral');
   vis('#executive-kpis', mode==='geral');
   vis('#overview-grid', mode==='geral');
   vis('#priorities-section', mode==='geral');
-  vis('#charts-row', mode==='geral'||mode==='historico');
+  vis('#charts-row', mode==='geral');
+  vis('#operation-section', mode==='operacao');
+  vis('#operation-summary', mode==='operacao'&&state.operationView==='resumo');
   vis('#tower-section', mode==='torre');
-  vis('#cause-section', mode==='ofensores');
-  vis('#ofensores-section', mode==='ofensores');
-  vis('#ranking-section', mode==='motoristas');
+  vis('#cause-section', mode==='operacao'&&state.operationView==='ofensores');
+  vis('#ofensores-section', mode==='operacao'&&state.operationView==='ofensores');
+  vis('#ranking-section', mode==='operacao'&&state.operationView==='motoristas');
 }
 function refresh() {
   const filtered = filteredHistory();
@@ -2312,6 +2496,7 @@ function refresh() {
   renderCharts(agg);
   renderDesconsiderados(agg);
   renderOfensores(drivers);
+  renderOperation(filtered, drivers);
   renderAllV2(agg, drivers, filtered);
   const searchTerm = ($('#driver-search-input') ? $('#driver-search-input').value : '').toLowerCase().trim();
   const visibleDrivers = searchTerm ? drivers.filter(d => d.name.toLowerCase().includes(searchTerm)) : drivers;
@@ -2322,8 +2507,17 @@ function refresh() {
 
 function selectMode(m) {
   state.mode = m;
+  if (m === 'operacao') state.operationView = state.operationView || 'resumo';
   state.selectedDriver = null;
   $$('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
+  $$('.operation-subtab').forEach(t => t.classList.toggle('active', t.dataset.opView === state.operationView));
+  refresh();
+}
+
+function selectOperationView(v) {
+  state.operationView = v;
+  state.selectedDriver = null;
+  $$('.operation-subtab').forEach(t => t.classList.toggle('active', t.dataset.opView === v));
   refresh();
 }
 
@@ -2362,6 +2556,9 @@ $$('.tab').forEach(t => t.addEventListener('click', () => {
 }));
 $$('.mode-tab').forEach(t => t.addEventListener('click', () => {
   if (t.dataset.mode) selectMode(t.dataset.mode);
+}));
+$$('.operation-subtab').forEach(t => t.addEventListener('click', () => {
+  if (t.dataset.opView) selectOperationView(t.dataset.opView);
 }));
 $$('.period-btn').forEach(b => b.addEventListener('click', () => selectPeriod(b.dataset.period)));
 $('#unit-filter').addEventListener('change', e => { state.unit=e.target.value; state.selectedDriver=null; refresh(); });
