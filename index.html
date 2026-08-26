@@ -1320,6 +1320,13 @@ function rowsEqual(a, b, fields) {
 }
 const DAY_FIELDS = ['total', 'entregues', 'pendentes', 'problematicos', 'sla', 'sla_sameday', 'desconsiderados', 'desconsiderados_pedidos', 'by_unit'];
 const DRIVER_FIELDS = ['total', 'delivered', 'pendentes', 'problems', 'sla', 'occurrences'];
+const DAY_WRITE_FIELDS = ['date', 'source', 'total', 'entregues', 'pendentes', 'problematicos', 'sla', 'sla_sameday', 'desconsiderados', 'desconsiderados_pedidos', 'by_unit'];
+
+function sanitizeDayRowForWrite(row) {
+  const out = {};
+  for (const key of DAY_WRITE_FIELDS) if (Object.prototype.hasOwnProperty.call(row, key)) out[key] = row[key];
+  return out;
+}
 
 function mergeResultInBatch(prev, next) {
   if (!prev) return next;
@@ -1395,10 +1402,6 @@ function mergeDayRowWithExisting(row, existing) {
     problematicos: s.problematicos,
     sla: s.sla,
     sla_sameday: s.sla_sameday,
-    recebidos: s.recebidos,
-    rota_total: s.rota_total,
-    rota_entregues: s.rota_entregues,
-    rota_pendentes: s.rota_pendentes,
     desconsiderados: s.desconsiderados,
     desconsiderados_pedidos: s.desconsiderados_pedidos,
     by_unit: byUnit,
@@ -1485,7 +1488,7 @@ async function upsertResults(results) {
     const existing = existingDaysMap.get(`${r.date}|${r.source}`);
     return !existing || !rowsEqual(existing, r, DAY_FIELDS);
   });
-  for (const part of chunkArray(dayRowsToWrite, 200)) {
+  for (const part of chunkArray(dayRowsToWrite.map(sanitizeDayRowForWrite), 200)) {
     const { error } = await sb.from('sla_days').upsert(part, { onConflict: 'date,source' });
     if (error) throw error;
   }
