@@ -250,7 +250,7 @@
   .nav-alert-badge { min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:var(--pllugo-red); color:#fff; font-size:10px; display:inline-flex; align-items:center; justify-content:center; margin-left:5px; }
   .unit-filter-wrap { display:flex; align-items:center; gap:7px; }
   .unit-filter-label { font-size:11px; color:var(--gray-500); font-weight:600; }
-  .unit-filter-select, #tower-status-filter { font-family:inherit; font-size:12px; color:var(--gray-700); background:#fff; border:1px solid var(--gray-300); border-radius:var(--radius-sm); padding:7px 28px 7px 9px; }
+  .unit-filter-select, #tower-status-filter, #tower-carrier-filter { font-family:inherit; font-size:12px; color:var(--gray-700); background:#fff; border:1px solid var(--gray-300); border-radius:var(--radius-sm); padding:7px 28px 7px 9px; }
   .control-status { display:flex; align-items:center; gap:11px; padding:11px 14px; margin:0 0 12px; border:1px solid var(--success-100); background:var(--success-50); border-radius:var(--radius-md); }
   .control-status.warn { border-color:var(--warn-100); background:var(--warn-50); }
   .control-status.crit { border-color:var(--crit-100); background:var(--crit-50); }
@@ -562,6 +562,7 @@
       </div>
       <div class="tower-toolbar">
         <input id="tower-search-input" type="text" placeholder="Buscar motorista…" autocomplete="off">
+        <select id="tower-carrier-filter"><option value="all">Todas as transportadoras</option><option value="J&T">J&T</option><option value="iMile">iMile</option></select>
         <select id="tower-status-filter"><option value="all">Todos os status</option><option value="critical">Críticos</option><option value="risk">Em risco</option><option value="attention">Atenção</option><option value="normal">Normal</option><option value="monitoring">Coletando histórico</option></select>
         <div class="tower-rule-note">Prioridade = volume pendente + tempo sem evolução + ritmo + projeção.</div>
       </div>
@@ -1804,7 +1805,7 @@ function aggregateDriversForHero(drivers, filtered) {
 function aggregate(filtered, carrier) {
   const out = { total: 0, entregues: 0, pendentes: 0, problematicos: 0, dailySLA: [], dailyEnt: [], dailyPend: [], dailySameday: [], labels: [], desconsiderados: 0, desconsideradosPedidos: [], samedayWeightedDelivered: 0, samedayWeightedTotal: 0 };
   for (const day of filtered) {
-    const src = carrier === 'pllugo' ? day.pllugo : (carrier === 'jt' ? day.jt : carrier === 'imile' ? day.imile : day.jt_real);
+    const src = sourceForDay(day, carrier);
     if (!src) continue;
     out.total += src.total;
     out.entregues += src.entregues;
@@ -1825,7 +1826,18 @@ function aggregate(filtered, carrier) {
 }
 
 function sourceForDay(day, carrier) {
-  return carrier === 'pllugo' ? day.pllugo : (carrier === 'jt' ? day.jt : carrier === 'imile' ? day.imile : day.jt_real);
+  if (carrier === 'pllugo') return day.pllugo;
+  if (carrier === 'jt') return day.jt;
+  if (carrier === 'jt_real') return day.jt_real || day.jt;
+  if (carrier === 'imile') return day.imile;
+  return null;
+}
+
+function operationalSourceForDay(day, carrier) {
+  if (carrier === 'pllugo') return mergePllugo(day.jt, day.imile);
+  if (carrier === 'jt' || carrier === 'jt_real') return day.jt;
+  if (carrier === 'imile') return day.imile;
+  return null;
 }
 
 function operationalMetrics(filtered, drivers) {
@@ -1834,7 +1846,7 @@ function operationalMetrics(filtered, drivers) {
   const routePending = Math.max(0, routeTotal - routeDelivered);
   let received = 0, hasReceived = false;
   for (const day of filtered) {
-    const src = sourceForDay(day, state.carrier);
+    const src = operationalSourceForDay(day, state.carrier);
     if (!src || src.recebidos == null) continue;
     received += Number(src.recebidos) || 0;
     hasReceived = true;
@@ -1940,26 +1952,14 @@ function extractOccurrenceMap(driver) {
   }
   return out;
 }
-function driversForCarrier(carrier, filtered) {
+function driversForCarrier(carrier, filtered, opts = {}) {
   const map = {};
   for (const day of filtered) {
     const sources = [];
-    if (carrier === 'pllugo' && (day.jt_real || day.jt)) sources.push({ list: (day.jt_real || day.jt).drivers, carrier: 'J&T' });
-    if (carrier === 'jt' && day.jt) sources.push({ list: day.jt.drivers, carrier: 'J&T' });
+    const jtForDrivers = opts.operationalJt ? day.jt : day.jt_real;
+    if (carrier === 'pllugo' && jtForDrivers) sources.push({ list: jtForDrivers.drivers, carrier: 'J&T' });
+    if ((carrier === 'jt' || carrier === 'jt_real') && jtForDrivers) sources.push({ list: jtForDrivers.drivers, carrier: 'J&T' });
     if ((carrier === 'pllugo' || carrier === 'imile') && day.imile) sources.push({ list: day.imile.drivers, carrier: 'iMile' });
-    if (carrier === 'jt_real' && day.jt_real) {
-      // Histórico dessa regra (21/08/2026): tentamos usar o bipagem (jt) como
-      // fonte do ranking por motorista aqui, achando que o Entrega realizada
-      // "inventava" volume pros motoristas (ex.: Lucas Ronas Pereira aparecia
-      // com 78 pacotes no SLA Real contra só 28 no bipagem). Renato corrigiu o
-      // entendimento: os 78 são reais — é exatamente a quantidade que saiu em
-      // rota com ele ("Horário de Saída para Entrega" preenchido); o bipagem
-      // que estava incompleto, sem registrar os pacotes que saíram mas não
-      // foram entregues. Voltou a usar os drivers do próprio processJtReal,
-      // que já contam exatamente "saiu em rota" (total) x "entregue no mesmo
-      // dia da saída" (delivered) — ver comentário em processJtReal.
-      sources.push({ list: day.jt_real.drivers, carrier: 'J&T' });
-    }
     for (const s of sources) {
       for (const d of s.list) {
         const k = carrier === 'pllugo' ? normalizeDriverName(d.name) : `${s.carrier}|${d.name}`;
@@ -2037,6 +2037,12 @@ function renderDataQuality(filtered) {
   if (state.unit !== 'all' && historyForUnit(state.unit).length===0) {
     banner.classList.add('warn'); title.textContent='Unidade ainda não identificada no histórico';
     txt.textContent='Importe um relatório que contenha MAUÁ / RBP / RIBEIRÃO. O sistema não atribui unidade por suposição — e, uma vez identificada, fica salva no Supabase, visível pra qualquer um que abrir o link.'; pill.textContent='PARCIAL'; return;
+  }
+  const hasJtPreview = filtered.some(d => d.jt && !d.jt_real);
+  if (state.mode === 'geral' && (state.carrier === 'pllugo' || state.carrier === 'jt_real') && hasJtPreview) {
+    banner.classList.add('warn'); title.textContent='SLA do dia em prévia operacional';
+    txt.textContent='J&T está usando o Monitoramento de bipagem enquanto o relatório Entrega/SLA não chegou. Quando o Entrega for importado, ele assume automaticamente a Visão Geral.';
+    pill.textContent='PRÉVIA'; return;
   }
   const sources=new Set(); for(const d of filtered){ if(d.jt_real||d.jt)sources.add('J&T'); if(d.imile)sources.add('iMile'); }
   if (state.carrier==='pllugo' && filtered.length && sources.size<2) { banner.classList.add('warn'); title.textContent='Visão Pllugo parcial'; txt.textContent=`Fontes encontradas: ${[...sources].join(' + ') || 'nenhuma'}. O SLA consolidado pode estar incompleto.`; pill.textContent='PARCIAL'; return; }
@@ -2147,14 +2153,13 @@ function towerDriverRowsForDay(day) {
   const addDriver = (d, carrier, unit) => {
     if (!d || !d.name) return;
     const name = displayDriverName(d.name);
-    const key = normalizeDriverName(name);
-    if (!map.has(key)) map.set(key, { name, carrier: 'Pllugo', total: 0, delivered: 0, pendentes: 0, sla: 0, unit: unit || null, carriers: [] });
+    const key = `${carrier || 'Pllugo'}|${normalizeDriverName(name)}`;
+    if (!map.has(key)) map.set(key, { name, carrier: carrier || 'Pllugo', total: 0, delivered: 0, pendentes: 0, sla: 0, unit: unit || null });
     const item = map.get(key);
     item.total += Number(d.total) || 0;
     item.delivered += Number(d.delivered) || 0;
     item.pendentes += Number(d.pendentes) || 0;
     if (unit && !item.unit) item.unit = unit;
-    if (carrier && !item.carriers.includes(carrier)) item.carriers.push(carrier);
   };
   const addSource = (src, carrier) => {
     if (!src) return;
@@ -2167,17 +2172,16 @@ function towerDriverRowsForDay(day) {
       for (const d of src.drivers || []) addDriver(d, carrier, unitMap[normalizeDriverName(d.name)] || null);
     }
   };
-  addSource(day.jt_real || day.jt, 'J&T');
+  addSource(day.jt, 'J&T');
   addSource(day.imile, 'iMile');
-  return [...map.values()].map(d => {
-    const { carriers, ...out } = d;
-    out.carrier = 'Pllugo';
-    out.sla = out.total ? round1(100 * out.delivered / out.total) : 0;
-    return out;
-  });
+  return [...map.values()].map(d => ({ ...d, sla: d.total ? round1(100 * d.delivered / d.total) : 0 }));
+}
+function towerDriverKey(d) {
+  return `${d.carrier || 'Pllugo'}|${normalizeDriverName(d.name)}`;
 }
 function towerDriversSignature(drivers) {
   return JSON.stringify((drivers || []).map(d => [
+    d.carrier || 'Pllugo',
     normalizeDriverName(d.name),
     d.unit || '',
     Number(d.total) || 0,
@@ -2209,7 +2213,7 @@ function currentMinutesSP(){const n=saoPauloNow();return n.hour*60+n.minute+n.se
 function buildTowerAnalysis(){
   const snaps=towerSnapshots().filter(s=>s.date===saoPauloToday()); if(!snaps.length)return[]; const cur=snaps[snaps.length-1], nowMin=currentMinutesSP(), remaining=Math.max(0,OPERATION_END_HOUR*60-nowMin)/60;
   return cur.drivers.map(d=>{
-    const norm=normalizeDriverName(d.name); const hist=snaps.map(s=>({stamp:s.stamp,d:(s.drivers||[]).find(x=>normalizeDriverName(x.name)===norm)})).filter(x=>x.d);
+    const key=towerDriverKey(d); const hist=snaps.map(s=>({stamp:s.stamp,d:(s.drivers||[]).find(x=>towerDriverKey(x)===key)})).filter(x=>x.d);
     let rate=null,noProgress=null;
     if(hist.length>=2){ const first=hist[0], last=hist[hist.length-1], hours=Math.max((new Date(last.stamp)-new Date(first.stamp))/3600000,.05); rate=Math.max(0,(last.d.delivered-first.d.delivered)/hours); let lastProgress=last.stamp; for(let i=hist.length-1;i>0;i--){if(hist[i].d.delivered>hist[i-1].d.delivered){lastProgress=hist[i].stamp;break;} lastProgress=hist[i-1].stamp;} noProgress=Math.max(0,(new Date(last.stamp)-new Date(lastProgress))/60000); }
     const projected=rate==null?null:Math.min(100,100*Math.min(d.total,d.delivered+rate*remaining)/Math.max(d.total,1)); const neededDeliveries=Math.max(0,Math.ceil(d.total*TARGET_SLA/100-d.delivered)); const neededRate=remaining>0?neededDeliveries/remaining:(neededDeliveries?999:0);
@@ -2219,8 +2223,8 @@ function buildTowerAnalysis(){
 }
 function towerStatusLabel(s){return s==='critical'?'Crítico':s==='risk'?'Em risco':s==='attention'?'Atenção':s==='normal'?'Normal':'Coletando';}
 function renderTower(){
-  const list=$('#tower-list'); if(!list)return; let data=buildTowerAnalysis(); const q=($('#tower-search-input')?.value||'').toLowerCase(),sf=$('#tower-status-filter')?.value||'all'; data=data.filter(d=>(!q||d.name.toLowerCase().includes(q))&&(sf==='all'||d.status===sf));
-  const all=buildTowerAnalysis(); const counts=s=>all.filter(x=>x.status===s).length; $('#tower-monitored').textContent=fmt(all.length); $('#tower-normal').textContent=fmt(counts('normal')); $('#tower-attention').textContent=fmt(counts('attention')); $('#tower-risk').textContent=fmt(counts('risk')); $('#tower-critical').textContent=fmt(counts('critical')); $('#tower-pending').textContent=fmt(all.reduce((s,x)=>s+x.pendentes,0));
+  const list=$('#tower-list'); if(!list)return; let data=buildTowerAnalysis(); const q=($('#tower-search-input')?.value||'').toLowerCase(),sf=$('#tower-status-filter')?.value||'all',cf=$('#tower-carrier-filter')?.value||'all'; const carrierOk=d=>cf==='all'||d.carrier===cf; data=data.filter(d=>carrierOk(d)&&(!q||d.name.toLowerCase().includes(q)||String(d.carrier||'').toLowerCase().includes(q))&&(sf==='all'||d.status===sf));
+  const all=buildTowerAnalysis().filter(carrierOk); const counts=s=>all.filter(x=>x.status===s).length; $('#tower-monitored').textContent=fmt(all.length); $('#tower-normal').textContent=fmt(counts('normal')); $('#tower-attention').textContent=fmt(counts('attention')); $('#tower-risk').textContent=fmt(counts('risk')); $('#tower-critical').textContent=fmt(counts('critical')); $('#tower-pending').textContent=fmt(all.reduce((s,x)=>s+x.pendentes,0));
   const badge=counts('critical')+counts('risk'); $('#nav-alert-badge').textContent=badge; $('#nav-alert-badge').style.display=badge?'inline-flex':'none'; $('#tower-freshness').textContent=towerSnapshots().length>=2?'Comparando snapshots do dia':'Aguardando pelo menos 2 atualizações do dia';
   if(!data.length){list.innerHTML='<div class="neutral-empty">Sem alertas para os filtros atuais. Para medir evolução real, importe/atualize o relatório mais de uma vez ao longo do dia.</div>';return;}
   list.innerHTML=data.map(d=>`<div class="tower-driver ${d.status}"><div class="tower-name-wrap"><div class="tower-name">${escapeHTML(d.name)}</div><div class="tower-sub">${d.unit?unitLabel(d.unit):'Unidade não identificada'} · ${escapeHTML(d.carrier||'Pllugo')} · risco ${d.score}/100</div></div><div class="tower-metric"><span>OFD</span><strong>${fmt(d.total)}</strong></div><div class="tower-metric"><span>Pendentes</span><strong class="${d.pendentes>30?'bad':''}">${fmt(d.pendentes)}</strong></div><div class="tower-metric tower-hide-sm"><span>Sem evolução</span><strong>${d.noProgress==null?'—':Math.round(d.noProgress)+' min'}</strong></div><div class="tower-metric tower-hide-md"><span>Ritmo atual</span><strong>${d.rate==null?'—':d.rate.toFixed(1).replace('.',',')+'/h'}</strong></div><div class="tower-metric tower-hide-md"><span>Projeção</span><strong class="${d.projected!=null&&d.projected<TARGET_SLA?'bad':''}">${d.projected==null?'—':d.projected.toFixed(1).replace('.',',')+'%'}</strong></div><div class="tower-status ${d.status}">${towerStatusLabel(d.status)}</div></div>`).join('');
@@ -2237,7 +2241,7 @@ async function detectTowerEscalations(){
     old = (data && data[0] && data[0].status) || {};
   } catch (e) { console.error('Falha ao ler status anterior da Torre de Controle:', e); }
   let escalated=false; const rank={monitoring:0,normal:1,attention:2,risk:3,critical:4}, next={};
-  for (const d of analysis) { const k=normalizeDriverName(d.name); next[k]=d.status; if(old[k]&&rank[d.status]>rank[old[k]]&&rank[d.status]>=3) escalated=true; }
+  for (const d of analysis) { const k=towerDriverKey(d); next[k]=d.status; if(old[k]&&rank[d.status]>rank[old[k]]&&rank[d.status]>=3) escalated=true; }
   try {
     const { error } = await sb.from('tower_status').upsert([{ date: today, status: next }], { onConflict: 'date' });
     if (error) throw error;
@@ -2528,7 +2532,7 @@ function applyModeVisibility() {
 function refresh() {
   const filtered = filteredHistory();
   const agg = aggregate(filtered, state.carrier);
-  const drivers = driversForCarrier(state.carrier, filtered);
+  const drivers = driversForCarrier(state.carrier, filtered, { operationalJt: state.mode === 'operacao' || state.mode === 'torre' });
   $('#day-count').textContent = filtered.length;
   if (filtered.length > 0) {
     const dts = filtered.map(h => h.date).sort();
@@ -2609,6 +2613,7 @@ $$('.operation-subtab').forEach(t => t.addEventListener('click', () => {
 $$('.period-btn').forEach(b => b.addEventListener('click', () => selectPeriod(b.dataset.period)));
 $('#unit-filter').addEventListener('change', e => { state.unit=e.target.value; state.selectedDriver=null; refresh(); });
 $('#tower-search-input').addEventListener('input', renderTower);
+$('#tower-carrier-filter').addEventListener('change', renderTower);
 $('#tower-status-filter').addEventListener('change', renderTower);
 $('#btn-sound-alerts').addEventListener('click',()=>{soundAlertsEnabled=!soundAlertsEnabled;localStorage.setItem('pllugo_sound_alerts_v2',soundAlertsEnabled?'on':'off');$('#btn-sound-alerts').textContent=(soundAlertsEnabled?'🔊':'🔇')+' Alertas';if(soundAlertsEnabled)playAlertTone();});
 
