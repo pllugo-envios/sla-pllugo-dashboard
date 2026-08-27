@@ -2142,6 +2142,50 @@ async function refreshTowerSnapshotsCache(){
     TOWER_SNAPSHOTS_CACHE = data || [];
   } catch (e) { console.error('Falha ao carregar snapshots da Torre de Controle:', e); }
 }
+function towerDriverRowsForDay(day) {
+  const map = new Map();
+  const addDriver = (d, carrier, unit) => {
+    if (!d || !d.name) return;
+    const name = displayDriverName(d.name);
+    const key = normalizeDriverName(name);
+    if (!map.has(key)) map.set(key, { name, carrier: 'Pllugo', total: 0, delivered: 0, pendentes: 0, sla: 0, unit: unit || null, carriers: [] });
+    const item = map.get(key);
+    item.total += Number(d.total) || 0;
+    item.delivered += Number(d.delivered) || 0;
+    item.pendentes += Number(d.pendentes) || 0;
+    if (unit && !item.unit) item.unit = unit;
+    if (carrier && !item.carriers.includes(carrier)) item.carriers.push(carrier);
+  };
+  const addSource = (src, carrier) => {
+    if (!src) return;
+    if (src.by_unit) {
+      for (const [unit, u] of Object.entries(src.by_unit)) {
+        for (const d of (u && u.drivers) || []) addDriver(d, carrier, unit);
+      }
+    } else {
+      const unitMap = unitMapForDay(day);
+      for (const d of src.drivers || []) addDriver(d, carrier, unitMap[normalizeDriverName(d.name)] || null);
+    }
+  };
+  addSource(day.jt_real || day.jt, 'J&T');
+  addSource(day.imile, 'iMile');
+  return [...map.values()].map(d => {
+    const { carriers, ...out } = d;
+    out.carrier = 'Pllugo';
+    out.sla = out.total ? round1(100 * out.delivered / out.total) : 0;
+    return out;
+  });
+}
+function towerDriversSignature(drivers) {
+  return JSON.stringify((drivers || []).map(d => [
+    normalizeDriverName(d.name),
+    d.unit || '',
+    Number(d.total) || 0,
+    Number(d.delivered) || 0,
+    Number(d.pendentes) || 0,
+    Number(d.sla) || 0,
+  ]).sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1])));
+}
 async function captureTowerSnapshot(){
   // Sempre relê o banco primeiro — pode ter foto nova de outro dispositivo/
   // import desde a última leitura, e a Torre precisa comparar contra a foto
@@ -2149,12 +2193,11 @@ async function captureTowerSnapshot(){
   await refreshTowerSnapshotsCache();
   const today=saoPauloToday(), day=DASH_DATA.history.find(h=>h.date===today);
   if (!day) return;
-  const drivers=driversForCarrier('pllugo',[day]);
-  if (!drivers.length) return;
-  const stamp=DASH_DATA.generated_at || new Date().toISOString();
-  if (TOWER_SNAPSHOTS_CACHE.some(s=>s.stamp===stamp)) { await detectTowerEscalations(); return; } // essa foto já existe no banco
-  const unitMap = unitMapForDay(day);
-  const driverRows = drivers.map(d=>({name:d.name,carrier:d.carrier,total:d.total,delivered:d.delivered,pendentes:d.pendentes,sla:d.sla,unit:unitMap[normalizeDriverName(d.name)]||null}));
+  const driverRows = towerDriverRowsForDay(day);
+  if (!driverRows.length) return;
+  const latest = TOWER_SNAPSHOTS_CACHE[TOWER_SNAPSHOTS_CACHE.length - 1];
+  if (latest && towerDriversSignature(latest.drivers) === towerDriversSignature(driverRows)) { await detectTowerEscalations(); return; }
+  const stamp=new Date().toISOString();
   try {
     const { error } = await sb.from('tower_snapshots').upsert([{ date: today, stamp, drivers: driverRows }], { onConflict: 'date,stamp' });
     if (error) throw error;
