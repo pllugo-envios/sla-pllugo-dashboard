@@ -250,7 +250,7 @@
   .nav-alert-badge { min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:var(--pllugo-red); color:#fff; font-size:10px; display:inline-flex; align-items:center; justify-content:center; margin-left:5px; }
   .unit-filter-wrap { display:flex; align-items:center; gap:7px; }
   .unit-filter-label { font-size:11px; color:var(--gray-500); font-weight:600; }
-  .unit-filter-select, #tower-status-filter, #tower-carrier-filter { font-family:inherit; font-size:12px; color:var(--gray-700); background:#fff; border:1px solid var(--gray-300); border-radius:var(--radius-sm); padding:7px 28px 7px 9px; }
+  .unit-filter-select, #tower-status-filter { font-family:inherit; font-size:12px; color:var(--gray-700); background:#fff; border:1px solid var(--gray-300); border-radius:var(--radius-sm); padding:7px 28px 7px 9px; }
   .control-status { display:flex; align-items:center; gap:11px; padding:11px 14px; margin:0 0 12px; border:1px solid var(--success-100); background:var(--success-50); border-radius:var(--radius-md); }
   .control-status.warn { border-color:var(--warn-100); background:var(--warn-50); }
   .control-status.crit { border-color:var(--crit-100); background:var(--crit-50); }
@@ -562,7 +562,6 @@
       </div>
       <div class="tower-toolbar">
         <input id="tower-search-input" type="text" placeholder="Buscar motorista…" autocomplete="off">
-        <select id="tower-carrier-filter"><option value="all">Todas as transportadoras</option><option value="J&T">J&T</option><option value="iMile">iMile</option></select>
         <select id="tower-status-filter"><option value="all">Todos os status</option><option value="critical">Críticos</option><option value="risk">Em risco</option><option value="attention">Atenção</option><option value="normal">Normal</option><option value="monitoring">Coletando histórico</option></select>
         <div class="tower-rule-note">Prioridade = volume pendente + tempo sem evolução + ritmo + projeção.</div>
       </div>
@@ -2222,9 +2221,14 @@ function buildTowerAnalysis(){
   }).filter(d=>state.unit==='all'||d.unit===state.unit).sort((a,b)=>(b.score-a.score)||(b.pendentes-a.pendentes));
 }
 function towerStatusLabel(s){return s==='critical'?'Crítico':s==='risk'?'Em risco':s==='attention'?'Atenção':s==='normal'?'Normal':'Coletando';}
+function carrierOkForTower(d) {
+  if (state.carrier === 'jt' || state.carrier === 'jt_real') return d.carrier === 'J&T';
+  if (state.carrier === 'imile') return d.carrier === 'iMile';
+  return true;
+}
 function renderTower(){
-  const list=$('#tower-list'); if(!list)return; let data=buildTowerAnalysis(); const q=($('#tower-search-input')?.value||'').toLowerCase(),sf=$('#tower-status-filter')?.value||'all',cf=$('#tower-carrier-filter')?.value||'all'; const carrierOk=d=>cf==='all'||d.carrier===cf; data=data.filter(d=>carrierOk(d)&&(!q||d.name.toLowerCase().includes(q)||String(d.carrier||'').toLowerCase().includes(q))&&(sf==='all'||d.status===sf));
-  const all=buildTowerAnalysis().filter(carrierOk); const counts=s=>all.filter(x=>x.status===s).length; $('#tower-monitored').textContent=fmt(all.length); $('#tower-normal').textContent=fmt(counts('normal')); $('#tower-attention').textContent=fmt(counts('attention')); $('#tower-risk').textContent=fmt(counts('risk')); $('#tower-critical').textContent=fmt(counts('critical')); $('#tower-pending').textContent=fmt(all.reduce((s,x)=>s+x.pendentes,0));
+  const list=$('#tower-list'); if(!list)return; let data=buildTowerAnalysis(); const q=($('#tower-search-input')?.value||'').toLowerCase(),sf=$('#tower-status-filter')?.value||'all'; data=data.filter(d=>carrierOkForTower(d)&&(!q||d.name.toLowerCase().includes(q)||String(d.carrier||'').toLowerCase().includes(q))&&(sf==='all'||d.status===sf));
+  const all=buildTowerAnalysis().filter(carrierOkForTower); const counts=s=>all.filter(x=>x.status===s).length; $('#tower-monitored').textContent=fmt(all.length); $('#tower-normal').textContent=fmt(counts('normal')); $('#tower-attention').textContent=fmt(counts('attention')); $('#tower-risk').textContent=fmt(counts('risk')); $('#tower-critical').textContent=fmt(counts('critical')); $('#tower-pending').textContent=fmt(all.reduce((s,x)=>s+x.pendentes,0));
   const badge=counts('critical')+counts('risk'); $('#nav-alert-badge').textContent=badge; $('#nav-alert-badge').style.display=badge?'inline-flex':'none'; $('#tower-freshness').textContent=towerSnapshots().length>=2?'Comparando snapshots do dia':'Aguardando pelo menos 2 atualizações do dia';
   if(!data.length){list.innerHTML='<div class="neutral-empty">Sem alertas para os filtros atuais. Para medir evolução real, importe/atualize o relatório mais de uma vez ao longo do dia.</div>';return;}
   list.innerHTML=data.map(d=>`<div class="tower-driver ${d.status}"><div class="tower-name-wrap"><div class="tower-name">${escapeHTML(d.name)}</div><div class="tower-sub">${d.unit?unitLabel(d.unit):'Unidade não identificada'} · ${escapeHTML(d.carrier||'Pllugo')} · risco ${d.score}/100</div></div><div class="tower-metric"><span>OFD</span><strong>${fmt(d.total)}</strong></div><div class="tower-metric"><span>Pendentes</span><strong class="${d.pendentes>30?'bad':''}">${fmt(d.pendentes)}</strong></div><div class="tower-metric tower-hide-sm"><span>Sem evolução</span><strong>${d.noProgress==null?'—':Math.round(d.noProgress)+' min'}</strong></div><div class="tower-metric tower-hide-md"><span>Ritmo atual</span><strong>${d.rate==null?'—':d.rate.toFixed(1).replace('.',',')+'/h'}</strong></div><div class="tower-metric tower-hide-md"><span>Projeção</span><strong class="${d.projected!=null&&d.projected<TARGET_SLA?'bad':''}">${d.projected==null?'—':d.projected.toFixed(1).replace('.',',')+'%'}</strong></div><div class="tower-status ${d.status}">${towerStatusLabel(d.status)}</div></div>`).join('');
@@ -2613,7 +2617,6 @@ $$('.operation-subtab').forEach(t => t.addEventListener('click', () => {
 $$('.period-btn').forEach(b => b.addEventListener('click', () => selectPeriod(b.dataset.period)));
 $('#unit-filter').addEventListener('change', e => { state.unit=e.target.value; state.selectedDriver=null; refresh(); });
 $('#tower-search-input').addEventListener('input', renderTower);
-$('#tower-carrier-filter').addEventListener('change', renderTower);
 $('#tower-status-filter').addEventListener('change', renderTower);
 $('#btn-sound-alerts').addEventListener('click',()=>{soundAlertsEnabled=!soundAlertsEnabled;localStorage.setItem('pllugo_sound_alerts_v2',soundAlertsEnabled?'on':'off');$('#btn-sound-alerts').textContent=(soundAlertsEnabled?'🔊':'🔇')+' Alertas';if(soundAlertsEnabled)playAlertTone();});
 
