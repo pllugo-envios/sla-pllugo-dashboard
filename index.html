@@ -1878,8 +1878,11 @@ const DRIVER_NAME_ALIASES = {
   'gustavo kaique pires da silva': 'gustavo kaique',
   'israel leal conceicao': 'israel leal',
   'jessica de oliveira express': 'jessica de oliveira guiotti',
+  'juan silva de souza': 'juan silva souza',
   'karina santos sales': 'karina santos',
+  'laercio de soza presentino': 'laercio de souza presentino',
   'paulo roberto rasoppi junior': 'paulo roberto',
+  'pedro henique biz': 'pedro henrique biz',
   'ricardo limeira da silva junior': 'ricardo limeira',
   'samuel antunes da silva filho': 'samuel antunes',
   'samuel tavares silva': 'samuel tavares',
@@ -1896,8 +1899,11 @@ const DRIVER_DISPLAY_NAMES = {
   'gustavo kaique': 'Gustavo Kaique',
   'israel leal': 'Israel Leal',
   'jessica de oliveira guiotti': 'Jessica De Oliveira Guiotti',
+  'juan silva souza': 'Juan Silva Souza',
   'karina santos': 'Karina Santos',
+  'laercio de souza presentino': 'Laercio De Souza Presentino',
   'paulo roberto': 'Paulo Roberto',
+  'pedro henrique biz': 'Pedro Henrique Biz',
   'ricardo limeira': 'Ricardo Limeira',
   'samuel antunes': 'Samuel Antunes',
   'samuel tavares': 'Samuel Tavares',
@@ -1931,8 +1937,22 @@ function carrierClass(label) {
 function addOccurrenceValue(out, label, value) {
   const amount = Number(value) || 0;
   if (!label || amount <= 0) return;
-  const cleanLabel = String(label).trim();
+  const cleanLabel = normalizeOccurrenceLabel(label);
+  if (!cleanLabel) return;
   out[cleanLabel] = (out[cleanLabel] || 0) + amount;
+}
+
+function normalizeOccurrenceLabel(label) {
+  let clean = String(label || '')
+    .replace(/[\u3400-\u9FFF]+/g, '')
+    .replace(/[._]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const key = clean.normalize('NFD').replace(/[̀-ͯ]/g, '').toLocaleLowerCase('pt-BR');
+  if (key.includes('ausencia do destinatario')) clean = 'Ausência do destinatário';
+  if (key.includes('erro de triagem')) clean = 'Erro de triagem';
+  if (key.includes('expedido') && key.includes('nao chegou')) clean = 'Expedido mas não chegou';
+  return clean;
 }
 
 function extractOccurrenceMap(driver) {
@@ -2595,6 +2615,11 @@ function selectPeriod(p) {
     $('#custom-range').style.display = 'none';
     state.customStart = '';
     state.customEnd = '';
+    if (!state.customDay) {
+      const scopedDates = historyForUnit(state.unit).map(h => h.date).sort();
+      state.customDay = scopedDates[scopedDates.length - 1] || '';
+      $('#date-day').value = state.customDay;
+    }
   } else {
     $('#day-range').style.display = 'none';
     $('#custom-range').style.display = 'none';
@@ -2615,7 +2640,18 @@ $$('.operation-subtab').forEach(t => t.addEventListener('click', () => {
   if (t.dataset.opView) selectOperationView(t.dataset.opView);
 }));
 $$('.period-btn').forEach(b => b.addEventListener('click', () => selectPeriod(b.dataset.period)));
-$('#unit-filter').addEventListener('change', e => { state.unit=e.target.value; state.selectedDriver=null; refresh(); });
+$('#unit-filter').addEventListener('change', e => {
+  state.unit=e.target.value;
+  state.selectedDriver=null;
+  if (state.period === 'day') {
+    const scopedDates = historyForUnit(state.unit).map(h => h.date).sort();
+    if (!scopedDates.includes(state.customDay)) {
+      state.customDay = scopedDates[scopedDates.length - 1] || '';
+      $('#date-day').value = state.customDay;
+    }
+  }
+  refresh();
+});
 $('#tower-search-input').addEventListener('input', renderTower);
 $('#tower-status-filter').addEventListener('change', renderTower);
 $('#btn-sound-alerts').addEventListener('click',()=>{soundAlertsEnabled=!soundAlertsEnabled;localStorage.setItem('pllugo_sound_alerts_v2',soundAlertsEnabled?'on':'off');$('#btn-sound-alerts').textContent=(soundAlertsEnabled?'🔊':'🔇')+' Alertas';if(soundAlertsEnabled)playAlertTone();});
