@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gael — exemplo de integração</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+       background:#F4F6F8;color:#18181B;margin:0;padding:28px 20px 220px;line-height:1.5}
+  .wrap{max-width:900px;margin:0 auto}
+  .topbar{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+  .topbar h1{font-size:20px;margin:0;flex:1}
+  .topbar-actions{display:flex;gap:8px}
+  .topbar-actions button{font:inherit;font-size:13px;border:1px solid #E8E8EC;background:#fff;
+       padding:8px 14px;border-radius:9px;cursor:pointer}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+  .card{background:#fff;border:1px solid #E8E8EC;border-radius:14px;padding:16px}
+  .card .lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:#8A94A3;font-weight:700}
+  .card .val{font-size:30px;font-weight:600;margin-top:6px;font-variant-numeric:tabular-nums}
+  p.hint{color:#4A5361;font-size:14px}
+  code{background:#fff;border:1px solid #E8E8EC;padding:1px 6px;border-radius:5px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <h1>Exemplo de integração do Gael</h1>
+    <div class="topbar-actions">
+      <button id="btn-piorar">Piorar o número</button>
+      <button id="btn-melhorar">Bater a meta</button>
+    </div>
+  </div>
+
+  <p class="hint">
+    Esta página não tem nada de especial: são três cards com número dentro.
+    Todo o comportamento do Gael vem do <code>GAEL_CONFIG</code> no fim do arquivo —
+    de onde ele lê os dados, o que responde e quando reage sozinho.
+    Clique nos botões acima para ver as reações automáticas.
+  </p>
+
+  <div class="cards">
+    <div class="card" id="card-sla">
+      <div class="lbl">Aproveitamento</div><div class="val" id="v-sla">92,4</div>
+    </div>
+    <div class="card" id="card-volume">
+      <div class="lbl">Volume do dia</div><div class="val" id="v-volume">3.917</div>
+    </div>
+    <div class="card" id="card-alertas">
+      <div class="lbl">Alertas abertos</div><div class="val" id="v-alertas">0</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------------------------------------------------------
+   CONFIGURAÇÃO MÍNIMA — copie esta estrutura para a sua ferramenta
+   --------------------------------------------------------------- */
+window.GAEL_CONFIG = {
+  character: { heightVh:0.24, heightMin:130, heightMax:260, entry:'right' },
+  dock: { label:'Pergunte ao Gael', placeholder:'aproveitamento, volume, alertas…' },
+  toggle: { container:'.topbar-actions', label:'🦊 Gael' },
+
+  /* 1. de onde vêm os números */
+  data: {
+    fields: {
+      sla:     { sel:'#v-sla',     type:'percent' },
+      volume:  { sel:'#v-volume',  type:'int' },
+      alertas: { sel:'#v-alertas', type:'int', default:0 }
+    },
+    ready: d => d.sla != null,
+    emptyMessage: 'Ainda não tem número na tela.'
+  },
+
+  /* 2. para onde ele leva a tela ao apontar */
+  sections: { '#card-sla':{}, '#card-volume':{}, '#card-alertas':{} },
+
+  /* 3. o que ele sabe responder */
+  intents: [
+    { match:['aproveitamento','sla','meta','numero'], point:'#card-sla',
+      type: d => d.sla >= 95 ? 'success' : 'warning',
+      text: d => `Aproveitamento em <b>${d.sla.toFixed(1).replace('.',',')}%</b>, meta 95%.` },
+    { match:['volume','quantos','pacote'], point:'#card-volume', type:'info',
+      text:'Foram <b>{volume}</b> no dia.' },
+    { match:['alerta','problema','pendencia'], point:'#card-alertas',
+      type: d => d.alertas ? 'critical' : 'success',
+      text: d => d.alertas ? `Tem <b>${d.alertas}</b> alerta(s) aberto(s).` : 'Nenhum alerta aberto.' }
+  ],
+  fallback: 'Aqui eu só sei falar de aproveitamento, volume e alertas.',
+
+  /* 4. primeira fala */
+  greeting: d => ({ text:`Olá! Aproveitamento em <b>${d.sla.toFixed(1).replace('.',',')}%</b> e ${d.volume} no volume.`,
+                    type: d.sla>=95?'success':'info' }),
+
+  /* 5. reações automáticas */
+  watchers: [
+    { id:'caiu', watch:'#v-sla',
+      when:(cur,prev)=> cur.sla!=null && prev.sla!=null && prev.sla>=95 && cur.sla<95,
+      do:(Gael,d)=> Gael.warn(`Caiu para <b>${d.sla.toFixed(1).replace('.',',')}%</b>, abaixo da meta.`,'#card-sla') },
+    { id:'bateu', watch:'#v-sla',
+      when:(cur,prev)=> cur.sla!=null && prev.sla!=null && prev.sla<95 && cur.sla>=95,
+      do:(Gael,d)=> Gael.celebrate(`Meta batida: <b>${d.sla.toFixed(1).replace('.',',')}%</b>!`) },
+    { id:'alerta-novo', watch:'#v-alertas', ignoreGap:true, cooldown:30000,
+      when:(cur,prev)=> (cur.alertas||0) > (prev.alertas||0),
+      do:(Gael,d)=> Gael.alert(`<b>${d.alertas}</b> alerta(s) aberto(s) agora.`,'#card-alertas') }
+  ]
+};
+
+document.getElementById('btn-piorar').onclick = () => {
+  document.getElementById('v-sla').textContent = '88,1';
+  document.getElementById('v-alertas').textContent = String(+document.getElementById('v-alertas').textContent + 2);
+};
+document.getElementById('btn-melhorar').onclick = () => {
+  document.getElementById('v-sla').textContent = '96,3';
+  document.getElementById('v-alertas').textContent = '0';
+};
+</script>
+<script src="gael.js" defer></script>
+</body>
+</html>
