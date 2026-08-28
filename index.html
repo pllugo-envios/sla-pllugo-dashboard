@@ -96,11 +96,11 @@
   /* Filters */
   .filters { background: var(--gray-0); border-bottom: 1px solid var(--gray-200); padding: 0.875rem 0; position: sticky; top: var(--topbar-height, 72px); z-index: 45; }
   .filters-inner { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-  .period-group { display: flex; gap: 4px; background: var(--gray-100); padding: 4px; border-radius: var(--radius-md); }
+  .period-group { display: flex; gap: 4px; background: var(--gray-100); padding: 4px; border-radius: var(--radius-md); flex-wrap: wrap; }
   .period-btn { font-family: inherit; font-size: 12px; padding: 7px 14px; border: none; background: transparent; color: var(--gray-500); border-radius: 7px; cursor: pointer; font-weight: 500; transition: all 0.15s; }
   .period-btn:hover { color: var(--gray-900); }
   .period-btn.active { background: var(--gray-0); color: var(--pllugo-red); box-shadow: var(--shadow-sm); }
-  .date-range { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gray-500); }
+  .date-range { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gray-500); padding: 3px 6px; background: var(--gray-0); border: 1px solid var(--gray-200); border-radius: var(--radius-md); }
   .date-range input[type="date"] { font-family: inherit; font-size: 12px; padding: 6px 10px; border: 1px solid var(--gray-300); border-radius: var(--radius-sm); color: var(--gray-900); background: var(--gray-0); }
   .date-range input[type="date"]:focus { outline: none; border-color: var(--pllugo-red); }
   .filter-spacer { flex: 1; }
@@ -368,19 +368,14 @@
   <div class="container filters-inner">
     <div class="period-group">
       <button class="period-btn active" data-period="1">Hoje</button>
+      <button class="period-btn" data-period="yesterday">Ontem</button>
       <button class="period-btn" data-period="7">7 dias</button>
       <button class="period-btn" data-period="15">15 dias</button>
       <button class="period-btn" data-period="30">30 dias</button>
-      <button class="period-btn" data-period="60">60 dias</button>
-      <button class="period-btn" data-period="day">Dia</button>
-      <button class="period-btn" data-period="custom">Personalizado</button>
-    </div>
-    <div class="date-range" id="day-range" style="display:none">
-      <span>Dia</span>
-      <input type="date" id="date-day">
+      <button class="period-btn" data-period="custom">Escolher data</button>
     </div>
     <div class="date-range" id="custom-range" style="display:none">
-      <span>De</span>
+      <span>Período</span>
       <input type="date" id="date-start">
       <span>até</span>
       <input type="date" id="date-end">
@@ -1774,12 +1769,16 @@ let charts = { sla: null, vol: null, detail: null };
 
 function dateInRange(d) {
   const dt = parseDate(d);
-  if (state.period === 'day') return !!state.customDay && d === state.customDay;
   if (state.period === 'custom') {
     if (!state.customStart || !state.customEnd) return false;
     return dt >= parseDate(state.customStart) && dt <= parseDate(state.customEnd);
   }
   const todayStr = saoPauloToday();
+  if (state.period === 'yesterday') {
+    const yesterday = parseDate(todayStr);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return d === yesterday.toISOString().slice(0, 10);
+  }
   const today = parseDate(todayStr);
   if (state.period === 1) return d === todayStr;
   const cutoff = new Date(today);
@@ -2278,7 +2277,7 @@ function renderHero(agg, drivers) {
   const cat = slaCategory(agg.sla);
   const carrierLabels = { pllugo: 'Pllugo', jt: 'J&T', imile: 'iMile', jt_real: 'J&T' };
   const carrierName = carrierLabels[state.carrier] || 'Pllugo';
-  const periodLabel = state.period === 'custom' ? 'Personalizado' : state.period === 'day' ? 'Dia' : state.period === 1 ? 'Hoje' : `${state.period} dias`;
+  const periodLabel = state.period === 'custom' ? 'Período escolhido' : state.period === 'yesterday' ? 'Ontem' : state.period === 1 ? 'Hoje' : `${state.period} dias`;
   $('#hero-label').textContent = `SLA ${carrierName} · ${periodLabel}`;
   $('#hero-sla').textContent = agg.sla ? agg.sla.toFixed(1) : '0.0';
   const heroNum = document.querySelector('.hero-sla-number');
@@ -2603,25 +2602,23 @@ function selectCarrier(c) {
 }
 
 function selectPeriod(p) {
-  state.period = p === 'day' ? 'day' : (p === 'custom' ? 'custom' : +p);
+  state.period = p === 'yesterday' ? 'yesterday' : (p === 'custom' ? 'custom' : +p);
   state.selectedDriver = null;
   $$('.period-btn').forEach(b => b.classList.toggle('active', b.dataset.period == p));
   if (p === 'custom') {
     $('#custom-range').style.display = '';
-    $('#day-range').style.display = 'none';
     state.customDay = '';
-  } else if (p === 'day') {
-    $('#day-range').style.display = '';
-    $('#custom-range').style.display = 'none';
-    state.customStart = '';
-    state.customEnd = '';
-    if (!state.customDay) {
+    if (!state.customStart || !state.customEnd) {
       const scopedDates = historyForUnit(state.unit).map(h => h.date).sort();
-      state.customDay = scopedDates[scopedDates.length - 1] || '';
-      $('#date-day').value = state.customDay;
+      const last = scopedDates[scopedDates.length - 1] || saoPauloToday();
+      state.customStart = last;
+      state.customEnd = last;
+      $('#date-start').value = last;
+      $('#date-end').value = last;
+      $('#date-start').max = last;
+      $('#date-end').min = '';
     }
   } else {
-    $('#day-range').style.display = 'none';
     $('#custom-range').style.display = 'none';
     state.customDay = '';
     state.customStart = '';
@@ -2643,11 +2640,14 @@ $$('.period-btn').forEach(b => b.addEventListener('click', () => selectPeriod(b.
 $('#unit-filter').addEventListener('change', e => {
   state.unit=e.target.value;
   state.selectedDriver=null;
-  if (state.period === 'day') {
+  if (state.period === 'custom') {
     const scopedDates = historyForUnit(state.unit).map(h => h.date).sort();
-    if (!scopedDates.includes(state.customDay)) {
-      state.customDay = scopedDates[scopedDates.length - 1] || '';
-      $('#date-day').value = state.customDay;
+    if (scopedDates.length && (!scopedDates.includes(state.customStart) || !scopedDates.includes(state.customEnd))) {
+      const last = scopedDates[scopedDates.length - 1];
+      state.customStart = last;
+      state.customEnd = last;
+      $('#date-start').value = last;
+      $('#date-end').value = last;
     }
   }
   refresh();
@@ -2656,7 +2656,6 @@ $('#tower-search-input').addEventListener('input', renderTower);
 $('#tower-status-filter').addEventListener('change', renderTower);
 $('#btn-sound-alerts').addEventListener('click',()=>{soundAlertsEnabled=!soundAlertsEnabled;localStorage.setItem('pllugo_sound_alerts_v2',soundAlertsEnabled?'on':'off');$('#btn-sound-alerts').textContent=(soundAlertsEnabled?'🔊':'🔇')+' Alertas';if(soundAlertsEnabled)playAlertTone();});
 
-$('#date-day').addEventListener('change', e => { state.customDay = e.target.value; refresh(); });
 $('#date-start').addEventListener('change', e => { state.customStart = e.target.value; $('#date-end').min = e.target.value; refresh(); });
 $('#date-end').addEventListener('change', e => { state.customEnd = e.target.value; $('#date-start').max = e.target.value; refresh(); });
 $('#driver-search-input').addEventListener('input', () => refresh());
@@ -2680,8 +2679,6 @@ async function applyLoadedData() {
 
   const allDates = DASH_DATA.history.map(h => h.date).sort();
   if (allDates.length) {
-    $('#date-day').min = allDates[0];
-    $('#date-day').max = allDates[allDates.length - 1];
     $('#date-start').min = allDates[0];
     $('#date-start').max = allDates[allDates.length - 1];
     $('#date-end').min = allDates[0];
