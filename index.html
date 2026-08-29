@@ -1909,6 +1909,7 @@ async function clearAllData() {
     DASH_DATA.generated_at = null;
     state.selectedDriver = null;
     TOWER_SNAPSHOTS_CACHE = [];
+    TOWER_SNAPSHOTS_DATE = null;
     await applyLoadedData();
     setImportStatus('Dados limpos. Base zerada, pronta pra novos testes.', 'ok');
   } catch (e) {
@@ -2029,6 +2030,7 @@ const FEATURE_TOWER_V2_UI = new URLSearchParams(location.search).get('tower_v2')
 // recarregado do banco a cada refreshTowerSnapshotsCache(); nada é persistido
 // só no navegador. Ver tower_snapshots/tower_status no supabase_schema.sql.
 let TOWER_SNAPSHOTS_CACHE = [];
+let TOWER_SNAPSHOTS_DATE = null;
 // Única preferência que continua só no navegador: ligar/desligar o beep de
 // alerta é uma escolha de dispositivo (cada pessoa decide se quer som no
 // computador dela), não um dado que precise ser igual pra todo mundo — por
@@ -2152,6 +2154,17 @@ function dateInRange(d) {
   return dt >= cutoff && dt <= today;
 }
 function filteredHistory() { return historyForUnit(state.unit).filter(h => dateInRange(h.date)); }
+function towerReferenceDate() {
+  const scopedDates = filteredHistory().map(h => h.date).filter(Boolean).sort();
+  if (scopedDates.length) return scopedDates[scopedDates.length - 1];
+  if (state.period === 'custom' && state.customEnd) return state.customEnd;
+  if (state.period === 'yesterday') {
+    const yesterday = parseDate(saoPauloToday());
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().slice(0, 10);
+  }
+  return saoPauloToday();
+}
 
 function aggregateDriversForHero(drivers, filtered) {
   const out = { total: 0, entregues: 0, pendentes: 0, problematicos: 0, dailySLA: [], dailyEnt: [], dailyPend: [], dailySameday: [], labels: [], desconsiderados: 0, desconsideradosPedidos: [], samedayWeightedDelivered: 0, samedayWeightedTotal: 0 };
@@ -2524,13 +2537,14 @@ function renderOperation(filtered, drivers) {
 // (recarregado a cada refreshTowerSnapshotsCache) pra buildTowerAnalysis()
 // poder continuar síncrona — a fonte da verdade é sempre o banco.
 function towerSnapshots(){ return TOWER_SNAPSHOTS_CACHE; }
-async function refreshTowerSnapshotsCache(){
+async function refreshTowerSnapshotsCache(date = towerReferenceDate()){
+  TOWER_SNAPSHOTS_DATE = date;
   if (!sb) { TOWER_SNAPSHOTS_CACHE = []; return; }
   try {
-    const { data, error } = await sb.from('tower_snapshots').select('*').eq('date', saoPauloToday()).order('stamp', { ascending: true });
+    const { data, error } = await sb.from('tower_snapshots').select('*').eq('date', date).order('stamp', { ascending: true });
     if (error) throw error;
     TOWER_SNAPSHOTS_CACHE = data || [];
-  } catch (e) { console.error('Falha ao carregar snapshots da Torre de Controle:', e); }
+  } catch (e) { TOWER_SNAPSHOTS_CACHE = []; console.error('Falha ao carregar snapshots da Torre de Controle:', e); }
 }
 function towerDriverRowsForDay(day) {
   const map = new Map();
@@ -2578,9 +2592,9 @@ async function captureTowerSnapshot(){
   // Sempre relê o banco primeiro — pode ter foto nova de outro dispositivo/
   // import desde a última leitura, e a Torre precisa comparar contra a foto
   // mais recente que existir, não só a que este navegador já viu.
-  await refreshTowerSnapshotsCache();
   const today=saoPauloToday(), day=DASH_DATA.history.find(h=>h.date===today);
   if (!day) return;
+  await refreshTowerSnapshotsCache(today);
   const driverRows = towerDriverRowsForDay(day);
   if (!driverRows.length) return;
   const latest = TOWER_SNAPSHOTS_CACHE[TOWER_SNAPSHOTS_CACHE.length - 1];
@@ -2590,12 +2604,13 @@ async function captureTowerSnapshot(){
     const { error } = await sb.from('tower_snapshots').upsert([{ date: today, stamp, drivers: driverRows }], { onConflict: 'date,stamp' });
     if (error) throw error;
   } catch (e) { console.error('Falha ao gravar snapshot da Torre de Controle:', e); return; }
-  await refreshTowerSnapshotsCache();
+  await refreshTowerSnapshotsCache(today);
   await detectTowerEscalations();
 }
 function currentMinutesSP(){const n=saoPauloNow();return n.hour*60+n.minute+n.second/60}
 function buildTowerAnalysis(){
-  const snaps=towerSnapshots().filter(s=>s.date===saoPauloToday()); if(!snaps.length)return[]; const cur=snaps[snaps.length-1], nowMin=currentMinutesSP(), remaining=Math.max(0,OPERATION_END_HOUR*60-nowMin)/60;
+  const refDate = towerReferenceDate();
+  const snaps=towerSnapshots().filter(s=>s.date===refDate); if(!snaps.length)return[]; const cur=snaps[snaps.length-1], nowMin=currentMinutesSP(), remaining=Math.max(0,OPERATION_END_HOUR*60-nowMin)/60;
   return cur.drivers.map(d=>{
     const key=towerDriverKey(d); const hist=snaps.map(s=>({stamp:s.stamp,d:(s.drivers||[]).find(x=>towerDriverKey(x)===key)})).filter(x=>x.d);
     let rate=null,noProgress=null;
@@ -2722,7 +2737,8 @@ function renderTower(){
   $('#tower-monitored').textContent=fmt(all.length); $('#tower-normal').textContent=fmt(counts('normal')); $('#tower-attention').textContent=fmt(counts('attention')); $('#tower-risk').textContent=fmt(counts('risk')); $('#tower-critical').textContent=fmt(counts('critical')); $('#tower-pending').textContent=fmt(all.reduce((s,x)=>s+x.pendentes,0));
   renderTowerV2Cockpit(all);
   const badge=counts('critical')+counts('risk'); $('#nav-alert-badge').textContent=badge; $('#nav-alert-badge').style.display=badge?'inline-flex':'none';
-  $('#tower-freshness').textContent=towerSnapshots().length>=2?'Comparando snapshots do dia':'Aguardando pelo menos 2 atualizações';
+  const refLabel = towerReferenceDate().split('-').reverse().join('/');
+  $('#tower-freshness').textContent=towerSnapshots().length>=2?`Comparando snapshots de ${refLabel}`:`Aguardando pelo menos 2 atualizações em ${refLabel}`;
   $$('.tower-v2-mini[data-status]').forEach(el=>el.classList.toggle('is-active-filter', sf===el.dataset.status));
   if(!data.length){list.innerHTML='<div class="neutral-empty">Nenhum motorista corresponde aos filtros atuais. Para medir evolução real, importe/atualize o relatório mais de uma vez ao longo do dia.</div>';return;}
   list.innerHTML=data.map((d,i)=>`<button type="button" class="tower-driver ${d.status}" data-tower-index="${i}" aria-label="Abrir análise de ${escapeHTML(d.name)}"><div class="tower-name-wrap"><div class="tower-name">${escapeHTML(d.name)}</div><div class="tower-sub">${d.unit?unitLabel(d.unit):'Unidade não identificada'} · ${escapeHTML(d.carrier||'Pllugo')} · risco ${d.score}/100</div></div><div class="tower-metric"><span>OFD</span><strong>${fmt(d.total)}</strong></div><div class="tower-metric"><span>Pendentes</span><strong class="${d.pendentes>30?'bad':''}">${fmt(d.pendentes)}</strong></div><div class="tower-metric tower-hide-sm"><span>Sem evolução</span><strong>${d.noProgress==null?'—':Math.round(d.noProgress)+' min'}</strong></div><div class="tower-metric tower-hide-md"><span>Ritmo atual</span><strong>${d.rate==null?'—':d.rate.toFixed(1).replace('.',',')+'/h'}</strong></div><div class="tower-metric tower-hide-md"><span>Projeção</span><strong class="${d.projected!=null&&d.projected<TARGET_SLA?'bad':''}">${d.projected==null?'—':d.projected.toFixed(1).replace('.',',')+'%'}</strong></div><div class="tower-status ${d.status}">${towerStatusLabel(d.status)}</div></button>`).join('');
@@ -2794,7 +2810,7 @@ function renderDriverTab(tab){
 async function loadDriverOrders(d){
   const body=$('#app-drawer-body'); if(!sb){body.innerHTML='<div class="drawer-empty">Supabase indisponível neste momento.</div>';return;}
   try{
-    const key=normalizeDriverName(d.name); const {data,error}=await sb.from('operational_orders').select('tracking_number,order_number,operational_status,occurrence_type,ofd_at,delivered_at,unit,source').eq('operational_date',saoPauloToday()).eq('driver_key',key).limit(100);
+    const key=normalizeDriverName(d.name); const {data,error}=await sb.from('operational_orders').select('tracking_number,order_number,operational_status,occurrence_type,ofd_at,delivered_at,unit,source').eq('operational_date',towerReferenceDate()).eq('driver_key',key).limit(100);
     if(error)throw error; const rows=data||[];
     if(!rows.length){body.innerHTML='<div class="drawer-empty">Nenhum pedido granular encontrado para este motorista no dia. A fonte pode estar disponível apenas de forma agregada.</div>';return;}
     body.innerHTML=`<div class="drawer-section"><div class="drawer-section-title">Pedidos do motorista <span>até 100 registros</span></div><div class="drawer-list">${rows.map(r=>`<div class="drawer-row"><div class="main"><strong>${escapeHTML(r.tracking_number||r.order_number||'Pedido')}</strong><small>${escapeHTML(r.operational_status||'status não informado')} ${r.occurrence_type?'· '+escapeHTML(r.occurrence_type):''}</small></div><div class="drawer-cell"><span>OFD</span><strong>${r.ofd_at?new Date(r.ofd_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—'}</strong></div><div class="drawer-cell"><span>Entrega</span><strong>${r.delivered_at?new Date(r.delivered_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—'}</strong></div><div class="drawer-cell"><span>Fonte</span><strong>${escapeHTML(r.source||d.carrier)}</strong></div></div>`).join('')}</div></div>`;
@@ -2803,7 +2819,7 @@ async function loadDriverOrders(d){
 async function loadDriverInterventions(d){
   const body=$('#app-drawer-body'); if(!sb){body.innerHTML='<div class="drawer-empty">Supabase indisponível neste momento.</div>';return;}
   try{
-    const {data,error}=await sb.from('driver_interventions').select('*').eq('operational_date',saoPauloToday()).eq('driver_key',normalizeDriverName(d.name)).order('created_at',{ascending:false}).limit(50); if(error)throw error; const rows=data||[];
+    const {data,error}=await sb.from('driver_interventions').select('*').eq('operational_date',towerReferenceDate()).eq('driver_key',normalizeDriverName(d.name)).order('created_at',{ascending:false}).limit(50); if(error)throw error; const rows=data||[];
     if(!rows.length){body.innerHTML='<div class="drawer-empty">Nenhuma intervenção registrada hoje para este motorista.</div>';return;}
     body.innerHTML=`<div class="drawer-timeline">${rows.map(r=>`<div class="timeline-item"><strong>${r.created_at?new Date(r.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—'} · ${escapeHTML(r.actor_name_snapshot||'Usuário')}</strong><span>${escapeHTML(r.action_type||r.channel||'Intervenção')} ${r.reason?'· '+escapeHTML(r.reason):''}${r.status?' · '+escapeHTML(r.status):''}</span></div>`).join('')}</div>`;
   }catch(e){body.innerHTML='<div class="drawer-empty"><strong>Histórico de intervenções ainda não está conectado nesta versão.</strong><br>A interface está pronta para a tabela <code>driver_interventions</code>.</div>';}
@@ -3159,6 +3175,12 @@ function refresh() {
   renderDesconsiderados(agg);
   renderOfensores(drivers);
   renderOperation(filtered, drivers);
+  const towerDate = towerReferenceDate();
+  if (TOWER_SNAPSHOTS_DATE !== towerDate) {
+    refreshTowerSnapshotsCache(towerDate).then(() => {
+      if (towerReferenceDate() === towerDate) renderTower();
+    }).catch(e => console.error('Falha ao atualizar Torre para a data selecionada:', e));
+  }
   renderAllV2(agg, drivers, filtered);
   const searchTerm = ($('#driver-search-input') ? $('#driver-search-input').value : '').toLowerCase().trim();
   const visibleDrivers = searchTerm ? drivers.filter(d => d.name.toLowerCase().includes(searchTerm)) : drivers;
@@ -3329,7 +3351,3 @@ installMatureInteractions();
 <script src="assets/gael/gael.js" defer></script>
 </body>
 </html>
-
-
-
-
