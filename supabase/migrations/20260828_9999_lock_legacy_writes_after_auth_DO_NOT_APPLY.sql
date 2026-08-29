@@ -1,0 +1,17 @@
+-- ============================================================================
+-- NAO APLICAR AGORA
+--
+-- Esta migration e um placeholder operacional para uma fase futura em que:
+-- 1. login Supabase Auth estiver funcionando;
+-- 2. importacao autenticada estiver funcionando;
+-- 3. usuarios admin/supervisor/operator estiverem criados;
+-- 4. rollback estiver testado.
+--
+-- Nao ha SQL ativo aqui de proposito.
+-- Qualquer mudanca de RLS nas tabelas legadas (`sla_days`, `sla_drivers`,
+-- `tower_snapshots`, `tower_status`) pode quebrar a ferramenta atual.
+-- ============================================================================
+
+-- Futuro: restringir escrita anonima das tabelas legadas.
+-- Futuro: manter leitura conforme necessidade operacional.
+-- Futuro: mover importacao para usuario autenticado ou backend seguro.
