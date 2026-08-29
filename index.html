@@ -356,6 +356,286 @@
   @media(max-width:820px){.overview-grid,.cause-layout,.operation-diagnosis{grid-template-columns:1fr}.entity-grid{grid-template-columns:1fr 1fr}.priority-grid{grid-template-columns:1fr}.unit-filter-wrap{width:100%;justify-content:flex-start}.tower-driver{grid-template-columns:1.4fr 1fr 1fr}.tower-hide-sm{display:none}}
   @media(max-width:560px){.executive-kpis,.tower-kpis,.operation-flow,.tower-v2-rings{grid-template-columns:1fr 1fr}.tower-v2-ring-card{grid-template-columns:1fr;text-align:center;justify-items:center;padding:12px 8px}.tower-v2-strip{grid-template-columns:1fr 1fr}.entity-grid{grid-template-columns:1fr}.control-status{align-items:flex-start}.control-status-pill{display:none}.operation-score-value{font-size:52px}.tower-driver{grid-template-columns:1fr 1fr}.tower-driver .tower-name-wrap{grid-column:1/-1}.tower-rule-note{width:100%;margin-left:0}}
 
+
+
+  /* ===== PLLUGO PRODUCT MATURITY LAYER — UX/UI 2026 ===== */
+  :root {
+    --motion-fast: 140ms;
+    --motion-base: 190ms;
+    --motion-slow: 280ms;
+    --motion-data: 760ms;
+    --ease-standard: cubic-bezier(.2,.8,.2,1);
+    --ease-enter: cubic-bezier(.16,1,.3,1);
+    --focus-ring: 0 0 0 3px rgba(240,74,79,.12);
+    --surface-hover: #fff;
+    --shadow-hover: 0 10px 28px rgba(15,15,17,.09);
+    --z-header: 50;
+    --z-floating: 100;
+    --z-drawer-backdrop: 900;
+    --z-drawer: 910;
+    --z-modal-backdrop: 1000;
+    --z-modal: 1010;
+    --z-toast: 1100;
+  }
+  html { scroll-behavior:smooth; }
+  body {
+    background:
+      radial-gradient(circle at 85% -10%, rgba(240,74,79,.045), transparent 28rem),
+      var(--gray-50);
+  }
+  button, input, select, textarea { font:inherit; }
+  button, [role="button"], input, select, .tab, .mode-tab, .period-btn, .driver-name, th[data-sort] {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:focus-visible, [role="button"]:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, th[data-sort]:focus-visible {
+    outline:none;
+    box-shadow:var(--focus-ring);
+    border-color:rgba(240,74,79,.55) !important;
+  }
+  .topbar {
+    z-index:var(--z-header);
+    background:rgba(255,255,255,.92);
+    backdrop-filter:saturate(145%) blur(14px);
+    -webkit-backdrop-filter:saturate(145%) blur(14px);
+    box-shadow:0 1px 0 rgba(15,15,17,.02);
+  }
+  .btn-update, .btn-clear, .mode-tab, .period-btn, .tab, .operation-subtab, #btn-sound-alerts {
+    transition:background-color var(--motion-base) var(--ease-standard), color var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
+  }
+  .btn-update:hover { transform:translateY(-1px); box-shadow:0 7px 18px rgba(240,74,79,.18); }
+  .btn-update:active, .btn-clear:active, .mode-tab:active, .period-btn:active, .tab:active, .operation-subtab:active { transform:translateY(0) scale(.985); }
+  .btn-clear:hover, #btn-sound-alerts:hover { background:var(--gray-50); box-shadow:var(--shadow-sm); }
+  .mode-tab:hover, .period-btn:hover { border-color:var(--gray-300); background:#fff; color:var(--gray-900); box-shadow:var(--shadow-sm); transform:translateY(-1px); }
+  .tab:hover, .operation-subtab:hover { color:var(--gray-900); background:linear-gradient(to bottom, transparent 86%, var(--gray-100) 86%); }
+  .operation-subtab { position:relative; }
+  .operation-subtab::after { content:""; position:absolute; left:14px; right:14px; bottom:-1px; height:2px; border-radius:2px; background:currentColor; transform:scaleX(0); transform-origin:center; transition:transform var(--motion-base) var(--ease-enter); }
+  .operation-subtab.active { border-bottom-color:transparent; }
+  .operation-subtab.active::after { transform:scaleX(1); }
+
+  .section, .hero, .operation-score, .overview-panel {
+    transition:border-color var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
+  }
+  .hero { box-shadow:0 8px 30px rgba(15,15,17,.055); }
+  .hero-mini, .exec-kpi, .operation-card, .diagnosis-card, .driver-detail-stat, .ofensor {
+    transition:transform var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard), background-color var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
+  }
+  .hero-mini:hover, .exec-kpi:hover, .operation-card:hover, .diagnosis-card:hover, .driver-detail-stat:hover, .ofensor:hover {
+    transform:translateY(-1px);
+    border-color:var(--gray-300);
+    box-shadow:0 6px 20px rgba(15,15,17,.055);
+    background:#fff;
+  }
+  table tbody tr td { transition:background-color var(--motion-fast) ease; }
+  table tbody tr:hover td { background:#f7f7f9; }
+  th[data-sort] { transition:background-color var(--motion-fast), color var(--motion-fast); }
+  input, select, textarea {
+    transition:border-color var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard), background-color var(--motion-base) var(--ease-standard);
+  }
+  input:hover, select:hover, textarea:hover { border-color:var(--gray-400); }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:var(--pllugo-red); box-shadow:var(--focus-ring); background:#fff; }
+
+  /* Cockpit principal */
+  .tower-section { border-top-color:var(--gray-900); box-shadow:0 12px 34px rgba(15,15,17,.045); }
+  .tower-v2-head { margin-bottom:14px; align-items:center; }
+  .tower-v2-title { font-size:13px; letter-spacing:-.01em; }
+  .tower-v2-live { display:inline-flex; align-items:center; gap:6px; font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.055em; color:#0E7A50; background:var(--success-50); border:1px solid var(--success-100); border-radius:999px; padding:6px 9px; white-space:nowrap; }
+  .tower-v2-live::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--success); box-shadow:0 0 0 3px rgba(22,166,109,.12); }
+  .tower-freshness { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--gray-200); background:#fff; padding:6px 10px; }
+  .tower-freshness::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--success); opacity:.75; }
+  .tower-v2-rings { gap:12px; }
+  .tower-v2-ring-card {
+    appearance:none;
+    width:100%;
+    text-align:left;
+    color:inherit;
+    font-family:inherit;
+    cursor:pointer;
+    position:relative;
+    overflow:hidden;
+    isolation:isolate;
+    padding:15px;
+    box-shadow:0 2px 8px rgba(15,15,17,.035);
+    transition:transform var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard), background-color var(--motion-base) var(--ease-standard);
+  }
+  .tower-v2-ring-card::before { content:""; position:absolute; inset:0; background:linear-gradient(135deg, rgba(240,74,79,.035), transparent 45%); opacity:0; transition:opacity var(--motion-base); pointer-events:none; }
+  .tower-v2-ring-card::after { content:"↗"; position:absolute; top:11px; right:12px; font-size:12px; color:var(--gray-300); transform:translate(-2px,2px); opacity:0; transition:all var(--motion-base) var(--ease-enter); }
+  .tower-v2-ring-card:hover { transform:translateY(-2px); border-color:var(--gray-300); box-shadow:var(--shadow-hover); background:#fff; }
+  .tower-v2-ring-card:hover::before { opacity:1; }
+  .tower-v2-ring-card:hover::after { opacity:1; transform:translate(0,0); color:var(--gray-500); }
+  .tower-v2-ring-card:active { transform:translateY(0) scale(.995); box-shadow:var(--shadow-sm); }
+  .tower-v2-ring { width:88px; height:88px; background:conic-gradient(var(--ring) calc(var(--value)*1%), #f0f0f3 0); filter:drop-shadow(0 2px 2px rgba(15,15,17,.025)); }
+  .tower-v2-ring::after { inset:9px; box-shadow:inset 0 0 0 1px var(--gray-200), 0 1px 2px rgba(15,15,17,.035); }
+  .tower-v2-ring strong { font-size:15.5px; }
+  .tower-v2-copy span { letter-spacing:.065em; }
+  .tower-v2-copy strong { font-size:25px; letter-spacing:-.025em; }
+  .tower-v2-copy small { line-height:1.35; }
+
+  .tower-v2-strip { grid-template-columns:repeat(8,minmax(0,1fr)); gap:9px; margin-top:12px; }
+  .tower-v2-mini {
+    appearance:none;
+    text-align:left;
+    color:inherit;
+    width:100%;
+    cursor:pointer;
+    position:relative;
+    background:#fafafb;
+    padding:10px 11px;
+    transition:transform var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard), background-color var(--motion-base) var(--ease-standard);
+  }
+  .tower-v2-mini:hover { transform:translateY(-1px); border-color:var(--gray-300); background:#fff; box-shadow:0 6px 16px rgba(15,15,17,.055); }
+  .tower-v2-mini:active { transform:translateY(0); }
+  .tower-v2-mini[data-status="normal"] strong { color:var(--success); }
+  .tower-v2-mini[data-status="attention"] strong { color:var(--warn); }
+  .tower-v2-mini[data-status="risk"] strong { color:#E87524; }
+  .tower-v2-mini[data-status="critical"] strong { color:var(--pllugo-red); }
+  .tower-v2-mini.is-active-filter { background:var(--pllugo-red-50); border-color:var(--pllugo-red-200); box-shadow:inset 0 0 0 1px rgba(240,74,79,.05); }
+  .tower-kpis { display:none !important; }
+
+  /* Barra operacional */
+  .tower-toolbar { padding:10px; border:1px solid var(--gray-200); border-radius:var(--radius-md); background:#fff; box-shadow:var(--shadow-sm); gap:9px; }
+  .tower-search-box { min-width:250px; flex:1; max-width:390px; display:flex; align-items:center; gap:8px; border:1px solid var(--gray-300); border-radius:var(--radius-sm); padding:0 10px; background:var(--gray-50); transition:border-color var(--motion-base), box-shadow var(--motion-base), background-color var(--motion-base); }
+  .tower-search-box:focus-within { border-color:var(--pllugo-red); box-shadow:var(--focus-ring); background:#fff; }
+  .tower-search-box svg { width:15px; height:15px; color:var(--gray-400); flex:0 0 auto; }
+  #tower-search-input { min-width:0; width:100%; max-width:none; flex:1; border:0; background:transparent; padding:8px 0; box-shadow:none !important; }
+  #tower-search-input:hover, #tower-search-input:focus { border:0 !important; box-shadow:none !important; }
+  #tower-status-filter { min-height:34px; border-radius:var(--radius-sm); }
+  .tower-clear-filter { border:1px solid var(--gray-300); background:#fff; color:var(--gray-600); border-radius:var(--radius-sm); padding:8px 10px; font-size:11px; font-weight:700; cursor:pointer; transition:all var(--motion-base); }
+  .tower-clear-filter:hover { color:var(--pllugo-red); border-color:var(--pllugo-red-200); background:var(--pllugo-red-50); }
+  .tower-rule-note { display:flex; align-items:center; gap:5px; }
+  .tower-rule-note::before { content:"ⓘ"; color:var(--gray-400); }
+
+  /* Linhas de motoristas = portas de investigação */
+  .tower-list { gap:8px; }
+  .tower-driver {
+    appearance:none;
+    width:100%;
+    text-align:left;
+    font-family:inherit;
+    color:inherit;
+    cursor:pointer;
+    position:relative;
+    transition:transform var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard), background-color var(--motion-base) var(--ease-standard);
+  }
+  .tower-driver::after { content:"›"; position:absolute; right:8px; top:50%; transform:translate(-3px,-50%); color:var(--gray-300); font-size:18px; opacity:0; transition:all var(--motion-base) var(--ease-enter); }
+  .tower-driver:hover { transform:translateY(-1px); border-color:var(--gray-300); box-shadow:0 7px 20px rgba(15,15,17,.06); background:#fff; }
+  .tower-driver:hover::after { opacity:1; transform:translate(0,-50%); }
+  .tower-driver:active { transform:translateY(0); }
+  .tower-driver.critical .tower-status::before { content:""; width:6px; height:6px; border-radius:50%; background:var(--pllugo-red); display:inline-block; margin-right:5px; box-shadow:0 0 0 0 rgba(240,74,79,.20); animation:criticalBreath 2.2s ease-out infinite; }
+  @keyframes criticalBreath { 0%,100%{box-shadow:0 0 0 0 rgba(240,74,79,.18)} 50%{box-shadow:0 0 0 5px rgba(240,74,79,0)} }
+
+  /* Drawer / drill-down */
+  .app-drawer-backdrop { position:fixed; inset:0; z-index:var(--z-drawer-backdrop); background:rgba(20,20,24,.28); backdrop-filter:blur(2px); opacity:0; pointer-events:none; transition:opacity var(--motion-slow) var(--ease-standard); }
+  .app-drawer-backdrop.open { opacity:1; pointer-events:auto; }
+  .app-drawer { position:fixed; top:0; right:0; bottom:0; width:min(620px,94vw); z-index:var(--z-drawer); background:#fff; border-left:1px solid var(--gray-200); box-shadow:-24px 0 60px rgba(15,15,17,.14); transform:translateX(28px); opacity:0; pointer-events:none; transition:transform var(--motion-slow) var(--ease-enter), opacity var(--motion-base) ease; display:flex; flex-direction:column; }
+  .app-drawer.open { transform:translateX(0); opacity:1; pointer-events:auto; }
+  .app-drawer-header { padding:18px 20px 14px; border-bottom:1px solid var(--gray-200); background:linear-gradient(180deg,#fff,#fdfdfe); }
+  .app-drawer-top { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+  .app-drawer-eyebrow { font-size:9px; text-transform:uppercase; letter-spacing:.10em; font-weight:800; color:var(--gray-400); }
+  .app-drawer-title { font-size:20px; line-height:1.15; letter-spacing:-.025em; margin-top:4px; color:var(--gray-900); }
+  .app-drawer-sub { font-size:11px; color:var(--gray-500); margin-top:5px; line-height:1.45; }
+  .app-drawer-close { width:34px; height:34px; border:1px solid var(--gray-200); border-radius:10px; background:#fff; color:var(--gray-500); cursor:pointer; display:grid; place-items:center; font-size:18px; transition:all var(--motion-base); flex:0 0 auto; }
+  .app-drawer-close:hover { background:var(--gray-50); color:var(--gray-900); border-color:var(--gray-300); transform:rotate(2deg); }
+  .app-drawer-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:13px; }
+  .app-btn { border-radius:9px; padding:8px 11px; font-size:11px; font-weight:750; cursor:pointer; border:1px solid transparent; display:inline-flex; align-items:center; gap:6px; transition:all var(--motion-base) var(--ease-standard); }
+  .app-btn.primary { background:var(--pllugo-red); color:#fff; }
+  .app-btn.primary:hover { background:var(--pllugo-red-hover); transform:translateY(-1px); box-shadow:0 7px 18px rgba(240,74,79,.16); }
+  .app-btn.secondary { background:#fff; color:var(--gray-700); border-color:var(--gray-300); }
+  .app-btn.secondary:hover { background:var(--gray-50); border-color:var(--gray-400); transform:translateY(-1px); }
+  .app-drawer-tabs { display:flex; gap:2px; padding:0 20px; border-bottom:1px solid var(--gray-200); background:#fff; overflow-x:auto; }
+  .app-drawer-tab { border:0; background:transparent; color:var(--gray-500); padding:11px 10px 10px; font-size:11px; font-weight:750; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:all var(--motion-base); }
+  .app-drawer-tab:hover { color:var(--gray-900); }
+  .app-drawer-tab.active { color:var(--pllugo-red); border-bottom-color:var(--pllugo-red); }
+  .app-drawer-body { padding:18px 20px 28px; overflow:auto; overscroll-behavior:contain; }
+  .drawer-metric-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+  .drawer-metric { border:1px solid var(--gray-200); background:var(--gray-50); border-radius:12px; padding:11px 12px; min-width:0; }
+  .drawer-metric span { display:block; font-size:8.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-400); font-weight:800; }
+  .drawer-metric strong { display:block; margin-top:4px; font-size:20px; line-height:1.05; font-variant-numeric:tabular-nums; letter-spacing:-.02em; }
+  .drawer-section { margin-top:16px; }
+  .drawer-section:first-child { margin-top:0; }
+  .drawer-section-title { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:11px; font-weight:800; color:var(--gray-900); margin-bottom:8px; }
+  .drawer-list { display:flex; flex-direction:column; gap:7px; }
+  .drawer-row { display:grid; grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(68px,.6fr)); gap:9px; align-items:center; border:1px solid var(--gray-200); background:#fff; border-radius:10px; padding:9px 10px; }
+  .drawer-row:hover { border-color:var(--gray-300); background:var(--gray-50); }
+  .drawer-row .main strong { display:block; font-size:11px; }
+  .drawer-row .main small { display:block; color:var(--gray-500); font-size:9px; margin-top:2px; }
+  .drawer-cell span { display:block; font-size:7.5px; text-transform:uppercase; color:var(--gray-400); font-weight:800; }
+  .drawer-cell strong { display:block; font-size:10.5px; margin-top:2px; }
+  .drawer-insight { border:1px solid var(--gray-200); background:linear-gradient(135deg,var(--gray-50),#fff); border-radius:12px; padding:12px 13px; color:var(--gray-600); font-size:11px; line-height:1.5; }
+  .drawer-insight strong { color:var(--gray-900); }
+  .drawer-empty { border:1px dashed var(--gray-300); background:var(--gray-50); border-radius:12px; padding:18px; text-align:center; color:var(--gray-500); font-size:11px; line-height:1.5; }
+  .drawer-occ-row { display:grid; grid-template-columns:minmax(0,1fr) 54px; gap:8px; align-items:center; padding:8px 0; border-bottom:1px solid var(--gray-100); }
+  .drawer-occ-row:last-child { border-bottom:0; }
+  .drawer-occ-name { font-size:10.5px; font-weight:650; }
+  .drawer-occ-num { text-align:right; font-size:11px; font-weight:800; }
+  .drawer-occ-bar { grid-column:1/-1; height:5px; border-radius:99px; overflow:hidden; background:var(--gray-100); margin-top:-3px; }
+  .drawer-occ-fill { height:100%; background:var(--warn); border-radius:99px; }
+  .drawer-timeline { position:relative; padding-left:18px; }
+  .drawer-timeline::before { content:""; position:absolute; top:4px; bottom:4px; left:5px; width:1px; background:var(--gray-200); }
+  .timeline-item { position:relative; padding:0 0 15px 6px; }
+  .timeline-item::before { content:""; position:absolute; left:-16px; top:4px; width:7px; height:7px; border-radius:50%; background:var(--pllugo-red); box-shadow:0 0 0 3px #fff,0 0 0 4px var(--gray-200); }
+  .timeline-item strong { display:block; font-size:10.5px; }
+  .timeline-item span { display:block; font-size:9.5px; color:var(--gray-500); margin-top:2px; line-height:1.4; }
+
+  /* Modal legado refinado */
+  #descons-modal { z-index:var(--z-modal-backdrop) !important; background:rgba(20,20,24,.34) !important; backdrop-filter:blur(3px); }
+  #descons-modal > div { border-radius:16px !important; border:1px solid var(--gray-200); box-shadow:0 24px 70px rgba(15,15,17,.18) !important; animation:modalIn var(--motion-slow) var(--ease-enter); }
+  #descons-close-btn, #descons-copy-btn, #descons-open-btn { transition:all var(--motion-base) var(--ease-standard); }
+  #descons-close-btn:hover { color:var(--gray-900) !important; transform:rotate(3deg); }
+  #descons-copy-btn:hover { background:var(--pllugo-red-hover) !important; transform:translateY(-1px); box-shadow:0 7px 18px rgba(240,74,79,.16); }
+  #descons-open-btn:hover { background:#fff7f0 !important; transform:translateY(-1px); }
+  @keyframes modalIn { from{opacity:0;transform:translateY(8px) scale(.985)} to{opacity:1;transform:none} }
+
+  /* Toast */
+  .app-toast-stack { position:fixed; right:20px; bottom:22px; z-index:var(--z-toast); display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+  .app-toast { min-width:250px; max-width:min(390px,88vw); border:1px solid var(--gray-200); background:rgba(255,255,255,.96); backdrop-filter:blur(10px); color:var(--gray-700); border-radius:12px; box-shadow:0 14px 40px rgba(15,15,17,.12); padding:10px 12px; font-size:11px; line-height:1.45; transform:translateY(8px); opacity:0; transition:all var(--motion-slow) var(--ease-enter); }
+  .app-toast.show { transform:none; opacity:1; }
+  .app-toast strong { color:var(--gray-900); }
+
+  /* Loading / shimmer */
+  .ui-skeleton { position:relative; overflow:hidden; background:var(--gray-100) !important; color:transparent !important; border-color:var(--gray-100) !important; }
+  .ui-skeleton::after { content:""; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg,transparent,rgba(255,255,255,.72),transparent); animation:shimmer 1.25s infinite; }
+  @keyframes shimmer { to { transform:translateX(100%); } }
+  .ui-view-enter { animation:viewEnter 220ms var(--ease-enter); }
+  @keyframes viewEnter { from{opacity:.25;transform:translateY(4px)} to{opacity:1;transform:none} }
+  .ui-value-change { animation:valueGlow 620ms ease-out; }
+  @keyframes valueGlow { 0%{background-color:rgba(22,166,109,.09)} 100%{background-color:transparent} }
+
+  /* Scrollbars discretas */
+  * { scrollbar-width:thin; scrollbar-color:#d9d9de transparent; }
+  *::-webkit-scrollbar { width:8px; height:8px; }
+  *::-webkit-scrollbar-thumb { background:#d9d9de; border-radius:99px; border:2px solid transparent; background-clip:padding-box; }
+  *::-webkit-scrollbar-thumb:hover { background:#c6c6cc; border:2px solid transparent; background-clip:padding-box; }
+
+  @media(max-width:1100px){
+    .tower-v2-strip{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .drawer-metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  }
+  @media(max-width:820px){
+    .tower-toolbar{align-items:stretch}
+    .tower-search-box{max-width:none;width:100%;flex-basis:100%}
+    .tower-rule-note{width:100%;margin-left:0}
+  }
+  @media(max-width:560px){
+    .tower-v2-ring-card{padding:13px 9px}
+    .tower-v2-ring{width:78px;height:78px}
+    .tower-v2-copy strong{font-size:21px}
+    .tower-v2-strip{grid-template-columns:1fr 1fr}
+    .app-drawer{width:100vw}
+    .app-drawer-header,.app-drawer-body{padding-left:16px;padding-right:16px}
+    .app-drawer-tabs{padding:0 12px}
+    .drawer-metric-grid{grid-template-columns:1fr 1fr}
+    .drawer-row{grid-template-columns:1fr 1fr}
+    .drawer-row .main{grid-column:1/-1}
+    .app-toast-stack{left:12px;right:12px;bottom:12px}
+    .app-toast{min-width:0;max-width:none;width:100%}
+  }
+  th[data-sort]::after { content:""; display:inline-block; margin-left:5px; color:var(--gray-400); font-size:9px; vertical-align:1px; }
+  th[data-sort].sort-asc::after { content:"↑"; color:var(--pllugo-red); }
+  th[data-sort].sort-desc::after { content:"↓"; color:var(--pllugo-red); }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.001ms !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -570,44 +850,45 @@
         <div><div class="section-title">Torre de Controle — operação em andamento</div><div class="section-sub">Detecta perda de ritmo antes de o motorista se tornar ofensor. A análise depende de snapshots sucessivos do dia.</div></div>
         <div class="tower-freshness" id="tower-freshness">Aguardando dados de hoje</div>
       </div>
-      <div class="tower-v2-cockpit" id="tower-v2-cockpit" aria-label="Cockpit operacional V2">
+      <div class="tower-v2-cockpit" id="tower-v2-cockpit" aria-label="Cockpit operacional">
         <div class="tower-v2-head">
           <div>
             <div class="tower-v2-title">Cockpit operacional</div>
-            <div class="tower-v2-sub">Leitura do dia em rota, sem alterar o SLA oficial.</div>
+            <div class="tower-v2-sub">Leitura do dia em rota, com sinais de risco e fechamento sem alterar o SLA oficial.</div>
           </div>
-          <div class="tower-v2-flag">V2 preview</div>
+          <div class="tower-v2-live">Operação ao vivo</div>
         </div>
         <div class="tower-v2-rings">
-          <div class="tower-v2-ring-card">
-            <div class="tower-v2-ring" id="tower-v2-expedidos-ring"><strong id="tower-v2-expedidos-pct">100%</strong></div>
+          <button type="button" class="tower-v2-ring-card" data-cockpit-drill="expedidos" aria-label="Abrir detalhamento dos expedidos">
+            <div class="tower-v2-ring" id="tower-v2-expedidos-ring"><strong id="tower-v2-expedidos-pct">0%</strong></div>
             <div class="tower-v2-copy"><span>Expedidos</span><strong id="tower-v2-expedidos">0</strong><small id="tower-v2-expedidos-sub">pedidos em rota</small></div>
-          </div>
-          <div class="tower-v2-ring-card delivered">
+          </button>
+          <button type="button" class="tower-v2-ring-card delivered" data-cockpit-drill="entregues" aria-label="Abrir detalhamento dos entregues">
             <div class="tower-v2-ring" id="tower-v2-entregues-ring"><strong id="tower-v2-entregues-pct">0%</strong></div>
             <div class="tower-v2-copy"><span>Entregues</span><strong id="tower-v2-entregues">0</strong><small id="tower-v2-entregues-sub">conclusão sobre expedidos</small></div>
-          </div>
-          <div class="tower-v2-ring-card pending">
+          </button>
+          <button type="button" class="tower-v2-ring-card pending" data-cockpit-drill="pendentes" aria-label="Abrir detalhamento dos pendentes">
             <div class="tower-v2-ring" id="tower-v2-pendentes-ring"><strong id="tower-v2-pendentes-pct">0%</strong></div>
             <div class="tower-v2-copy"><span>Pendentes</span><strong id="tower-v2-pendentes">0</strong><small id="tower-v2-pendentes-sub">ainda em aberto</small></div>
-          </div>
-          <div class="tower-v2-ring-card sla" id="tower-v2-sla-card">
+          </button>
+          <button type="button" class="tower-v2-ring-card sla" id="tower-v2-sla-card" data-cockpit-drill="sla" aria-label="Abrir composição do SLA">
             <div class="tower-v2-ring" id="tower-v2-sla-ring"><strong id="tower-v2-sla-pct">0%</strong></div>
-            <div class="tower-v2-copy"><span>SLA agora</span><strong id="tower-v2-sla">0,0%</strong><small>meta visual 95%</small></div>
-          </div>
+            <div class="tower-v2-copy"><span>SLA agora</span><strong id="tower-v2-sla">0,0%</strong><small>meta operacional 95%</small></div>
+          </button>
         </div>
-        <div class="tower-v2-strip">
-          <div class="tower-v2-mini"><span>Monitorados</span><strong id="tower-v2-monitorados">0</strong></div>
-          <div class="tower-v2-mini"><span>Normal</span><strong id="tower-v2-normal">0</strong></div>
-          <div class="tower-v2-mini"><span>Atenção</span><strong id="tower-v2-atencao">0</strong></div>
-          <div class="tower-v2-mini"><span>Em risco</span><strong id="tower-v2-risco">0</strong></div>
-          <div class="tower-v2-mini"><span>Críticos</span><strong id="tower-v2-criticos">0</strong></div>
-          <div class="tower-v2-mini"><span>SLA projetado</span><strong id="tower-v2-projetado">—</strong></div>
-          <div class="tower-v2-mini"><span>Sob risco</span><strong id="tower-v2-sob-risco">0</strong></div>
-          <div class="tower-v2-mini"><span>Recuperáveis</span><strong id="tower-v2-recuperaveis">—</strong></div>
+        <div class="tower-v2-strip" aria-label="Saúde e inteligência da operação">
+          <button type="button" class="tower-v2-mini" data-cockpit-drill="monitorados"><span>Monitorados</span><strong id="tower-v2-monitorados">0</strong></button>
+          <button type="button" class="tower-v2-mini" data-status="normal"><span>Normal</span><strong id="tower-v2-normal">0</strong></button>
+          <button type="button" class="tower-v2-mini" data-status="attention"><span>Atenção</span><strong id="tower-v2-atencao">0</strong></button>
+          <button type="button" class="tower-v2-mini" data-status="risk"><span>Em risco</span><strong id="tower-v2-risco">0</strong></button>
+          <button type="button" class="tower-v2-mini" data-status="critical"><span>Críticos</span><strong id="tower-v2-criticos">0</strong></button>
+          <button type="button" class="tower-v2-mini" data-cockpit-drill="projetado"><span>SLA projetado</span><strong id="tower-v2-projetado">—</strong></button>
+          <button type="button" class="tower-v2-mini" data-cockpit-drill="sob-risco"><span>Sob risco</span><strong id="tower-v2-sob-risco">0</strong></button>
+          <button type="button" class="tower-v2-mini" data-cockpit-drill="recuperaveis"><span>Recuperáveis</span><strong id="tower-v2-recuperaveis">—</strong></button>
         </div>
       </div>
-      <div class="tower-kpis">
+      <!-- KPIs legados mantidos invisíveis para compatibilidade com a lógica atual -->
+      <div class="tower-kpis" aria-hidden="true">
         <div class="tower-kpi"><span>Monitorados</span><strong id="tower-monitored">0</strong></div>
         <div class="tower-kpi normal"><span>Normal</span><strong id="tower-normal">0</strong></div>
         <div class="tower-kpi attention"><span>Atenção</span><strong id="tower-attention">0</strong></div>
@@ -615,12 +896,16 @@
         <div class="tower-kpi critical"><span>Críticos</span><strong id="tower-critical">0</strong></div>
         <div class="tower-kpi"><span>Pendentes</span><strong id="tower-pending">0</strong></div>
       </div>
-      <div class="tower-toolbar">
-        <input id="tower-search-input" type="text" placeholder="Buscar motorista…" autocomplete="off">
-        <select id="tower-status-filter"><option value="all">Todos os status</option><option value="critical">Críticos</option><option value="risk">Em risco</option><option value="attention">Atenção</option><option value="normal">Normal</option><option value="monitoring">Coletando histórico</option></select>
-        <div class="tower-rule-note">Prioridade = volume pendente + tempo sem evolução + ritmo + projeção.</div>
+      <div class="tower-toolbar" aria-label="Filtros da Torre de Controle">
+        <label class="tower-search-box" for="tower-search-input">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.4-3.4"></path></svg>
+          <input id="tower-search-input" type="text" placeholder="Buscar motorista…" autocomplete="off">
+        </label>
+        <select id="tower-status-filter" aria-label="Filtrar por status"><option value="all">Todos os status</option><option value="critical">Críticos</option><option value="risk">Em risco</option><option value="attention">Atenção</option><option value="normal">Normal</option><option value="monitoring">Coletando histórico</option></select>
+        <button type="button" class="tower-clear-filter" id="tower-clear-filter">Limpar filtros</button>
+        <div class="tower-rule-note" title="A prioridade combina volume pendente, tempo sem evolução, ritmo atual e projeção de fechamento.">Prioridade considera pendência, evolução, ritmo e projeção.</div>
       </div>
-      <div class="tower-list" id="tower-list"></div>
+      <div class="tower-list" id="tower-list" aria-live="polite"></div>
     </div>
 
     <div class="section cause-section" id="cause-section" style="display:none">
@@ -715,6 +1000,26 @@
     Pllugo SLA & Torre de Controle · dados atualizados em <span class="ts" id="gen-ts">—</span> · use o botão <strong>Atualizar Dashboard</strong> no topo pra importar novos relatórios.
   </div>
 </div>
+
+
+<!-- Camada de investigação profissional — drawer reutilizável -->
+<div class="app-drawer-backdrop" id="app-drawer-backdrop" aria-hidden="true"></div>
+<aside class="app-drawer" id="app-drawer" aria-hidden="true" aria-label="Detalhamento operacional">
+  <div class="app-drawer-header">
+    <div class="app-drawer-top">
+      <div>
+        <div class="app-drawer-eyebrow" id="app-drawer-eyebrow">Torre de Controle</div>
+        <div class="app-drawer-title" id="app-drawer-title">Detalhamento</div>
+        <div class="app-drawer-sub" id="app-drawer-sub">—</div>
+      </div>
+      <button type="button" class="app-drawer-close" id="app-drawer-close" aria-label="Fechar painel">×</button>
+    </div>
+    <div class="app-drawer-actions" id="app-drawer-actions"></div>
+  </div>
+  <div class="app-drawer-tabs" id="app-drawer-tabs" style="display:none"></div>
+  <div class="app-drawer-body" id="app-drawer-body"></div>
+</aside>
+<div class="app-toast-stack" id="app-toast-stack" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -1718,7 +2023,7 @@ function slaCategory(sla) {
 
 const TARGET_SLA = 95;
 const OPERATION_END_HOUR = 17;
-const FEATURE_TOWER_V2_UI = new URLSearchParams(location.search).get('tower_v2') === '1';
+const FEATURE_TOWER_V2_UI = new URLSearchParams(location.search).get('tower_v2') === '1'; // preview seguro: use ?tower_v2=1; sem parametro, Torre atual permanece igual
 // Cache em memória da Torre de Controle (snapshots do dia, lidos do Supabase).
 // Só isso fica "guardado localmente" nesse sentido — é só um cache de leitura,
 // recarregado do banco a cada refreshTowerSnapshotsCache(); nada é persistido
@@ -2306,10 +2611,50 @@ function carrierOkForTower(d) {
   if (state.carrier === 'imile') return d.carrier === 'iMile';
   return true;
 }
+const UI_REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const TOWER_RING_STATE = new Map();
+const TOWER_NUMBER_STATE = new Map();
+let TOWER_LAST_VISIBLE = [];
+let TOWER_LAST_ALL = [];
+let TOWER_COCKPIT_SUMMARY = null;
+
+function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+function animateNumericElement(selector, target, opts={}) {
+  const el = $(selector);
+  if (!el) return;
+  const key = selector;
+  const end = Number(target) || 0;
+  const prev = TOWER_NUMBER_STATE.has(key) ? TOWER_NUMBER_STATE.get(key) : (opts.firstFromZero === false ? end : 0);
+  TOWER_NUMBER_STATE.set(key, end);
+  const format = opts.format || (v => fmt(v));
+  if (UI_REDUCED_MOTION || Math.abs(prev-end) < 0.0001) { el.textContent = format(end); return; }
+  const started = performance.now(), duration = opts.duration || 720;
+  const tick = now => {
+    const t = Math.min(1, (now-started)/duration);
+    const v = prev + (end-prev)*easeOutCubic(t);
+    el.textContent = format(v);
+    if (t < 1) requestAnimationFrame(tick); else {
+      el.textContent = format(end);
+      const parent = el.closest('.tower-v2-ring-card,.tower-v2-mini');
+      if (parent) { parent.classList.remove('ui-value-change'); void parent.offsetWidth; parent.classList.add('ui-value-change'); setTimeout(()=>parent.classList.remove('ui-value-change'),650); }
+    }
+  };
+  requestAnimationFrame(tick);
+}
 function setRingValue(id, value) {
   const el = $(id);
   if (!el) return;
-  el.style.setProperty('--value', Math.max(0, Math.min(100, value || 0)));
+  const end = Math.max(0, Math.min(100, Number(value) || 0));
+  const prev = TOWER_RING_STATE.has(id) ? TOWER_RING_STATE.get(id) : 0;
+  TOWER_RING_STATE.set(id, end);
+  if (UI_REDUCED_MOTION || Math.abs(prev-end) < .05) { el.style.setProperty('--value', end); return; }
+  const started=performance.now(), duration=780;
+  const tick=now=>{
+    const t=Math.min(1,(now-started)/duration);
+    el.style.setProperty('--value', prev+(end-prev)*easeOutCubic(t));
+    if(t<1)requestAnimationFrame(tick); else el.style.setProperty('--value',end);
+  };
+  requestAnimationFrame(tick);
 }
 function renderTowerV2Cockpit(all) {
   const cockpit = $('#tower-v2-cockpit');
@@ -2332,51 +2677,170 @@ function renderTowerV2Cockpit(all) {
     if (x.rate == null || !isFinite(x.rate)) return s;
     return s + Math.min(Number(x.pendentes) || 0, Math.max(0, Math.floor((Number(x.rate) || 0) * remainingHours)));
   }, 0);
-  const atRisk = all.filter(x => x.status === 'critical' || x.status === 'risk')
-    .reduce((s, x) => s + (Number(x.pendentes) || 0), 0);
+  const atRisk = all.filter(x => x.status === 'critical' || x.status === 'risk').reduce((s, x) => s + (Number(x.pendentes) || 0), 0);
   const counts = s => all.filter(x => x.status === s).length;
+  TOWER_COCKPIT_SUMMARY = {total,delivered,pending,sla,deliveredPct,pendingPct,projected,recoverable,atRisk,remainingHours,counts:{normal:counts('normal'),attention:counts('attention'),risk:counts('risk'),critical:counts('critical'),monitoring:counts('monitoring')}};
 
-  $('#tower-v2-expedidos').textContent = fmt(total);
-  $('#tower-v2-expedidos-pct').textContent = total ? '100%' : '0%';
+  animateNumericElement('#tower-v2-expedidos', total);
+  animateNumericElement('#tower-v2-expedidos-pct', total ? 100 : 0, {format:v=>Math.round(v)+'%'});
   $('#tower-v2-expedidos-sub').textContent = total ? 'pedidos em rota monitorada' : 'sem rota no filtro';
   setRingValue('#tower-v2-expedidos-ring', total ? 100 : 0);
 
-  $('#tower-v2-entregues').textContent = fmt(delivered);
-  $('#tower-v2-entregues-pct').textContent = deliveredPct.toFixed(0) + '%';
+  animateNumericElement('#tower-v2-entregues', delivered);
+  animateNumericElement('#tower-v2-entregues-pct', deliveredPct, {format:v=>Math.round(v)+'%'});
   $('#tower-v2-entregues-sub').textContent = `${deliveredPct.toFixed(1).replace('.', ',')}% dos expedidos`;
   setRingValue('#tower-v2-entregues-ring', deliveredPct);
 
-  $('#tower-v2-pendentes').textContent = fmt(pending);
-  $('#tower-v2-pendentes-pct').textContent = pendingPct.toFixed(0) + '%';
+  animateNumericElement('#tower-v2-pendentes', pending);
+  animateNumericElement('#tower-v2-pendentes-pct', pendingPct, {format:v=>Math.round(v)+'%'});
   $('#tower-v2-pendentes-sub').textContent = `${pendingPct.toFixed(1).replace('.', ',')}% ainda pendente`;
   setRingValue('#tower-v2-pendentes-ring', pendingPct);
 
   const slaCard = $('#tower-v2-sla-card');
-  if (slaCard) {
-    slaCard.classList.toggle('ok', sla >= TARGET_SLA);
-    slaCard.classList.toggle('warn', sla < TARGET_SLA && sla >= 90);
-  }
-  $('#tower-v2-sla').textContent = sla.toFixed(1).replace('.', ',') + '%';
-  $('#tower-v2-sla-pct').textContent = Math.min(100, Math.round(100 * sla / TARGET_SLA)) + '%';
+  if (slaCard) { slaCard.classList.toggle('ok', sla >= TARGET_SLA); slaCard.classList.toggle('warn', sla < TARGET_SLA && sla >= 90); }
+  animateNumericElement('#tower-v2-sla', sla, {format:v=>v.toFixed(1).replace('.',',')+'%'});
+  animateNumericElement('#tower-v2-sla-pct', total ? Math.min(100,100*sla/TARGET_SLA) : 0, {format:v=>Math.round(v)+'%'});
   setRingValue('#tower-v2-sla-ring', total ? Math.min(100, 100 * sla / TARGET_SLA) : 0);
 
-  $('#tower-v2-monitorados').textContent = fmt(all.length);
-  $('#tower-v2-normal').textContent = fmt(counts('normal'));
-  $('#tower-v2-atencao').textContent = fmt(counts('attention'));
-  $('#tower-v2-risco').textContent = fmt(counts('risk'));
-  $('#tower-v2-criticos').textContent = fmt(counts('critical'));
-  $('#tower-v2-projetado').textContent = projected == null ? '—' : projected.toFixed(1).replace('.', ',') + '%';
-  $('#tower-v2-sob-risco').textContent = fmt(atRisk);
-  $('#tower-v2-recuperaveis').textContent = projectedRows.length ? fmt(recoverable) : '—';
+  animateNumericElement('#tower-v2-monitorados', all.length);
+  animateNumericElement('#tower-v2-normal', counts('normal'));
+  animateNumericElement('#tower-v2-atencao', counts('attention'));
+  animateNumericElement('#tower-v2-risco', counts('risk'));
+  animateNumericElement('#tower-v2-criticos', counts('critical'));
+  if (projected == null) $('#tower-v2-projetado').textContent='—'; else animateNumericElement('#tower-v2-projetado', projected, {format:v=>v.toFixed(1).replace('.',',')+'%'});
+  animateNumericElement('#tower-v2-sob-risco', atRisk);
+  if (!projectedRows.length) $('#tower-v2-recuperaveis').textContent='—'; else animateNumericElement('#tower-v2-recuperaveis', recoverable);
 }
 function renderTower(){
-  const list=$('#tower-list'); if(!list)return; let data=buildTowerAnalysis(); const q=($('#tower-search-input')?.value||'').toLowerCase(),sf=$('#tower-status-filter')?.value||'all'; data=data.filter(d=>carrierOkForTower(d)&&(!q||d.name.toLowerCase().includes(q)||String(d.carrier||'').toLowerCase().includes(q))&&(sf==='all'||d.status===sf));
-  const all=buildTowerAnalysis().filter(carrierOkForTower); const counts=s=>all.filter(x=>x.status===s).length; $('#tower-monitored').textContent=fmt(all.length); $('#tower-normal').textContent=fmt(counts('normal')); $('#tower-attention').textContent=fmt(counts('attention')); $('#tower-risk').textContent=fmt(counts('risk')); $('#tower-critical').textContent=fmt(counts('critical')); $('#tower-pending').textContent=fmt(all.reduce((s,x)=>s+x.pendentes,0));
+  const list=$('#tower-list'); if(!list)return;
+  let data=buildTowerAnalysis();
+  const q=($('#tower-search-input')?.value||'').toLowerCase(),sf=$('#tower-status-filter')?.value||'all';
+  data=data.filter(d=>carrierOkForTower(d)&&(!q||d.name.toLowerCase().includes(q)||String(d.carrier||'').toLowerCase().includes(q))&&(sf==='all'||d.status===sf));
+  const all=buildTowerAnalysis().filter(carrierOkForTower);
+  TOWER_LAST_VISIBLE=data; TOWER_LAST_ALL=all;
+  const counts=s=>all.filter(x=>x.status===s).length;
+  $('#tower-monitored').textContent=fmt(all.length); $('#tower-normal').textContent=fmt(counts('normal')); $('#tower-attention').textContent=fmt(counts('attention')); $('#tower-risk').textContent=fmt(counts('risk')); $('#tower-critical').textContent=fmt(counts('critical')); $('#tower-pending').textContent=fmt(all.reduce((s,x)=>s+x.pendentes,0));
   renderTowerV2Cockpit(all);
-  const badge=counts('critical')+counts('risk'); $('#nav-alert-badge').textContent=badge; $('#nav-alert-badge').style.display=badge?'inline-flex':'none'; $('#tower-freshness').textContent=towerSnapshots().length>=2?'Comparando snapshots do dia':'Aguardando pelo menos 2 atualizações do dia';
-  if(!data.length){list.innerHTML='<div class="neutral-empty">Sem alertas para os filtros atuais. Para medir evolução real, importe/atualize o relatório mais de uma vez ao longo do dia.</div>';return;}
-  list.innerHTML=data.map(d=>`<div class="tower-driver ${d.status}"><div class="tower-name-wrap"><div class="tower-name">${escapeHTML(d.name)}</div><div class="tower-sub">${d.unit?unitLabel(d.unit):'Unidade não identificada'} · ${escapeHTML(d.carrier||'Pllugo')} · risco ${d.score}/100</div></div><div class="tower-metric"><span>OFD</span><strong>${fmt(d.total)}</strong></div><div class="tower-metric"><span>Pendentes</span><strong class="${d.pendentes>30?'bad':''}">${fmt(d.pendentes)}</strong></div><div class="tower-metric tower-hide-sm"><span>Sem evolução</span><strong>${d.noProgress==null?'—':Math.round(d.noProgress)+' min'}</strong></div><div class="tower-metric tower-hide-md"><span>Ritmo atual</span><strong>${d.rate==null?'—':d.rate.toFixed(1).replace('.',',')+'/h'}</strong></div><div class="tower-metric tower-hide-md"><span>Projeção</span><strong class="${d.projected!=null&&d.projected<TARGET_SLA?'bad':''}">${d.projected==null?'—':d.projected.toFixed(1).replace('.',',')+'%'}</strong></div><div class="tower-status ${d.status}">${towerStatusLabel(d.status)}</div></div>`).join('');
+  const badge=counts('critical')+counts('risk'); $('#nav-alert-badge').textContent=badge; $('#nav-alert-badge').style.display=badge?'inline-flex':'none';
+  $('#tower-freshness').textContent=towerSnapshots().length>=2?'Comparando snapshots do dia':'Aguardando pelo menos 2 atualizações';
+  $$('.tower-v2-mini[data-status]').forEach(el=>el.classList.toggle('is-active-filter', sf===el.dataset.status));
+  if(!data.length){list.innerHTML='<div class="neutral-empty">Nenhum motorista corresponde aos filtros atuais. Para medir evolução real, importe/atualize o relatório mais de uma vez ao longo do dia.</div>';return;}
+  list.innerHTML=data.map((d,i)=>`<button type="button" class="tower-driver ${d.status}" data-tower-index="${i}" aria-label="Abrir análise de ${escapeHTML(d.name)}"><div class="tower-name-wrap"><div class="tower-name">${escapeHTML(d.name)}</div><div class="tower-sub">${d.unit?unitLabel(d.unit):'Unidade não identificada'} · ${escapeHTML(d.carrier||'Pllugo')} · risco ${d.score}/100</div></div><div class="tower-metric"><span>OFD</span><strong>${fmt(d.total)}</strong></div><div class="tower-metric"><span>Pendentes</span><strong class="${d.pendentes>30?'bad':''}">${fmt(d.pendentes)}</strong></div><div class="tower-metric tower-hide-sm"><span>Sem evolução</span><strong>${d.noProgress==null?'—':Math.round(d.noProgress)+' min'}</strong></div><div class="tower-metric tower-hide-md"><span>Ritmo atual</span><strong>${d.rate==null?'—':d.rate.toFixed(1).replace('.',',')+'/h'}</strong></div><div class="tower-metric tower-hide-md"><span>Projeção</span><strong class="${d.projected!=null&&d.projected<TARGET_SLA?'bad':''}">${d.projected==null?'—':d.projected.toFixed(1).replace('.',',')+'%'}</strong></div><div class="tower-status ${d.status}">${towerStatusLabel(d.status)}</div></button>`).join('');
 }
+
+/* ===== Drill-down profissional da Torre ===== */
+let DRAWER_CONTEXT={type:null,driver:null,tab:'agora'};
+function showToast(message,title='Pllugo'){
+  const stack=$('#app-toast-stack'); if(!stack)return;
+  const el=document.createElement('div'); el.className='app-toast'; el.innerHTML=`<strong>${escapeHTML(title)}</strong><br>${escapeHTML(message)}`; stack.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300)},3200);
+}
+function openDrawer({eyebrow='Torre de Controle',title='Detalhamento',sub='',actions='',tabs='',body=''}){
+  $('#app-drawer-eyebrow').textContent=eyebrow; $('#app-drawer-title').textContent=title; $('#app-drawer-sub').textContent=sub||'—';
+  $('#app-drawer-actions').innerHTML=actions||''; $('#app-drawer-body').innerHTML=body||'';
+  const tabsEl=$('#app-drawer-tabs'); tabsEl.innerHTML=tabs||''; tabsEl.style.display=tabs?'flex':'none';
+  $('#app-drawer').classList.add('open'); $('#app-drawer-backdrop').classList.add('open'); $('#app-drawer').setAttribute('aria-hidden','false'); $('#app-drawer-backdrop').setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden'; setTimeout(()=>$('#app-drawer-close')?.focus(),30);
+}
+function closeDrawer(){ $('#app-drawer').classList.remove('open'); $('#app-drawer-backdrop').classList.remove('open'); $('#app-drawer').setAttribute('aria-hidden','true'); $('#app-drawer-backdrop').setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+function metricCard(label,value,cls=''){return `<div class="drawer-metric ${cls}"><span>${escapeHTML(label)}</span><strong>${escapeHTML(String(value))}</strong></div>`;}
+function driverRowsHtml(rows, mode='pending'){
+  if(!rows.length)return '<div class="drawer-empty">Nenhum dado para este recorte.</div>';
+  return `<div class="drawer-list">${rows.map(d=>`<div class="drawer-row"><div class="main"><strong>${escapeHTML(d.name)}</strong><small>${d.unit?unitLabel(d.unit):'Unidade não identificada'} · ${escapeHTML(d.carrier||'Pllugo')} · ${towerStatusLabel(d.status)}</small></div><div class="drawer-cell"><span>OFD</span><strong>${fmt(d.total)}</strong></div><div class="drawer-cell"><span>Pendentes</span><strong>${fmt(d.pendentes)}</strong></div><div class="drawer-cell"><span>${mode==='delivered'?'Entregues':'Projeção'}</span><strong>${mode==='delivered'?fmt(d.delivered):(d.projected==null?'—':d.projected.toFixed(1).replace('.',',')+'%')}</strong></div></div>`).join('')}</div>`;
+}
+function openCockpitDrill(type){
+  const all=TOWER_LAST_ALL||[], s=TOWER_COCKPIT_SUMMARY||{};
+  let title='Visão operacional',sub='Detalhamento do recorte atual',body='';
+  if(type==='expedidos'){title='Pedidos expedidos';sub=`${fmt(s.total||0)} pedidos em rota monitorada`;body=`<div class="drawer-metric-grid">${metricCard('Expedidos',fmt(s.total||0))}${metricCard('Entregues',fmt(s.delivered||0))}${metricCard('Pendentes',fmt(s.pending||0))}</div><div class="drawer-section"><div class="drawer-section-title">Distribuição por motorista <span>${all.length}</span></div>${driverRowsHtml([...all].sort((a,b)=>b.total-a.total))}</div>`;}
+  else if(type==='entregues'){title='Entregas concluídas';sub=`${(s.deliveredPct||0).toFixed(1).replace('.',',')}% dos expedidos já concluídos`;body=`<div class="drawer-metric-grid">${metricCard('Entregues',fmt(s.delivered||0))}${metricCard('Expedidos',fmt(s.total||0))}${metricCard('Conclusão',(s.deliveredPct||0).toFixed(1).replace('.',',')+'%')}</div><div class="drawer-section"><div class="drawer-section-title">Maiores volumes concluídos</div>${driverRowsHtml([...all].sort((a,b)=>b.delivered-a.delivered),'delivered')}</div>`;}
+  else if(type==='pendentes'){title='Pendências da operação';sub=`${fmt(s.pending||0)} pedidos ainda em aberto`;body=`<div class="drawer-metric-grid">${metricCard('Pendentes',fmt(s.pending||0))}${metricCard('Sob risco',fmt(s.atRisk||0))}${metricCard('Recuperáveis',fmt(s.recoverable||0))}</div><div class="drawer-section"><div class="drawer-section-title">Prioridade por motorista</div>${driverRowsHtml([...all].sort((a,b)=>b.score-a.score||b.pendentes-a.pendentes))}</div><div class="drawer-section"><div class="drawer-insight"><strong>Profundidade por pedido</strong><br>Quando a tabela <code>operational_orders</code> estiver disponível no Supabase, este mesmo painel passa a abrir o tracking individual sem alterar a lógica oficial de SLA.</div></div>`;}
+  else if(type==='sla'){const needed=Math.max(0,Math.ceil((s.total||0)*TARGET_SLA/100-(s.delivered||0)));title='Composição do SLA';sub='Leitura atual do fechamento operacional';body=`<div class="drawer-metric-grid">${metricCard('SLA atual',(s.sla||0).toFixed(1).replace('.',',')+'%')}${metricCard('Meta',TARGET_SLA+'%')}${metricCard('SLA projetado',s.projected==null?'—':s.projected.toFixed(1).replace('.',',')+'%')}${metricCard('Entregues',fmt(s.delivered||0))}${metricCard('Pendentes',fmt(s.pending||0))}${metricCard('Entregas p/ meta',fmt(needed))}</div><div class="drawer-section"><div class="drawer-insight"><strong>Importante</strong><br>O SLA projetado é um indicador de apoio à decisão. Ele não substitui o SLA oficial calculado pelas regras já consolidadas da ferramenta.</div></div>`;}
+  else if(type==='monitorados'){title='Motoristas monitorados';sub=`${all.length} motoristas presentes no snapshot atual`;body=driverRowsHtml(all);}
+  else if(type==='projetado'){title='SLA projetado';sub=s.projected==null?'Aguardando evolução suficiente para projetar':`Fechamento estimado em ${s.projected.toFixed(1).replace('.',',')}%`;body=`<div class="drawer-metric-grid">${metricCard('Atual',(s.sla||0).toFixed(1).replace('.',',')+'%')}${metricCard('Projetado',s.projected==null?'—':s.projected.toFixed(1).replace('.',',')+'%')}${metricCard('Meta',TARGET_SLA+'%')}</div><div class="drawer-section"><div class="drawer-section-title">Motoristas com projeção disponível</div>${driverRowsHtml(all.filter(d=>d.projected!=null).sort((a,b)=>(a.projected??999)-(b.projected??999)))}</div>`;}
+  else if(type==='sob-risco'){const risk=all.filter(d=>d.status==='critical'||d.status==='risk').sort((a,b)=>b.score-a.score);title='Pedidos sob risco';sub=`${fmt(s.atRisk||0)} pendências concentradas em motoristas em risco ou críticos`;body=`<div class="drawer-metric-grid">${metricCard('Sob risco',fmt(s.atRisk||0))}${metricCard('Motoristas',risk.length)}${metricCard('Pendentes total',fmt(s.pending||0))}</div><div class="drawer-section"><div class="drawer-section-title">Onde atuar primeiro</div>${driverRowsHtml(risk)}</div>`;}
+  else if(type==='recuperaveis'){title='Estimativa de recuperabilidade';sub=`${fmt(s.recoverable||0)} pedidos potencialmente concluíveis no tempo restante`;body=`<div class="drawer-metric-grid">${metricCard('Recuperáveis',fmt(s.recoverable||0))}${metricCard('Tempo restante',(s.remainingHours||0).toFixed(1).replace('.',',')+' h')}${metricCard('Pendentes',fmt(s.pending||0))}</div><div class="drawer-section"><div class="drawer-insight"><strong>Como ler</strong><br>É uma estimativa matemática baseada no ritmo observado e no tempo restante até o encerramento operacional. Não é uma previsão geográfica individual de entrega.</div></div>`;}
+  DRAWER_CONTEXT={type,driver:null,tab:'agora'}; openDrawer({title,sub,body});
+}
+function towerDriverHistory(driver){
+  const unitHistory=driver.unit?historyForUnit(driver.unit):DASH_DATA.history;
+  const hist=[...unitHistory].filter(h=>h.date<=saoPauloToday()).sort((a,b)=>a.date.localeCompare(b.date)).slice(-30);
+  const carrier=driver.carrier==='J&T'?'jt':driver.carrier==='iMile'?'imile':'pllugo';
+  const rows=driversForCarrier(carrier,hist,{operationalJt:true});
+  return rows.find(x=>normalizeDriverName(x.name)===normalizeDriverName(driver.name))||null;
+}
+function renderDriverTab(tab){
+  const d=DRAWER_CONTEXT.driver; if(!d)return; DRAWER_CONTEXT.tab=tab;
+  $$('.app-drawer-tab').forEach(b=>b.classList.toggle('active',b.dataset.drawerTab===tab));
+  const body=$('#app-drawer-body');
+  if(tab==='agora'){
+    const actualSla=d.total?round1(100*d.delivered/d.total):0;
+    body.innerHTML=`<div class="drawer-metric-grid">${metricCard('OFD',fmt(d.total))}${metricCard('Entregues',fmt(d.delivered))}${metricCard('Pendentes',fmt(d.pendentes))}${metricCard('SLA atual',actualSla.toFixed(1).replace('.',',')+'%')}${metricCard('Risk Score',d.score+'/100')}${metricCard('Status',towerStatusLabel(d.status))}${metricCard('Sem evolução',d.noProgress==null?'—':Math.round(d.noProgress)+' min')}${metricCard('Ritmo atual',d.rate==null?'—':d.rate.toFixed(1).replace('.',',')+'/h')}${metricCard('Ritmo necessário',d.neededRate==null?'—':d.neededRate.toFixed(1).replace('.',',')+'/h')}${metricCard('Projeção',d.projected==null?'—':d.projected.toFixed(1).replace('.',',')+'%')}</div><div class="drawer-section"><div class="drawer-insight"><strong>Leitura operacional</strong><br>${d.status==='critical'?'Intervenção prioritária recomendada.':d.status==='risk'?'Requer acompanhamento próximo e possível intervenção.':d.status==='attention'?'Monitorar evolução nas próximas atualizações.':'Operação dentro dos parâmetros atuais.'}</div></div>`;
+  } else if(tab==='historico'){
+    const h=towerDriverHistory(d);
+    if(!h){body.innerHTML='<div class="drawer-empty">Base histórica insuficiente para este motorista.</div>';return;}
+    const hist=[...(h.dailyHistory||[])].sort((a,b)=>a.date.localeCompare(b.date)); const slas=hist.map(x=>x.sla).filter(Number.isFinite); const vols=hist.map(x=>Number(x.total)||0).sort((a,b)=>a-b); const p50=vols.length?vols[Math.floor((vols.length-1)*.5)]:0; const p75=vols.length?vols[Math.floor((vols.length-1)*.75)]:0; const best=slas.length?Math.max(...slas):null,worst=slas.length?Math.min(...slas):null;
+    body.innerHTML=`<div class="drawer-metric-grid">${metricCard('SLA 30d',h.sla.toFixed(1).replace('.',',')+'%')}${metricCard('Dias',h.days)}${metricCard('Volume',fmt(h.total))}${metricCard('P50 volume',fmt(p50))}${metricCard('P75 volume',fmt(p75))}${metricCard('Melhor SLA',best==null?'—':best.toFixed(1).replace('.',',')+'%')}${metricCard('Pior SLA',worst==null?'—':worst.toFixed(1).replace('.',',')+'%')}${metricCard('Pendentes',fmt(h.pendentes))}</div><div class="drawer-section"><div class="drawer-section-title">Últimos dias</div>${hist.slice(-12).reverse().map(x=>`<div class="drawer-row"><div class="main"><strong>${x.date.split('-').reverse().join('/')}</strong><small>histórico do motorista</small></div><div class="drawer-cell"><span>Volume</span><strong>${fmt(x.total)}</strong></div><div class="drawer-cell"><span>Entregues</span><strong>${fmt(x.delivered)}</strong></div><div class="drawer-cell"><span>SLA</span><strong>${x.sla.toFixed(1).replace('.',',')}%</strong></div></div>`).join('')}</div>`;
+  } else if(tab==='ocorrencias'){
+    const h=towerDriverHistory(d), entries=Object.entries((h&&h.occurrences)||{}).filter(([,v])=>Number(v)>0).sort((a,b)=>b[1]-a[1]);
+    if(!entries.length){body.innerHTML='<div class="drawer-empty">Sem ocorrências categorizadas para este motorista no histórico disponível.</div>';return;}
+    const max=Math.max(...entries.map(([,v])=>Number(v)||0)); body.innerHTML=`<div class="drawer-section"><div class="drawer-section-title">Pareto de ocorrências</div>${entries.map(([k,v])=>`<div class="drawer-occ-row"><div class="drawer-occ-name">${escapeHTML(k)}</div><div class="drawer-occ-num">${fmt(v)}</div><div class="drawer-occ-bar"><div class="drawer-occ-fill" style="width:${Math.max(4,100*v/max)}%"></div></div></div>`).join('')}</div>`;
+  } else if(tab==='pedidos'){
+    body.innerHTML='<div class="drawer-empty"><strong>Consultando detalhamento por pedido…</strong><br>Esta consulta é carregada somente quando necessária.</div>'; loadDriverOrders(d);
+  } else if(tab==='intervencoes'){
+    body.innerHTML='<div class="drawer-empty"><strong>Consultando intervenções…</strong><br>Esta consulta é carregada somente quando necessária.</div>'; loadDriverInterventions(d);
+  }
+}
+async function loadDriverOrders(d){
+  const body=$('#app-drawer-body'); if(!sb){body.innerHTML='<div class="drawer-empty">Supabase indisponível neste momento.</div>';return;}
+  try{
+    const key=normalizeDriverName(d.name); const {data,error}=await sb.from('operational_orders').select('tracking_number,order_number,operational_status,occurrence_type,ofd_at,delivered_at,unit,source').eq('operational_date',saoPauloToday()).eq('driver_key',key).limit(100);
+    if(error)throw error; const rows=data||[];
+    if(!rows.length){body.innerHTML='<div class="drawer-empty">Nenhum pedido granular encontrado para este motorista no dia. A fonte pode estar disponível apenas de forma agregada.</div>';return;}
+    body.innerHTML=`<div class="drawer-section"><div class="drawer-section-title">Pedidos do motorista <span>até 100 registros</span></div><div class="drawer-list">${rows.map(r=>`<div class="drawer-row"><div class="main"><strong>${escapeHTML(r.tracking_number||r.order_number||'Pedido')}</strong><small>${escapeHTML(r.operational_status||'status não informado')} ${r.occurrence_type?'· '+escapeHTML(r.occurrence_type):''}</small></div><div class="drawer-cell"><span>OFD</span><strong>${r.ofd_at?new Date(r.ofd_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—'}</strong></div><div class="drawer-cell"><span>Entrega</span><strong>${r.delivered_at?new Date(r.delivered_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—'}</strong></div><div class="drawer-cell"><span>Fonte</span><strong>${escapeHTML(r.source||d.carrier)}</strong></div></div>`).join('')}</div></div>`;
+  }catch(e){body.innerHTML='<div class="drawer-empty"><strong>Detalhamento por pedido ainda não está conectado nesta versão.</strong><br>A interface já está preparada para <code>operational_orders</code> sem interferir no SLA atual.</div>';}
+}
+async function loadDriverInterventions(d){
+  const body=$('#app-drawer-body'); if(!sb){body.innerHTML='<div class="drawer-empty">Supabase indisponível neste momento.</div>';return;}
+  try{
+    const {data,error}=await sb.from('driver_interventions').select('*').eq('operational_date',saoPauloToday()).eq('driver_key',normalizeDriverName(d.name)).order('created_at',{ascending:false}).limit(50); if(error)throw error; const rows=data||[];
+    if(!rows.length){body.innerHTML='<div class="drawer-empty">Nenhuma intervenção registrada hoje para este motorista.</div>';return;}
+    body.innerHTML=`<div class="drawer-timeline">${rows.map(r=>`<div class="timeline-item"><strong>${r.created_at?new Date(r.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—'} · ${escapeHTML(r.actor_name_snapshot||'Usuário')}</strong><span>${escapeHTML(r.action_type||r.channel||'Intervenção')} ${r.reason?'· '+escapeHTML(r.reason):''}${r.status?' · '+escapeHTML(r.status):''}</span></div>`).join('')}</div>`;
+  }catch(e){body.innerHTML='<div class="drawer-empty"><strong>Histórico de intervenções ainda não está conectado nesta versão.</strong><br>A interface está pronta para a tabela <code>driver_interventions</code>.</div>';}
+}
+function openDriverDrawer(d){
+  DRAWER_CONTEXT={type:'driver',driver:d,tab:'agora'};
+  const tabs=['agora','historico','pedidos','ocorrencias','intervencoes'].map((x,i)=>`<button type="button" class="app-drawer-tab ${i===0?'active':''}" data-drawer-tab="${x}">${x==='agora'?'Agora':x==='historico'?'Histórico':x==='pedidos'?'Pedidos':x==='ocorrencias'?'Ocorrências':'Intervenções'}</button>`).join('');
+  const actions=`<button type="button" class="app-btn primary" id="drawer-whatsapp-btn">Acionar via WhatsApp</button><button type="button" class="app-btn secondary" id="drawer-filter-driver-btn">Filtrar na Torre</button>`;
+  openDrawer({eyebrow:'Análise de motorista',title:d.name,sub:`${d.unit?unitLabel(d.unit):'Unidade não identificada'} · ${d.carrier||'Pllugo'} · ${towerStatusLabel(d.status)} · risco ${d.score}/100`,actions,tabs,body:''});
+  renderDriverTab('agora');
+}
+async function openWhatsAppForDriver(d){
+  if(!sb){showToast('Supabase indisponível para consultar o cadastro do motorista.','WhatsApp');return;}
+  try{
+    const {data,error}=await sb.from('driver_profiles').select('phone_e164,whatsapp_enabled,display_name').eq('driver_key',normalizeDriverName(d.name)).limit(1); if(error)throw error;
+    const profile=data&&data[0]; if(!profile||!profile.phone_e164){showToast('Telefone ainda não cadastrado para este motorista.','WhatsApp');return;}
+    const msg=`Olá, ${profile.display_name||d.name}. Aqui é a Torre de Controle Pllugo. Identificamos ${d.pendentes} pedidos pendentes${d.noProgress!=null?` e ${Math.round(d.noProgress)} minutos sem evolução`:''}. Como está a operação? Precisamos de uma atualização para acompanhar o fechamento de hoje.`;
+    let actor=null; try{const {data:u}=await sb.auth.getUser();actor=u&&u.user;}catch(e){}
+    if(actor){try{await sb.from('driver_interventions').insert([{operational_date:saoPauloToday(),driver_key:normalizeDriverName(d.name),driver_name_snapshot:d.name,unit:d.unit||null,carrier:d.carrier||null,action_type:'whatsapp_contact',channel:'whatsapp',reason:'tower_contact',message:msg,tower_status:d.status,risk_score:d.score,pending_count:d.pendentes,sla_projected:d.projected, no_progress_minutes:d.noProgress, actor_user_id:actor.id, actor_name_snapshot:actor.email||'Usuário', status:'initiated'}]);}catch(e){console.warn('Não foi possível registrar intervenção:',e);}}
+    window.open(`https://wa.me/${String(profile.phone_e164).replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`,'_blank','noopener'); showToast(actor?'Acionamento aberto e registro solicitado.':'WhatsApp aberto. Faça login para registrar a autoria da intervenção.','WhatsApp');
+  }catch(e){showToast('Cadastro de WhatsApp ainda não está conectado nesta versão.','WhatsApp');}
+}
+function animatePrimaryView(){
+  const candidates=['#hero-section','#operation-section','#tower-section','#cause-section','#overview-grid'];
+  for(const sel of candidates){const el=$(sel); if(el&&getComputedStyle(el).display!=='none'){el.classList.remove('ui-view-enter');void el.offsetWidth;el.classList.add('ui-view-enter');setTimeout(()=>el.classList.remove('ui-view-enter'),300);}}
+}
+function installMatureInteractions(){
+  $('#app-drawer-close')?.addEventListener('click',closeDrawer); $('#app-drawer-backdrop')?.addEventListener('click',closeDrawer);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#app-drawer')?.classList.contains('open'))closeDrawer();});
+  $('#tower-v2-cockpit')?.addEventListener('click',e=>{const status=e.target.closest('[data-status]'); if(status){$('#tower-status-filter').value=status.dataset.status; renderTower(); showToast(`Filtro aplicado: ${towerStatusLabel(status.dataset.status)}.`,'Torre de Controle'); return;} const drill=e.target.closest('[data-cockpit-drill]'); if(drill)openCockpitDrill(drill.dataset.cockpitDrill);});
+  $('#tower-list')?.addEventListener('click',e=>{const row=e.target.closest('.tower-driver'); if(!row)return; const d=TOWER_LAST_VISIBLE[Number(row.dataset.towerIndex)]; if(d)openDriverDrawer(d);});
+  $('#app-drawer-tabs')?.addEventListener('click',e=>{const b=e.target.closest('[data-drawer-tab]');if(b)renderDriverTab(b.dataset.drawerTab);});
+  $('#app-drawer-actions')?.addEventListener('click',e=>{if(e.target.closest('#drawer-whatsapp-btn')&&DRAWER_CONTEXT.driver)openWhatsAppForDriver(DRAWER_CONTEXT.driver); if(e.target.closest('#drawer-filter-driver-btn')&&DRAWER_CONTEXT.driver){$('#tower-search-input').value=DRAWER_CONTEXT.driver.name;closeDrawer();renderTower();showToast('Motorista isolado na Torre.','Filtro');}});
+  $('#tower-clear-filter')?.addEventListener('click',()=>{$('#tower-search-input').value='';$('#tower-status-filter').value='all';renderTower();showToast('Filtros da Torre removidos.','Torre de Controle');});
+  if(window.Chart){Chart.defaults.animation.duration=UI_REDUCED_MOTION?0:650;Chart.defaults.animation.easing='easeOutQuart';Chart.defaults.interaction.mode='nearest';Chart.defaults.interaction.intersect=false;}
+}
+
 function playAlertTone(){if(!soundAlertsEnabled)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.connect(gain);gain.connect(ctx.destination);osc.frequency.value=720;gain.gain.value=.035;osc.start();setTimeout(()=>{osc.stop();ctx.close()},180)}catch(e){}}
 async function detectTowerEscalations(){
   if (!sb) return;
@@ -2710,6 +3174,7 @@ function selectMode(m) {
   $$('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
   $$('.operation-subtab').forEach(t => t.classList.toggle('active', t.dataset.opView === state.operationView));
   refresh();
+  animatePrimaryView();
 }
 
 function selectOperationView(v) {
@@ -2717,6 +3182,7 @@ function selectOperationView(v) {
   state.selectedDriver = null;
   $$('.operation-subtab').forEach(t => t.classList.toggle('active', t.dataset.opView === v));
   refresh();
+  animatePrimaryView();
 }
 
 function selectCarrier(c) {
@@ -2724,6 +3190,7 @@ function selectCarrier(c) {
   state.selectedDriver = null;
   $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.carrier === c));
   refresh();
+  animatePrimaryView();
 }
 
 function selectPeriod(p) {
@@ -2750,6 +3217,7 @@ function selectPeriod(p) {
     state.customEnd = '';
   }
   refresh();
+  animatePrimaryView();
 }
 
 $$('.tab').forEach(t => t.addEventListener('click', () => {
@@ -2776,6 +3244,7 @@ $('#unit-filter').addEventListener('change', e => {
     }
   }
   refresh();
+  animatePrimaryView();
 });
 $('#tower-search-input').addEventListener('input', renderTower);
 $('#tower-status-filter').addEventListener('change', renderTower);
@@ -2784,12 +3253,22 @@ $('#btn-sound-alerts').addEventListener('click',()=>{soundAlertsEnabled=!soundAl
 $('#date-start').addEventListener('change', e => { state.customStart = e.target.value; $('#date-end').min = e.target.value; refresh(); });
 $('#date-end').addEventListener('change', e => { state.customEnd = e.target.value; $('#date-start').max = e.target.value; refresh(); });
 $('#driver-search-input').addEventListener('input', () => refresh());
+function updateSortIndicators(){
+  $$('th[data-sort]').forEach(th=>{
+    const active=th.dataset.sort===state.sort.col;
+    th.classList.toggle('sort-asc',active&&state.sort.dir==='asc');
+    th.classList.toggle('sort-desc',active&&state.sort.dir==='desc');
+    th.setAttribute('aria-sort',active?(state.sort.dir==='asc'?'ascending':'descending'):'none');
+  });
+}
 $$('th[data-sort]').forEach(th => th.addEventListener('click', () => {
   const col = th.dataset.sort;
   if (state.sort.col === col) state.sort.dir = state.sort.dir === 'asc' ? 'desc' : 'asc';
   else { state.sort.col = col; state.sort.dir = 'desc'; }
+  updateSortIndicators();
   refresh();
 }));
+updateSortIndicators();
 
 // Chamado no carregamento da página (depois do fetch inicial no Supabase) e
 // de novo depois de cada "Atualizar Dashboard" bem-sucedido.
@@ -2821,6 +3300,8 @@ $('#upload-input').addEventListener('change', (e) => {
   e.target.value = ''; // permite selecionar os mesmos arquivos de novo depois
 });
 
+installMatureInteractions();
+
 (async function boot() {
   if (!sb) {
     setImportStatus('Supabase não configurado ainda — edite SUPABASE_URL/SUPABASE_ANON_KEY no topo do arquivo (veja o README) e recarregue a página.', 'err');
@@ -2848,7 +3329,6 @@ $('#upload-input').addEventListener('change', (e) => {
 <script src="assets/gael/gael.js" defer></script>
 </body>
 </html>
-
 
 
 
