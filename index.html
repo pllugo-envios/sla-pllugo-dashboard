@@ -2023,7 +2023,7 @@ function slaCategory(sla) {
 
 const TARGET_SLA = 95;
 const OPERATION_END_HOUR = 17;
-const FEATURE_TOWER_V2_UI = new URLSearchParams(location.search).get('tower_v2') === '1'; // preview seguro: use ?tower_v2=1; sem parametro, Torre atual permanece igual
+const FEATURE_TOWER_V2_UI = new URLSearchParams(location.search).get('tower_v2') !== '0'; // V2 ativa no link oficial; use ?tower_v2=0 para rollback visual temporario
 // Cache em memória da Torre de Controle (snapshots do dia, lidos do Supabase).
 // Só isso fica "guardado localmente" nesse sentido — é só um cache de leitura,
 // recarregado do banco a cada refreshTowerSnapshotsCache(); nada é persistido
@@ -3329,7 +3329,6 @@ installMatureInteractions();
 <script src="assets/gael/gael.js" defer></script>
 </body>
 </html>
-
 
 
 
