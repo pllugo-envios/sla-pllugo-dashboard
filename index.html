@@ -578,6 +578,44 @@
   .timeline-item strong { display:block; font-size:10.5px; }
   .timeline-item span { display:block; font-size:9.5px; color:var(--gray-500); margin-top:2px; line-height:1.4; }
 
+  /* Gestão de Base */
+  .base-intel-strip { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:12px; }
+  .base-intel-card { appearance:none; border:1px solid var(--gray-200); background:#fff; border-radius:12px; padding:13px 14px; text-align:left; font-family:inherit; color:inherit; cursor:pointer; display:flex; flex-direction:column; gap:5px; min-width:0; transition:all var(--motion-base) var(--ease-standard); }
+  .base-intel-card:hover { transform:translateY(-1px); border-color:var(--gray-300); box-shadow:0 8px 22px rgba(15,15,17,.06); }
+  .base-intel-card span { font-size:9px; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-400); font-weight:800; }
+  .base-intel-card strong { font-size:22px; line-height:1; color:var(--gray-900); font-variant-numeric:tabular-nums; }
+  .base-intel-card small { font-size:10px; line-height:1.35; color:var(--gray-500); }
+  .base-intel-card.warn strong { color:var(--warn); }
+  .base-intel-card.critical strong { color:var(--pllugo-red); }
+  .base-section { border-top:3px solid #2A6F97; }
+  .base-dashboard { display:grid; grid-template-columns:minmax(280px,.82fr) minmax(0,1.18fr); gap:14px; align-items:stretch; }
+  .base-score { border:1px solid var(--gray-200); background:linear-gradient(180deg,#fff,#f8fbfd); border-radius:14px; padding:16px; display:grid; grid-template-columns:auto minmax(0,1fr); gap:16px; align-items:center; }
+  .base-ring { --value:0; --ring:#2A6F97; width:124px; height:124px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(var(--ring) calc(var(--value)*1%), #eceef2 0); position:relative; }
+  .base-ring::after { content:""; position:absolute; inset:12px; border-radius:50%; background:#fff; box-shadow:inset 0 0 0 1px var(--gray-200); }
+  .base-ring strong { position:relative; z-index:1; font-size:20px; letter-spacing:-.02em; }
+  .base-score-copy span { display:block; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--gray-400); font-weight:800; }
+  .base-score-copy strong { display:block; margin-top:5px; font-size:30px; line-height:1; color:var(--gray-900); }
+  .base-score-copy small { display:block; margin-top:7px; color:var(--gray-500); font-size:11px; line-height:1.45; }
+  .base-workbench { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+  .base-work-card { border:1px solid var(--gray-200); background:#fff; border-radius:12px; padding:13px; min-width:0; }
+  .base-work-card span { display:block; font-size:8.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-400); font-weight:800; }
+  .base-work-card strong { display:block; margin-top:5px; font-size:20px; color:var(--gray-900); }
+  .base-search-row { display:flex; gap:9px; align-items:center; margin-top:14px; }
+  .base-search-row input { flex:1; min-width:0; border:1px solid var(--gray-300); border-radius:10px; padding:10px 12px; font-size:13px; }
+  .base-search-row button { border:1px solid var(--gray-300); background:#fff; border-radius:10px; padding:10px 13px; font-size:12px; font-weight:750; cursor:pointer; }
+  .base-search-row button.primary { border-color:var(--pllugo-red); background:var(--pllugo-red); color:#fff; }
+  .base-queues { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; }
+  .base-queue-list { display:flex; flex-direction:column; gap:7px; }
+  .base-order-row { appearance:none; width:100%; border:1px solid var(--gray-200); background:#fff; border-radius:10px; padding:9px 10px; display:grid; grid-template-columns:minmax(0,1.35fr) repeat(3,minmax(70px,.55fr)); gap:9px; align-items:center; text-align:left; font-family:inherit; color:inherit; cursor:pointer; transition:all var(--motion-base) var(--ease-standard); }
+  .base-order-row:hover { transform:translateY(-1px); border-color:var(--gray-300); box-shadow:0 6px 16px rgba(15,15,17,.05); }
+  .base-order-row .main strong { display:block; font-size:11px; }
+  .base-order-row .main small { display:block; color:var(--gray-500); font-size:9px; margin-top:2px; }
+  .base-row-cell span { display:block; font-size:7.5px; text-transform:uppercase; color:var(--gray-400); font-weight:800; }
+  .base-row-cell strong { display:block; font-size:10.5px; margin-top:2px; }
+  .base-actions { display:flex; gap:7px; flex-wrap:wrap; }
+  .base-actions button { border:1px solid var(--gray-300); background:#fff; color:var(--gray-700); border-radius:9px; padding:7px 10px; font-size:11px; font-weight:750; cursor:pointer; }
+  .base-actions button:hover { background:var(--gray-50); border-color:var(--gray-400); }
+
   /* Modal legado refinado */
   #descons-modal { z-index:var(--z-modal-backdrop) !important; background:rgba(20,20,24,.34) !important; backdrop-filter:blur(3px); }
   #descons-modal > div { border-radius:16px !important; border:1px solid var(--gray-200); box-shadow:0 24px 70px rgba(15,15,17,.18) !important; animation:modalIn var(--motion-slow) var(--ease-enter); }
@@ -611,6 +649,8 @@
   @media(max-width:1100px){
     .tower-v2-strip{grid-template-columns:repeat(4,minmax(0,1fr))}
     .drawer-metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .base-dashboard,.base-queues{grid-template-columns:1fr}
+    .base-intel-strip,.base-workbench{grid-template-columns:repeat(2,minmax(0,1fr))}
   }
   @media(max-width:820px){
     .tower-toolbar{align-items:stretch}
@@ -628,6 +668,10 @@
     .drawer-metric-grid{grid-template-columns:1fr 1fr}
     .drawer-row{grid-template-columns:1fr 1fr}
     .drawer-row .main{grid-column:1/-1}
+    .base-intel-strip,.base-workbench{grid-template-columns:1fr}
+    .base-search-row{flex-direction:column;align-items:stretch}
+    .base-order-row{grid-template-columns:1fr 1fr}
+    .base-order-row .main{grid-column:1/-1}
     .app-toast-stack{left:12px;right:12px;bottom:12px}
     .app-toast{min-width:0;max-width:none;width:100%}
   }
@@ -707,6 +751,7 @@
       <button class="mode-tab active" data-mode="geral">Visão Geral</button>
       <button class="mode-tab" data-mode="operacao">Visão Operação</button>
       <button class="mode-tab" data-mode="torre">Torre de Controle <span class="nav-alert-badge" id="nav-alert-badge" style="display:none">0</span></button>
+      <button class="mode-tab" data-mode="base">Gestão de Base</button>
     </div>
     <div class="carrier-tabs">
       <button class="tab active" data-carrier="pllugo">Pllugo</button>
@@ -761,6 +806,21 @@
       <div class="exec-kpi"><span>Ofensas</span><strong id="exec-losses">—</strong><small>fora da regra</small></div>
       <div class="exec-kpi"><span>Excluídos</span><strong id="exec-excluded">—</strong><small>não responsabilidade</small></div>
       <div class="exec-kpi"><span>Em risco agora</span><strong id="exec-risk">—</strong><small>Torre de Controle</small></div>
+    </div>
+
+    <div class="base-intel-strip" id="base-intel-strip">
+      <button type="button" class="base-intel-card" data-base-drill="backlog">
+        <span>Backlog do dia</span><strong id="base-strip-backlog">—</strong><small>recebidos sem OFD no mesmo dia</small>
+      </button>
+      <button type="button" class="base-intel-card warn" data-base-drill="retidos3">
+        <span>Retidos &gt; 3 dias</span><strong id="base-strip-retidos3">—</strong><small>pendentes fora da rota</small>
+      </button>
+      <button type="button" class="base-intel-card critical" data-base-drill="retidos6">
+        <span>Retidos &gt; 6 dias</span><strong id="base-strip-retidos6">—</strong><small>fila crítica</small>
+      </button>
+      <button type="button" class="base-intel-card" data-base-drill="received-route">
+        <span>Recebidos → Rota</span><strong id="base-strip-route-rate">—</strong><small>taxa de expedição da janela</small>
+      </button>
     </div>
 
     <div class="overview-grid" id="overview-grid">
@@ -908,6 +968,56 @@
         <div class="tower-rule-note" title="A prioridade combina volume pendente, tempo sem evolução, ritmo atual e projeção de fechamento.">Prioridade considera pendência, evolução, ritmo e projeção.</div>
       </div>
       <div class="tower-list" id="tower-list" aria-live="polite"></div>
+    </div>
+
+    <div class="section base-section" id="base-section" style="display:none">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Gestão de Base — pedidos e retenção</div>
+          <div class="section-sub">Backlog, aging, tentativas e tracking por pedido a partir da base granular</div>
+        </div>
+        <div class="filter-info"><strong id="base-record-count">0</strong> pedidos rastreados</div>
+      </div>
+      <div class="base-dashboard">
+        <div class="base-score">
+          <div class="base-ring" id="base-route-ring"><strong id="base-route-pct">—</strong></div>
+          <div class="base-score-copy">
+            <span>Recebidos → Rota</span>
+            <strong id="base-route-main">—</strong>
+            <small id="base-route-sub">Mede se tudo que entrou na base saiu em rota no mesmo dia.</small>
+          </div>
+        </div>
+        <div class="base-workbench">
+          <div class="base-work-card"><span>Recebidos</span><strong id="base-received">—</strong></div>
+          <div class="base-work-card"><span>Com OFD no dia</span><strong id="base-ofd-same-day">—</strong></div>
+          <div class="base-work-card"><span>Retidos no dia</span><strong id="base-backlog">—</strong></div>
+          <div class="base-work-card"><span>Taxa retenção</span><strong id="base-retention-rate">—</strong></div>
+          <div class="base-work-card"><span>Sem mov. &gt;24h</span><strong id="base-no-move">—</strong></div>
+          <div class="base-work-card"><span>2+ tentativas</span><strong id="base-attempts">—</strong></div>
+          <div class="base-work-card"><span>Troca motorista</span><strong id="base-driver-swap">—</strong></div>
+          <div class="base-work-card"><span>7+ dias</span><strong id="base-aging-7">—</strong></div>
+        </div>
+      </div>
+      <div class="base-search-row">
+        <input id="base-order-search" type="text" placeholder="Digite o ID / remessa do pedido" autocomplete="off">
+        <button type="button" class="primary" id="base-order-search-btn">Pesquisar</button>
+      </div>
+      <div class="base-queues">
+        <div class="section overview-panel">
+          <div class="section-header">
+            <div><div class="section-title">Fila crítica de retenção</div><div class="section-sub">Pedidos atuais ainda não entregues, priorizados por idade</div></div>
+            <div class="base-actions"><button type="button" data-base-drill="critical-retention">Abrir lista</button><button type="button" data-base-export="critical-retention">Exportar Excel</button></div>
+          </div>
+          <div class="base-queue-list" id="base-critical-list"></div>
+        </div>
+        <div class="section overview-panel">
+          <div class="section-header">
+            <div><div class="section-title">Backlog da data</div><div class="section-sub">Recebidos sem saída em rota no mesmo dia</div></div>
+            <div class="base-actions"><button type="button" data-base-drill="backlog">Abrir lista</button><button type="button" data-base-export="backlog">Exportar Excel</button></div>
+          </div>
+          <div class="base-queue-list" id="base-backlog-list"></div>
+        </div>
+      </div>
     </div>
 
     <div class="section cause-section" id="cause-section" style="display:none">
@@ -2240,6 +2350,8 @@ async function clearAllData() {
     state.selectedDriver = null;
     TOWER_SNAPSHOTS_CACHE = [];
     TOWER_SNAPSHOTS_DATE = null;
+    Object.assign(BASE_CACHE, { key: '', loading: false, loaded: false, error: null, orders: [], events: [], backlog: [], summary: null });
+    BASE_DRAWER_ROWS = [];
     await applyLoadedData();
     setImportStatus('Dados limpos. Base zerada, pronta pra novos testes.', 'ok');
   } catch (e) {
@@ -2332,6 +2444,7 @@ async function handleFilesSelected(fileList) {
     const { history, generated_at } = await fetchHistoryFromSupabase();
     DASH_DATA.history = history;
     DASH_DATA.generated_at = generated_at || new Date().toISOString();
+    Object.assign(BASE_CACHE, { key: '', loading: false, loaded: false, error: null, orders: [], events: [], backlog: [], summary: null });
     await applyLoadedData();
 
     const summary = finalResults.map(r => `${r.source} ${r.date} (${r.data.sla}%)`).join(' · ');
@@ -2767,6 +2880,153 @@ function driversForCarrier(carrier, filtered, opts = {}) {
 
 function unitLabel(u){ return u === 'maua' ? 'Mauá' : u === 'rbp' ? 'Ribeirão Pires' : 'Não identificada'; }
 function filterHistoryPeriod(history){ return (history || []).filter(h => dateInRange(h.date)); }
+const BASE_CACHE = { key: '', loading: false, loaded: false, error: null, orders: [], events: [], backlog: [], summary: null };
+let BASE_DRAWER_ROWS = [];
+
+function selectedDateBounds() {
+  if (state.period === 'custom' && state.customStart && state.customEnd) return { start: state.customStart, end: state.customEnd };
+  if (state.period === 'yesterday') {
+    const y = parseDate(saoPauloToday());
+    y.setDate(y.getDate() - 1);
+    const d = dateOnly(y);
+    return { start: d, end: d };
+  }
+  const today = parseDate(saoPauloToday());
+  if (state.period === 1) return { start: saoPauloToday(), end: saoPauloToday() };
+  const start = new Date(today);
+  start.setDate(start.getDate() - ((Number(state.period) || 1) - 1));
+  return { start: dateOnly(start), end: dateOnly(today) };
+}
+
+function baseSourceMatches(row) {
+  const src = String(row.source || '').toLowerCase();
+  if (state.carrier === 'imile') return src.includes('imile');
+  if (state.carrier === 'jt' || state.carrier === 'jt_real') return src === 'jt' || src.includes('j&t');
+  return true;
+}
+
+function baseUnitMatches(row) {
+  return state.unit === 'all' || row.unit === state.unit;
+}
+
+function eventLocalDate(row) {
+  return dateOnly(toDate(row.event_at));
+}
+
+function isOpenOrder(row) {
+  return String(row.current_status || '').toLowerCase() !== 'delivered' && !row.last_delivered_at;
+}
+
+function normalizeBaseOrder(row) {
+  const first = row.first_received_at ? toDate(row.first_received_at) : null;
+  const last = row.last_event_at ? toDate(row.last_event_at) : null;
+  return {
+    ...row,
+    order_key: row.order_key || row.tracking_number || '',
+    hours_since_received: Number(row.hours_since_received) || (first ? (Date.now() - first.getTime()) / 3600000 : 0),
+    hours_without_movement: Number(row.hours_without_movement) || (last ? (Date.now() - last.getTime()) / 3600000 : 0),
+    attempt_count: Number(row.attempt_count) || 0,
+    driver_count: Number(row.driver_count) || 0,
+  };
+}
+
+function baseAgingLabel(hours) {
+  const days = Math.floor((Number(hours) || 0) / 24);
+  if (days <= 1) return '0-1 dia';
+  if (days <= 3) return '2-3 dias';
+  if (days <= 6) return '4-6 dias';
+  return '7+ dias';
+}
+
+function buildBaseSummary(orders, events, bounds) {
+  const scopedOrders = orders.filter(o => baseSourceMatches(o) && baseUnitMatches(o)).map(normalizeBaseOrder);
+  const scopedEvents = events.filter(e => baseSourceMatches(e) && baseUnitMatches(e));
+  const received = scopedEvents.filter(e => e.event_type === 'received');
+  const ofdSameDayKeys = new Set(scopedEvents.filter(e => e.event_type === 'ofd').map(e => `${e.source}|${e.order_key}|${eventLocalDate(e)}`));
+  const orderMap = new Map(scopedOrders.map(o => [`${o.source}|${o.order_key}`, o]));
+  const backlogMap = new Map();
+  for (const ev of received) {
+    const d = eventLocalDate(ev);
+    if (!d || d < bounds.start || d > bounds.end) continue;
+    const key = `${ev.source}|${ev.order_key}|${d}`;
+    if (ofdSameDayKeys.has(key)) continue;
+    const ord = orderMap.get(`${ev.source}|${ev.order_key}`) || {};
+    backlogMap.set(key, {
+      ...ord,
+      source: ev.source,
+      order_key: ev.order_key,
+      tracking_number: ev.tracking_number || ev.order_key,
+      unit: ev.unit || ord.unit,
+      received_at: ev.event_at,
+      backlog_date: d,
+      current_status: ord.current_status || 'received',
+      last_driver_name: ord.last_driver_name || '',
+      last_event_at: ord.last_event_at || ev.event_at,
+      hours_since_received: ord.hours_since_received || ((Date.now() - toDate(ev.event_at).getTime()) / 3600000),
+      hours_without_movement: ord.hours_without_movement || ((Date.now() - toDate(ev.event_at).getTime()) / 3600000),
+      attempt_count: ord.attempt_count || 0,
+      driver_count: ord.driver_count || 0,
+    });
+  }
+  const backlog = [...backlogMap.values()].sort((a,b) => String(a.received_at).localeCompare(String(b.received_at)));
+  const retained = scopedOrders.filter(isOpenOrder).sort((a,b) => b.hours_since_received - a.hours_since_received);
+  const retidos3 = retained.filter(o => o.hours_since_received >= 72);
+  const retidos6 = retained.filter(o => o.hours_since_received >= 144);
+  const aging = { '0-1 dia': 0, '2-3 dias': 0, '4-6 dias': 0, '7+ dias': 0 };
+  for (const o of retained) aging[baseAgingLabel(o.hours_since_received)]++;
+  const uniqueReceived = new Set(received.map(e => `${e.source}|${e.order_key}|${eventLocalDate(e)}`));
+  const ofdForReceived = [...uniqueReceived].filter(k => ofdSameDayKeys.has(k)).length;
+  return {
+    orders: scopedOrders,
+    events: scopedEvents,
+    backlog,
+    retained,
+    retidos3,
+    retidos6,
+    aging,
+    receivedCount: uniqueReceived.size,
+    ofdSameDayCount: ofdForReceived,
+    routeRate: uniqueReceived.size ? round1(100 * ofdForReceived / uniqueReceived.size) : null,
+    retentionRate: uniqueReceived.size ? round1(100 * backlog.length / uniqueReceived.size) : null,
+    noMove24: retained.filter(o => o.hours_without_movement >= 24).length,
+    attempts2: retained.filter(o => o.attempt_count >= 2).length,
+    driverSwap: retained.filter(o => o.driver_count >= 2).length,
+  };
+}
+
+async function refreshBaseKnowledge() {
+  if (!sb) return;
+  const bounds = selectedDateBounds();
+  const key = `${bounds.start}|${bounds.end}|${state.unit}|${state.carrier}`;
+  if (BASE_CACHE.loading || (BASE_CACHE.key === key && BASE_CACHE.loaded && !BASE_CACHE.error)) return;
+  BASE_CACHE.loading = true;
+  BASE_CACHE.key = key;
+  renderBaseManagement();
+  try {
+    const endNext = addDaysYMD(bounds.end, 1);
+    const [orders, events] = await Promise.all([
+      fetchAllRows('v_order_current_intelligence'),
+      fetchAllRows('order_events', q => q.gte('event_at', `${bounds.start}T00:00:00-03:00`).lt('event_at', `${endNext}T00:00:00-03:00`)),
+    ]);
+    BASE_CACHE.orders = orders || [];
+    BASE_CACHE.events = events || [];
+    BASE_CACHE.summary = buildBaseSummary(BASE_CACHE.orders, BASE_CACHE.events, bounds);
+    BASE_CACHE.error = null;
+    BASE_CACHE.loaded = true;
+  } catch (e) {
+    BASE_CACHE.error = e.message || String(e);
+    BASE_CACHE.summary = null;
+  } finally {
+    BASE_CACHE.loading = false;
+    renderBaseManagement();
+  }
+}
+
+function ensureBaseKnowledge() {
+  if (!sb) return;
+  refreshBaseKnowledge().catch(e => console.error('Falha ao carregar Gestão de Base:', e));
+}
+
 function renderDataQuality(filtered) {
   const banner=$('#data-quality-banner'), title=$('#data-quality-title'), txt=$('#data-quality-text'), pill=$('#data-quality-pill');
   if (!banner) return;
@@ -3103,6 +3363,145 @@ function showToast(message,title='Pllugo'){
   requestAnimationFrame(()=>el.classList.add('show'));
   setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300)},3200);
 }
+function setText(id, value) { const el = $(id); if (el) el.textContent = value; }
+function statusLabel(status) {
+  const s = String(status || '').toLowerCase();
+  if (s === 'delivered') return 'Entregue';
+  if (s === 'problem') return 'Problemático';
+  if (s === 'in_route') return 'Em rota';
+  if (s === 'received') return 'Recebido';
+  if (s === 'ofd') return 'Saiu em rota';
+  return 'Sem status';
+}
+function formatDateTime(v) {
+  const d = toDate(v);
+  return d ? d.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—';
+}
+function renderBaseOrderRows(rows, limit = 6) {
+  if (!rows || !rows.length) return '<div class="drawer-empty">Nenhum pedido neste recorte.</div>';
+  return rows.slice(0, limit).map((r, i) => `
+    <button type="button" class="base-order-row" data-base-row-index="${i}">
+      <div class="main"><strong>${escapeHTML(r.order_key || r.tracking_number || 'Pedido sem ID')}</strong><small>${escapeHTML(statusLabel(r.current_status))} · ${r.unit ? unitLabel(r.unit) : 'Unidade não identificada'}</small></div>
+      <div class="base-row-cell"><span>Recebido</span><strong>${formatDateTime(r.first_received_at || r.received_at)}</strong></div>
+      <div class="base-row-cell"><span>Último status</span><strong>${formatDateTime(r.last_event_at)}</strong></div>
+      <div class="base-row-cell"><span>Aging</span><strong>${Math.floor((Number(r.hours_since_received) || 0) / 24)} dia(s)</strong></div>
+    </button>
+  `).join('');
+}
+function renderBaseStrip() {
+  const s = BASE_CACHE.summary;
+  setText('#base-strip-backlog', s ? fmt(s.backlog.length) : (BASE_CACHE.loading ? '...' : '—'));
+  setText('#base-strip-retidos3', s ? fmt(s.retidos3.length) : (BASE_CACHE.loading ? '...' : '—'));
+  setText('#base-strip-retidos6', s ? fmt(s.retidos6.length) : (BASE_CACHE.loading ? '...' : '—'));
+  setText('#base-strip-route-rate', s && s.routeRate != null ? `${s.routeRate.toFixed(1).replace('.', ',')}%` : (BASE_CACHE.loading ? '...' : '—'));
+}
+function renderBaseManagement() {
+  renderBaseStrip();
+  if (!$('#base-section')) return;
+  const s = BASE_CACHE.summary;
+  if (BASE_CACHE.loading && !s) {
+    setText('#base-record-count', '...');
+    setText('#base-route-pct', '...');
+    setText('#base-route-main', 'Carregando');
+    $('#base-critical-list').innerHTML = '<div class="drawer-empty">Carregando base granular...</div>';
+    $('#base-backlog-list').innerHTML = '<div class="drawer-empty">Carregando backlog da janela...</div>';
+    return;
+  }
+  if (BASE_CACHE.error) {
+    setText('#base-record-count', '0');
+    $('#base-critical-list').innerHTML = `<div class="drawer-empty"><strong>Base granular indisponível.</strong><br>${escapeHTML(BASE_CACHE.error)}</div>`;
+    $('#base-backlog-list').innerHTML = '<div class="drawer-empty">Rode a migration da base de pedidos e reimporte os relatórios.</div>';
+    return;
+  }
+  if (!s) {
+    setText('#base-record-count', '0');
+    $('#base-critical-list').innerHTML = '<div class="drawer-empty">Sem dados granulares carregados ainda.</div>';
+    $('#base-backlog-list').innerHTML = '<div class="drawer-empty">Importe recebimento e entrega para alimentar a base.</div>';
+    return;
+  }
+  const routeRate = s.routeRate == null ? null : s.routeRate;
+  $('#base-route-ring')?.style.setProperty('--value', String(routeRate == null ? 0 : Math.max(0, Math.min(100, routeRate))));
+  setText('#base-record-count', fmt(s.orders.length));
+  setText('#base-route-pct', routeRate == null ? '—' : `${Math.round(routeRate)}%`);
+  setText('#base-route-main', routeRate == null ? 'Sem leitura' : `${routeRate.toFixed(1).replace('.', ',')}%`);
+  setText('#base-route-sub', `${fmt(s.ofdSameDayCount)} com OFD no dia de ${fmt(s.receivedCount)} recebidos na janela.`);
+  setText('#base-received', fmt(s.receivedCount));
+  setText('#base-ofd-same-day', fmt(s.ofdSameDayCount));
+  setText('#base-backlog', fmt(s.backlog.length));
+  setText('#base-retention-rate', s.retentionRate == null ? '—' : `${s.retentionRate.toFixed(1).replace('.', ',')}%`);
+  setText('#base-no-move', fmt(s.noMove24));
+  setText('#base-attempts', fmt(s.attempts2));
+  setText('#base-driver-swap', fmt(s.driverSwap));
+  setText('#base-aging-7', fmt(s.aging['7+ dias']));
+  $('#base-critical-list').innerHTML = renderBaseOrderRows(s.retidos3.length ? s.retidos3 : s.retained, 7);
+  $('#base-backlog-list').innerHTML = renderBaseOrderRows(s.backlog, 7);
+}
+function baseRowsForType(type) {
+  const s = BASE_CACHE.summary;
+  if (!s) return [];
+  if (type === 'backlog') return s.backlog;
+  if (type === 'retidos3') return s.retidos3;
+  if (type === 'retidos6') return s.retidos6;
+  if (type === 'critical-retention') return s.retained;
+  if (type === 'received-route') return s.backlog;
+  return [];
+}
+function baseTypeTitle(type) {
+  if (type === 'backlog') return 'Backlog da data';
+  if (type === 'retidos3') return 'Retidos acima de 3 dias';
+  if (type === 'retidos6') return 'Retidos acima de 6 dias';
+  if (type === 'critical-retention') return 'Fila crítica de retenção';
+  if (type === 'received-route') return 'Recebidos sem rota no dia';
+  return 'Pedidos';
+}
+function baseRowsToText(rows) {
+  return rows.map(r => [r.order_key || r.tracking_number || '', statusLabel(r.current_status), r.unit ? unitLabel(r.unit) : '', r.last_driver_name || '', formatDateTime(r.first_received_at || r.received_at), formatDateTime(r.last_event_at), `${Math.floor((Number(r.hours_since_received) || 0) / 24)} dia(s)`].join('\t')).join('\n');
+}
+function exportBaseRows(rows, filename) {
+  if (!rows.length) { showToast('Nenhum pedido para exportar.', 'Gestão de Base'); return; }
+  const data = rows.map(r => ({
+    pedido: r.order_key || r.tracking_number || '',
+    status: statusLabel(r.current_status),
+    unidade: r.unit ? unitLabel(r.unit) : '',
+    motorista: r.last_driver_name || '',
+    recebido: formatDateTime(r.first_received_at || r.received_at),
+    ultimo_status: formatDateTime(r.last_event_at),
+    aging_dias: Math.floor((Number(r.hours_since_received) || 0) / 24),
+    tentativas: Number(r.attempt_count) || 0,
+    motoristas: Number(r.driver_count) || 0,
+    ultimo_problema: r.last_problem_reason || '',
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Pedidos');
+  XLSX.writeFile(wb, filename);
+}
+function openBaseList(type) {
+  const rows = baseRowsForType(type);
+  BASE_DRAWER_ROWS = rows;
+  const actions = `<button type="button" class="app-btn primary" id="base-copy-list">Copiar lista</button><button type="button" class="app-btn secondary" id="base-export-list">Exportar Excel</button>`;
+  const body = `<div class="drawer-section"><div class="drawer-section-title">${escapeHTML(baseTypeTitle(type))}<span>${fmt(rows.length)} pedidos</span></div><div class="drawer-list">${renderBaseOrderRows(rows, 100)}</div></div>`;
+  DRAWER_CONTEXT = { type:'base-list', baseType:type, driver:null, tab:'base' };
+  openDrawer({ eyebrow:'Gestão de Base', title:baseTypeTitle(type), sub:'Clique em um pedido para abrir o tracking operacional.', actions, body });
+}
+async function openOrderTracking(orderKey) {
+  if (!orderKey || !sb) return;
+  openDrawer({ eyebrow:'Tracking do pedido', title:orderKey, sub:'Consultando linha do tempo operacional...', body:'<div class="drawer-empty">Carregando eventos do pedido...</div>' });
+  try {
+    const [{data:orderData,error:orderError},{data:eventData,error:eventError}] = await Promise.all([
+      sb.from('orders').select('*').eq('order_key', orderKey).limit(1),
+      sb.from('order_events').select('*').eq('order_key', orderKey).order('event_at',{ascending:true}).limit(100),
+    ]);
+    if (orderError) throw orderError;
+    if (eventError) throw eventError;
+    const order = (orderData || [])[0] || {};
+    const events = eventData || [];
+    const body = `<div class="drawer-metric-grid">${metricCard('Status', statusLabel(order.current_status))}${metricCard('Unidade', order.unit ? unitLabel(order.unit) : '—')}${metricCard('Tentativas', events.filter(e=>e.event_type==='ofd').length)}${metricCard('Motoristas', new Set(events.map(e=>e.driver_key).filter(Boolean)).size)}${metricCard('Recebido', formatDateTime(order.first_received_at))}${metricCard('Último evento', formatDateTime(order.last_event_at))}</div><div class="drawer-section"><div class="drawer-section-title">Linha do tempo <span>${events.length} evento(s)</span></div><div class="drawer-timeline">${events.map(e=>`<div class="timeline-item"><strong>${formatDateTime(e.event_at)} · ${escapeHTML(statusLabel(e.event_type === 'ofd' ? 'in_route' : e.event_type))}</strong><span>${escapeHTML([e.driver_name, e.location, e.problem_reason].filter(Boolean).join(' · ') || 'evento registrado')}</span></div>`).join('') || '<div class="drawer-empty">Nenhum evento encontrado para este pedido.</div>'}</div></div>`;
+    openDrawer({ eyebrow:'Tracking do pedido', title:orderKey, sub:`${statusLabel(order.current_status)} · ${order.unit ? unitLabel(order.unit) : 'Unidade não identificada'}`, body });
+  } catch (e) {
+    $('#app-drawer-body').innerHTML = `<div class="drawer-empty"><strong>Não foi possível carregar o pedido.</strong><br>${escapeHTML(e.message || e)}</div>`;
+  }
+}
 function openDrawer({eyebrow='Torre de Controle',title='Detalhamento',sub='',actions='',tabs='',body=''}){
   $('#app-drawer-eyebrow').textContent=eyebrow; $('#app-drawer-title').textContent=title; $('#app-drawer-sub').textContent=sub||'—';
   $('#app-drawer-actions').innerHTML=actions||''; $('#app-drawer-body').innerHTML=body||'';
@@ -3239,7 +3638,7 @@ async function openWhatsAppForDriver(d){
   }catch(e){showToast('Cadastro de WhatsApp ainda não está conectado nesta versão.','WhatsApp');}
 }
 function animatePrimaryView(){
-  const candidates=['#hero-section','#operation-section','#tower-section','#cause-section','#overview-grid'];
+  const candidates=['#hero-section','#operation-section','#tower-section','#base-section','#cause-section','#overview-grid'];
   for(const sel of candidates){const el=$(sel); if(el&&getComputedStyle(el).display!=='none'){el.classList.remove('ui-view-enter');void el.offsetWidth;el.classList.add('ui-view-enter');setTimeout(()=>el.classList.remove('ui-view-enter'),300);}}
 }
 function installMatureInteractions(){
@@ -3248,8 +3647,39 @@ function installMatureInteractions(){
   $('#tower-v2-cockpit')?.addEventListener('click',e=>{const status=e.target.closest('[data-status]'); if(status){$('#tower-status-filter').value=status.dataset.status; renderTower(); showToast(`Filtro aplicado: ${towerStatusLabel(status.dataset.status)}.`,'Torre de Controle'); return;} const drill=e.target.closest('[data-cockpit-drill]'); if(drill)openCockpitDrill(drill.dataset.cockpitDrill);});
   $('#tower-list')?.addEventListener('click',e=>{const row=e.target.closest('.tower-driver'); if(!row)return; const d=TOWER_LAST_VISIBLE[Number(row.dataset.towerIndex)]; if(d)openDriverDrawer(d);});
   $('#app-drawer-tabs')?.addEventListener('click',e=>{const b=e.target.closest('[data-drawer-tab]');if(b)renderDriverTab(b.dataset.drawerTab);});
-  $('#app-drawer-body')?.addEventListener('click',e=>{const row=e.target.closest('[data-drawer-driver-index]'); if(!row)return; const d=DRAWER_DRIVER_ROWS[Number(row.dataset.drawerDriverIndex)]; if(d)openDriverDrawer(d);});
-  $('#app-drawer-actions')?.addEventListener('click',e=>{if(e.target.closest('#drawer-whatsapp-btn')&&DRAWER_CONTEXT.driver)openWhatsAppForDriver(DRAWER_CONTEXT.driver); if(e.target.closest('#drawer-filter-driver-btn')&&DRAWER_CONTEXT.driver){$('#tower-search-input').value=DRAWER_CONTEXT.driver.name;closeDrawer();renderTower();showToast('Motorista isolado na Torre.','Filtro');}});
+  $('#app-drawer-body')?.addEventListener('click',e=>{
+    const driverRow=e.target.closest('[data-drawer-driver-index]');
+    if(driverRow){const d=DRAWER_DRIVER_ROWS[Number(driverRow.dataset.drawerDriverIndex)]; if(d)openDriverDrawer(d); return;}
+    const baseRow=e.target.closest('[data-base-row-index]');
+    if(baseRow){const r=BASE_DRAWER_ROWS[Number(baseRow.dataset.baseRowIndex)]; if(r)openOrderTracking(r.order_key||r.tracking_number); return;}
+  });
+  $('#app-drawer-actions')?.addEventListener('click',e=>{
+    if(e.target.closest('#drawer-whatsapp-btn')&&DRAWER_CONTEXT.driver)openWhatsAppForDriver(DRAWER_CONTEXT.driver);
+    if(e.target.closest('#drawer-filter-driver-btn')&&DRAWER_CONTEXT.driver){$('#tower-search-input').value=DRAWER_CONTEXT.driver.name;closeDrawer();renderTower();showToast('Motorista isolado na Torre.','Filtro');}
+    if(e.target.closest('#base-copy-list')){navigator.clipboard?.writeText(baseRowsToText(BASE_DRAWER_ROWS));showToast('Lista copiada para a área de transferência.','Gestão de Base');}
+    if(e.target.closest('#base-export-list'))exportBaseRows(BASE_DRAWER_ROWS, `pllugo_${DRAWER_CONTEXT.baseType||'pedidos'}_${selectedDateBounds().start}_${selectedDateBounds().end}.xlsx`);
+  });
+  $('#base-intel-strip')?.addEventListener('click',e=>{
+    const drill=e.target.closest('[data-base-drill]');
+    if(!drill)return;
+    ensureBaseKnowledge();
+    if(BASE_CACHE.summary)openBaseList(drill.dataset.baseDrill);
+    else showToast('Carregando a base granular. Tente novamente em alguns segundos.','Gestão de Base');
+  });
+  $('#base-section')?.addEventListener('click',e=>{
+    const drill=e.target.closest('[data-base-drill]');
+    if(drill){ensureBaseKnowledge(); if(BASE_CACHE.summary)openBaseList(drill.dataset.baseDrill); else showToast('Carregando a base granular.','Gestão de Base'); return;}
+    const exp=e.target.closest('[data-base-export]');
+    if(exp){exportBaseRows(baseRowsForType(exp.dataset.baseExport), `pllugo_${exp.dataset.baseExport}_${selectedDateBounds().start}_${selectedDateBounds().end}.xlsx`); return;}
+    const row=e.target.closest('[data-base-row-index]');
+    if(row){
+      const list=row.closest('#base-backlog-list')?baseRowsForType('backlog'):(BASE_CACHE.summary?.retidos3.length?BASE_CACHE.summary.retidos3:BASE_CACHE.summary?.retained||[]);
+      const r=list[Number(row.dataset.baseRowIndex)];
+      if(r)openOrderTracking(r.order_key||r.tracking_number);
+    }
+  });
+  $('#base-order-search-btn')?.addEventListener('click',()=>openOrderTracking(cleanOrderId($('#base-order-search')?.value||'')));
+  $('#base-order-search')?.addEventListener('keydown',e=>{if(e.key==='Enter')openOrderTracking(cleanOrderId(e.target.value||''));});
   $('#tower-clear-filter')?.addEventListener('click',()=>{$('#tower-search-input').value='';$('#tower-status-filter').value='all';renderTower();showToast('Filtros da Torre removidos.','Torre de Controle');});
   if(window.Chart){Chart.defaults.animation.duration=UI_REDUCED_MOTION?0:650;Chart.defaults.animation.easing='easeOutQuart';Chart.defaults.interaction.mode='nearest';Chart.defaults.interaction.intersect=false;}
 }
@@ -3273,7 +3703,7 @@ async function detectTowerEscalations(){
   } catch (e) { console.error('Falha ao salvar status da Torre de Controle:', e); }
   if (escalated) playAlertTone();
 }
-function renderAllV2(agg,drivers,filtered){renderDataQuality(filtered);renderExecutiveKpis(agg,drivers);renderUnitAndClientPerformance();renderCauses(agg,drivers);renderPriorities(agg,drivers);renderTower();}
+function renderAllV2(agg,drivers,filtered){renderDataQuality(filtered);renderExecutiveKpis(agg,drivers);renderUnitAndClientPerformance();renderCauses(agg,drivers);renderPriorities(agg,drivers);renderTower();renderBaseManagement();if(state.mode==='geral'||state.mode==='base')ensureBaseKnowledge();}
 
 function renderHero(agg, drivers) {
   const cat = slaCategory(agg.sla);
@@ -3541,15 +3971,17 @@ function showDriverDetail() {
 function applyModeVisibility() {
   const mode=state.mode;
   const vis=(sel,show)=>{const el=$(sel);if(el)el.style.display=show?'':'none';};
-  vis('#data-quality-banner', mode==='geral'||mode==='operacao'||mode==='torre');
+  vis('#data-quality-banner', mode==='geral'||mode==='operacao'||mode==='torre'||mode==='base');
   vis('#hero-section', mode==='geral');
   vis('#executive-kpis', mode==='geral');
+  vis('#base-intel-strip', mode==='geral');
   vis('#overview-grid', mode==='geral');
   vis('#priorities-section', mode==='geral');
   vis('#charts-row', mode==='geral');
   vis('#operation-section', mode==='operacao');
   vis('#operation-summary', mode==='operacao'&&state.operationView==='resumo');
   vis('#tower-section', mode==='torre');
+  vis('#base-section', mode==='base');
   vis('#cause-section', mode==='operacao'&&state.operationView==='ofensores');
   vis('#ofensores-section', mode==='operacao'&&state.operationView==='ofensores');
   vis('#ranking-section', mode==='operacao'&&state.operationView==='motoristas');
