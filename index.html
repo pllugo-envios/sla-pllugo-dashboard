@@ -616,6 +616,137 @@
   .base-actions button { border:1px solid var(--gray-300); background:#fff; color:var(--gray-700); border-radius:9px; padding:7px 10px; font-size:11px; font-weight:750; cursor:pointer; }
   .base-actions button:hover { background:var(--gray-50); border-color:var(--gray-400); }
 
+  /* ===== Gestão de Base v3 — workbench operacional ===== */
+  .base-head-meta { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .base-freshness { font-size:10px; font-weight:750; color:var(--gray-500); border:1px solid var(--gray-200); background:var(--gray-50); border-radius:999px; padding:5px 10px; }
+  .base-freshness.live { color:#16A66D; border-color:#bfe8d5; background:#f2fbf7; }
+  .base-freshness.stale { color:#D98309; border-color:#f2d8ac; background:#fffaf0; }
+  .base-ghost-btn { border:1px solid var(--gray-300); background:#fff; color:var(--gray-700); border-radius:9px; padding:7px 11px; font-size:11px; font-weight:750; cursor:pointer; font-family:inherit; transition:all var(--motion-base) var(--ease-standard); }
+  .base-ghost-btn:hover { background:var(--gray-50); border-color:var(--gray-400); transform:translateY(-1px); }
+  .base-ghost-btn.primary { border-color:var(--pllugo-red); background:var(--pllugo-red); color:#fff; }
+  .base-ghost-btn.primary:hover { background:var(--pllugo-red-hover); }
+  .base-ghost-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+
+  .base-subtabs { display:flex; gap:6px; flex-wrap:wrap; margin:12px 0 14px; border-bottom:1px solid var(--gray-200); padding-bottom:9px; }
+  .base-subtab { appearance:none; border:1px solid transparent; background:transparent; color:var(--gray-500); font-family:inherit; font-size:12px; font-weight:750; padding:7px 13px; border-radius:9px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all var(--motion-base) var(--ease-standard); }
+  .base-subtab:hover { background:var(--gray-50); color:var(--gray-700); }
+  .base-subtab.active { background:#eef4f8; border-color:#cfe0ea; color:#1f5c7d; }
+  .bm-badge { min-width:17px; height:17px; padding:0 5px; border-radius:999px; background:var(--gray-200); color:var(--gray-700); font-size:9.5px; display:inline-flex; align-items:center; justify-content:center; font-weight:800; }
+  .base-subtab.active .bm-badge { background:#2A6F97; color:#fff; }
+  .bm-badge.hot { background:var(--pllugo-red); color:#fff; }
+
+  .bm-alert { border:1px solid #f2d8ac; background:#fffaf0; color:#8a5a00; border-radius:11px; padding:10px 12px; font-size:11.5px; line-height:1.45; margin-bottom:12px; }
+  .bm-alert.error { border-color:#f3c3c4; background:#fff5f5; color:#a03236; }
+
+  .bm-panel { border:1px solid var(--gray-200); background:#fff; border-radius:14px; padding:14px; }
+  .bm-panel + .bm-panel { margin-top:12px; }
+  .bm-panel-title { font-size:12px; font-weight:800; color:var(--gray-900); letter-spacing:-.01em; }
+  .bm-panel-sub { font-size:10px; color:var(--gray-500); margin-top:2px; line-height:1.4; }
+  .bm-panel-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:11px; flex-wrap:wrap; }
+
+  .bm-funnel { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; }
+  .bm-funnel-step { border:1px solid var(--gray-200); border-radius:11px; padding:11px; background:linear-gradient(180deg,#fff,#fbfcfd); position:relative; min-width:0; }
+  .bm-funnel-step span { display:block; font-size:8.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-400); font-weight:800; }
+  .bm-funnel-step strong { display:block; margin-top:5px; font-size:21px; line-height:1; color:var(--gray-900); font-variant-numeric:tabular-nums; }
+  .bm-funnel-step small { display:block; margin-top:5px; font-size:9.5px; color:var(--gray-500); }
+  .bm-funnel-bar { height:4px; border-radius:99px; background:var(--gray-100); margin-top:8px; overflow:hidden; }
+  .bm-funnel-bar i { display:block; height:100%; background:#2A6F97; border-radius:99px; transition:width var(--motion-slow) var(--ease-standard); }
+  .bm-funnel-step.retido .bm-funnel-bar i { background:var(--pllugo-red); }
+  .bm-funnel-step.retido strong { color:var(--pllugo-red); }
+
+  .bm-kpi-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:9px; }
+  .bm-kpi { appearance:none; text-align:left; font-family:inherit; border:1px solid var(--gray-200); background:#fff; border-radius:11px; padding:11px; cursor:pointer; min-width:0; transition:all var(--motion-base) var(--ease-standard); }
+  .bm-kpi:hover { transform:translateY(-1px); border-color:var(--gray-300); box-shadow:0 8px 20px rgba(15,15,17,.06); }
+  .bm-kpi span { display:block; font-size:8.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--gray-400); font-weight:800; }
+  .bm-kpi strong { display:block; margin-top:5px; font-size:19px; line-height:1; color:var(--gray-900); font-variant-numeric:tabular-nums; }
+  .bm-kpi small { display:block; margin-top:4px; font-size:9px; color:var(--gray-500); line-height:1.35; }
+  .bm-kpi.warn strong { color:var(--warn); }
+  .bm-kpi.critical strong { color:var(--pllugo-red); }
+  .bm-kpi.good strong { color:#16A66D; }
+
+  .bm-aging-rows { display:flex; flex-direction:column; gap:8px; }
+  .bm-aging-row { display:grid; grid-template-columns:74px minmax(0,1fr) 62px; gap:10px; align-items:center; cursor:pointer; border:none; background:none; font-family:inherit; padding:0; text-align:left; }
+  .bm-aging-row b { font-size:10.5px; color:var(--gray-700); font-weight:750; }
+  .bm-aging-track { height:9px; border-radius:99px; background:var(--gray-100); overflow:hidden; }
+  .bm-aging-track i { display:block; height:100%; border-radius:99px; transition:width var(--motion-slow) var(--ease-standard); }
+  .bm-aging-row.a0 i { background:#16A66D; } .bm-aging-row.a1 i { background:#57B894; }
+  .bm-aging-row.a2 i { background:#D98309; } .bm-aging-row.a3 i { background:var(--pllugo-red); }
+  .bm-aging-row em { font-style:normal; font-size:10.5px; color:var(--gray-600); text-align:right; font-variant-numeric:tabular-nums; }
+  .bm-aging-row:hover b, .bm-aging-row:hover em { color:var(--gray-900); }
+
+  .bm-split { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .bm-split-3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+  .bm-mini-list { display:flex; flex-direction:column; gap:6px; }
+  .bm-mini-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:9px; align-items:center; border:1px solid var(--gray-100); border-radius:9px; padding:7px 9px; font-size:11px; }
+  .bm-mini-row strong { font-weight:750; color:var(--gray-800); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bm-mini-row span { font-size:10px; color:var(--gray-500); font-variant-numeric:tabular-nums; }
+
+  /* Toolbar de filtros */
+  .bm-toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+  .bm-toolbar input[type=text], .bm-toolbar select { border:1px solid var(--gray-300); border-radius:9px; padding:8px 10px; font-size:11.5px; font-family:inherit; background:#fff; color:var(--gray-800); min-width:0; }
+  .bm-toolbar input[type=text] { flex:1 1 220px; }
+  .bm-toolbar select { flex:0 0 auto; }
+  .bm-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .bm-chip { appearance:none; font-family:inherit; border:1px solid var(--gray-200); background:#fff; color:var(--gray-600); border-radius:999px; padding:5px 11px; font-size:10.5px; font-weight:750; cursor:pointer; transition:all var(--motion-base) var(--ease-standard); }
+  .bm-chip:hover { border-color:var(--gray-400); color:var(--gray-800); }
+  .bm-chip.active { background:#1f5c7d; border-color:#1f5c7d; color:#fff; }
+  .bm-chip.danger.active { background:var(--pllugo-red); border-color:var(--pllugo-red); }
+
+  .bm-table-wrap { border:1px solid var(--gray-200); border-radius:12px; overflow:auto; max-height:560px; }
+  table.bm-table { width:100%; border-collapse:collapse; font-size:11px; }
+  table.bm-table thead th { position:sticky; top:0; z-index:2; background:var(--gray-50); border-bottom:1px solid var(--gray-200); padding:9px 10px; text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:.05em; color:var(--gray-500); font-weight:800; white-space:nowrap; }
+  table.bm-table thead th.sortable { cursor:pointer; user-select:none; }
+  table.bm-table thead th.sortable:hover { color:var(--gray-800); }
+  table.bm-table thead th .dir { color:#2A6F97; margin-left:3px; }
+  table.bm-table tbody td { border-bottom:1px solid var(--gray-100); padding:8px 10px; color:var(--gray-700); vertical-align:middle; white-space:nowrap; }
+  table.bm-table tbody tr:hover { background:#f9fbfc; }
+  table.bm-table tbody tr.selected { background:#eef4f8; }
+  table.bm-table td.num, table.bm-table th.num { text-align:right; font-variant-numeric:tabular-nums; }
+  table.bm-table td .id-link { background:none; border:none; font-family:inherit; font-size:11px; font-weight:800; color:#1f5c7d; cursor:pointer; padding:0; text-decoration:underline dotted; }
+  table.bm-table td .id-link:hover { color:var(--pllugo-red); }
+  .bm-tag { display:inline-block; border-radius:999px; padding:2px 8px; font-size:9px; font-weight:800; letter-spacing:.02em; border:1px solid transparent; }
+  .bm-tag.g { background:#f2fbf7; color:#0f7a51; border-color:#bfe8d5; }
+  .bm-tag.y { background:#fffaf0; color:#8a5a00; border-color:#f2d8ac; }
+  .bm-tag.r { background:#fff5f5; color:#a03236; border-color:#f3c3c4; }
+  .bm-tag.n { background:var(--gray-50); color:var(--gray-600); border-color:var(--gray-200); }
+  .bm-risk { display:inline-flex; align-items:center; gap:6px; }
+  .bm-risk i { width:34px; height:5px; border-radius:99px; background:var(--gray-100); overflow:hidden; display:inline-block; }
+  .bm-risk i b { display:block; height:100%; background:var(--pllugo-red); border-radius:99px; }
+
+  .bm-table-foot { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .bm-pager { display:flex; align-items:center; gap:7px; font-size:11px; color:var(--gray-600); }
+  .bm-actions { display:flex; gap:6px; flex-wrap:wrap; }
+  .bm-selectbar { display:flex; align-items:center; gap:9px; flex-wrap:wrap; border:1px dashed #cfe0ea; background:#f6fafc; border-radius:10px; padding:8px 11px; font-size:11px; color:#1f5c7d; margin-bottom:10px; }
+
+  .bm-empty { border:1px dashed var(--gray-200); border-radius:11px; padding:22px; text-align:center; color:var(--gray-500); font-size:11.5px; line-height:1.5; }
+  .bm-skel { height:13px; border-radius:6px; background:var(--gray-100); position:relative; overflow:hidden; }
+  .bm-skel::after { content:""; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(90deg,transparent,rgba(255,255,255,.72),transparent); animation:shimmer 1.25s infinite; }
+
+  .bm-search-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .bm-search-row input { flex:1 1 260px; min-width:0; border:1px solid var(--gray-300); border-radius:10px; padding:10px 12px; font-size:13px; font-family:inherit; }
+  .bm-textarea { width:100%; min-height:110px; border:1px solid var(--gray-300); border-radius:10px; padding:10px 12px; font-size:11.5px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; resize:vertical; }
+  .bm-recents { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+
+  .bm-track-head { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; margin-bottom:12px; }
+  .bm-track-metric { border:1px solid var(--gray-200); border-radius:10px; padding:9px 11px; background:#fff; }
+  .bm-track-metric span { display:block; font-size:8.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--gray-400); font-weight:800; }
+  .bm-track-metric strong { display:block; margin-top:4px; font-size:14px; color:var(--gray-900); }
+  .bm-timeline { position:relative; padding-left:18px; }
+  .bm-timeline::before { content:""; position:absolute; top:6px; bottom:6px; left:5px; width:1px; background:var(--gray-200); }
+  .bm-tl-item { position:relative; padding:0 0 14px 8px; }
+  .bm-tl-item::before { content:""; position:absolute; left:-17px; top:4px; width:8px; height:8px; border-radius:50%; background:#2A6F97; box-shadow:0 0 0 3px #fff,0 0 0 4px var(--gray-200); }
+  .bm-tl-item.ev-delivered::before { background:#16A66D; }
+  .bm-tl-item.ev-problem::before { background:var(--pllugo-red); }
+  .bm-tl-item.ev-ofd::before { background:#D98309; }
+  .bm-tl-item strong { display:block; font-size:11px; color:var(--gray-900); }
+  .bm-tl-item span { display:block; font-size:10px; color:var(--gray-500); margin-top:2px; line-height:1.45; }
+  .bm-tl-gap { font-size:9.5px; color:var(--gray-400); margin-top:3px; font-weight:750; }
+
+  .bm-chart-wrap { position:relative; height:240px; }
+
+  @media(max-width:1080px){ .bm-kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))} .bm-funnel{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  @media(max-width:820px){ .bm-split,.bm-split-3{grid-template-columns:1fr} .bm-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))} .base-dashboard{grid-template-columns:1fr} .base-queues{grid-template-columns:1fr} .bm-table-wrap{max-height:420px} }
+
   /* Modal legado refinado */
   #descons-modal { z-index:var(--z-modal-backdrop) !important; background:rgba(20,20,24,.34) !important; backdrop-filter:blur(3px); }
   #descons-modal > div { border-radius:16px !important; border:1px solid var(--gray-200); box-shadow:0 24px 70px rgba(15,15,17,.18) !important; animation:modalIn var(--motion-slow) var(--ease-enter); }
@@ -973,49 +1104,278 @@
     <div class="section base-section" id="base-section" style="display:none">
       <div class="section-header">
         <div>
-          <div class="section-title">Gestão de Base — pedidos e retenção</div>
-          <div class="section-sub">Backlog, aging, tentativas e tracking por pedido a partir da base granular</div>
+          <div class="section-title">Gestão de Base — inteligência de pedidos</div>
+          <div class="section-sub">Backlog, retenção, aging, tentativas e tracking a partir da base granular — contando apenas pedidos mãe, sem os volumes (-001, -002…)</div>
         </div>
-        <div class="filter-info"><strong id="base-record-count">0</strong> pedidos rastreados</div>
-      </div>
-      <div class="base-dashboard">
-        <div class="base-score">
-          <div class="base-ring" id="base-route-ring"><strong id="base-route-pct">—</strong></div>
-          <div class="base-score-copy">
-            <span>Recebidos → Rota</span>
-            <strong id="base-route-main">—</strong>
-            <small id="base-route-sub">Mede se tudo que entrou na base saiu em rota no mesmo dia.</small>
-          </div>
-        </div>
-        <div class="base-workbench">
-          <div class="base-work-card"><span>Recebidos</span><strong id="base-received">—</strong></div>
-          <div class="base-work-card"><span>Com OFD no dia</span><strong id="base-ofd-same-day">—</strong></div>
-          <div class="base-work-card"><span>Retidos no dia</span><strong id="base-backlog">—</strong></div>
-          <div class="base-work-card"><span>Taxa retenção</span><strong id="base-retention-rate">—</strong></div>
-          <div class="base-work-card"><span>Sem mov. &gt;24h</span><strong id="base-no-move">—</strong></div>
-          <div class="base-work-card"><span>2+ tentativas</span><strong id="base-attempts">—</strong></div>
-          <div class="base-work-card"><span>Troca motorista</span><strong id="base-driver-swap">—</strong></div>
-          <div class="base-work-card"><span>7+ dias</span><strong id="base-aging-7">—</strong></div>
+        <div class="base-head-meta">
+          <span class="base-freshness" id="bm-freshness">—</span>
+          <span class="filter-info"><strong id="base-record-count">0</strong> pedidos mãe na base</span>
+          <span class="base-freshness" id="bm-child-note" style="display:none"></span>
+          <button type="button" class="base-ghost-btn" id="bm-refresh">Atualizar base</button>
         </div>
       </div>
-      <div class="base-search-row">
-        <input id="base-order-search" type="text" placeholder="Digite o ID / remessa do pedido" autocomplete="off">
-        <button type="button" class="primary" id="base-order-search-btn">Pesquisar</button>
+
+      <div class="base-subtabs" id="bm-subtabs">
+        <button type="button" class="base-subtab active" data-bm-view="panorama">Panorama</button>
+        <button type="button" class="base-subtab" data-bm-view="fila">Fila de retenção <span class="bm-badge" id="bm-badge-fila">0</span></button>
+        <button type="button" class="base-subtab" data-bm-view="backlog">Backlog diário <span class="bm-badge" id="bm-badge-backlog">0</span></button>
+        <button type="button" class="base-subtab" data-bm-view="tracking">Tracking</button>
+        <button type="button" class="base-subtab" data-bm-view="analytics">Analytics</button>
       </div>
-      <div class="base-queues">
-        <div class="section overview-panel">
-          <div class="section-header">
-            <div><div class="section-title">Fila crítica de retenção</div><div class="section-sub">Pedidos atuais ainda não entregues, priorizados por idade</div></div>
-            <div class="base-actions"><button type="button" data-base-drill="critical-retention">Abrir lista</button><button type="button" data-base-export="critical-retention">Exportar Excel</button></div>
+
+      <div class="bm-alert" id="bm-alert" style="display:none"></div>
+
+      <!-- ===== PANORAMA ===== -->
+      <div class="bm-view" id="bm-view-panorama">
+        <div class="base-dashboard">
+          <div class="base-score">
+            <div class="base-ring" id="base-route-ring"><strong id="base-route-pct">—</strong></div>
+            <div class="base-score-copy">
+              <span>Recebidos → Rota</span>
+              <strong id="base-route-main">—</strong>
+              <small id="base-route-sub">Mede se tudo que entrou na base saiu em rota no mesmo dia.</small>
+            </div>
           </div>
-          <div class="base-queue-list" id="base-critical-list"></div>
+          <div class="bm-panel">
+            <div class="bm-panel-head">
+              <div>
+                <div class="bm-panel-title">Funil da janela selecionada</div>
+                <div class="bm-panel-sub">Do recebimento até a conclusão no mesmo dia — clique para abrir a relação de pedidos</div>
+              </div>
+            </div>
+            <div class="bm-funnel" id="bm-funnel"></div>
+          </div>
         </div>
-        <div class="section overview-panel">
-          <div class="section-header">
-            <div><div class="section-title">Backlog da data</div><div class="section-sub">Recebidos sem saída em rota no mesmo dia</div></div>
-            <div class="base-actions"><button type="button" data-base-drill="backlog">Abrir lista</button><button type="button" data-base-export="backlog">Exportar Excel</button></div>
+
+        <div class="bm-panel">
+          <div class="bm-panel-head">
+            <div>
+              <div class="bm-panel-title">Indicadores de retenção e risco</div>
+              <div class="bm-panel-sub">Cada indicador abre a fila filtrada com exportação e cópia em massa</div>
+            </div>
           </div>
-          <div class="base-queue-list" id="base-backlog-list"></div>
+          <div class="bm-kpi-grid" id="bm-kpi-grid"></div>
+        </div>
+
+        <div class="bm-split">
+          <div class="bm-panel">
+            <div class="bm-panel-head">
+              <div>
+                <div class="bm-panel-title">Aging da fila atual</div>
+                <div class="bm-panel-sub">Pedidos ainda não entregues, por tempo desde o recebimento</div>
+              </div>
+            </div>
+            <div class="bm-aging-rows" id="bm-aging"></div>
+          </div>
+          <div class="bm-panel">
+            <div class="bm-panel-head">
+              <div>
+                <div class="bm-panel-title">Fila crítica — os 8 mais antigos</div>
+                <div class="bm-panel-sub">Clique no pedido para abrir o tracking completo</div>
+              </div>
+              <div class="bm-actions">
+                <button type="button" class="base-ghost-btn" data-bm-open="retidos">Abrir fila</button>
+                <button type="button" class="base-ghost-btn" data-bm-export="retidos">Excel</button>
+              </div>
+            </div>
+            <div class="base-queue-list" id="bm-critical-list"></div>
+          </div>
+        </div>
+
+        <div class="bm-split-3">
+          <div class="bm-panel">
+            <div class="bm-panel-head"><div><div class="bm-panel-title">Retenção por unidade</div><div class="bm-panel-sub">Pedidos em aberto</div></div></div>
+            <div class="bm-mini-list" id="bm-by-unit"></div>
+          </div>
+          <div class="bm-panel">
+            <div class="bm-panel-head"><div><div class="bm-panel-title">Retenção por transportadora</div><div class="bm-panel-sub">Pedidos em aberto</div></div></div>
+            <div class="bm-mini-list" id="bm-by-source"></div>
+          </div>
+          <div class="bm-panel">
+            <div class="bm-panel-head"><div><div class="bm-panel-title">Motivos de retenção</div><div class="bm-panel-sub">Último problema registrado</div></div></div>
+            <div class="bm-mini-list" id="bm-by-reason"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== FILA DE RETENÇÃO ===== -->
+      <div class="bm-view" id="bm-view-fila" style="display:none">
+        <div class="bm-panel">
+          <div class="bm-panel-head">
+            <div>
+              <div class="bm-panel-title">Workbench da fila</div>
+              <div class="bm-panel-sub" id="bm-fila-sub">Filtre, ordene, selecione, copie em massa e exporte. Pressione <strong>/</strong> para buscar.</div>
+            </div>
+            <div class="bm-actions">
+              <button type="button" class="base-ghost-btn" id="bm-save-view">Salvar visão</button>
+              <button type="button" class="base-ghost-btn" id="bm-load-view">Visão salva</button>
+              <button type="button" class="base-ghost-btn" id="bm-reset-filters">Limpar filtros</button>
+            </div>
+          </div>
+
+          <div class="bm-chips" id="bm-presets">
+            <button type="button" class="bm-chip active" data-bm-preset="todos">Todos em aberto</button>
+            <button type="button" class="bm-chip" data-bm-preset="backlog">Backlog da janela</button>
+            <button type="button" class="bm-chip" data-bm-preset="retidos3">Retidos &gt; 3 dias</button>
+            <button type="button" class="bm-chip danger" data-bm-preset="retidos6">Retidos &gt; 6 dias</button>
+            <button type="button" class="bm-chip" data-bm-preset="nunca-saiu">Nunca saiu em rota</button>
+            <button type="button" class="bm-chip" data-bm-preset="sem-movimento">Sem movimentação &gt; 24h</button>
+            <button type="button" class="bm-chip" data-bm-preset="tentativas">2+ tentativas</button>
+            <button type="button" class="bm-chip" data-bm-preset="troca-motorista">Troca de motorista</button>
+          </div>
+
+          <div class="bm-toolbar">
+            <input type="text" id="bm-filter-search" placeholder="Buscar por ID, motorista, motivo…" autocomplete="off">
+            <select id="bm-filter-aging" aria-label="Aging">
+              <option value="all">Todo aging</option>
+              <option value="0-1">0–1 dia</option>
+              <option value="2-3">2–3 dias</option>
+              <option value="4-6">4–6 dias</option>
+              <option value="7+">7+ dias</option>
+            </select>
+            <select id="bm-filter-unit" aria-label="Unidade">
+              <option value="all">Todas as unidades</option>
+              <option value="maua">Mauá</option>
+              <option value="rbp">Ribeirão Pires</option>
+              <option value="none">Não identificada</option>
+            </select>
+            <select id="bm-filter-status" aria-label="Status">
+              <option value="all">Todos os status</option>
+              <option value="received">Recebido</option>
+              <option value="in_route">Em rota</option>
+              <option value="problem">Problemático</option>
+              <option value="delivered">Entregue</option>
+            </select>
+            <select id="bm-filter-category" aria-label="Categoria de retenção">
+              <option value="all">Todas as categorias</option>
+              <option value="nunca_saiu">Nunca saiu em rota</option>
+              <option value="em_rota">Em rota sem baixa</option>
+              <option value="reincidente">Reincidente (2+ tentativas)</option>
+              <option value="problema">Com problema registrado</option>
+            </select>
+            <select id="bm-filter-driver" aria-label="Motorista"><option value="all">Todos os motoristas</option></select>
+            <select id="bm-page-size" aria-label="Linhas por página">
+              <option value="50">50 linhas</option>
+              <option value="100" selected>100 linhas</option>
+              <option value="250">250 linhas</option>
+              <option value="500">500 linhas</option>
+            </select>
+          </div>
+
+          <div class="bm-selectbar" id="bm-selectbar" style="display:none">
+            <strong id="bm-select-count">0 selecionados</strong>
+            <button type="button" class="base-ghost-btn" data-bm-bulk="copy-ids">Copiar IDs</button>
+            <button type="button" class="base-ghost-btn" data-bm-bulk="copy-table">Copiar tabela</button>
+            <button type="button" class="base-ghost-btn" data-bm-bulk="export">Exportar Excel</button>
+            <button type="button" class="base-ghost-btn" data-bm-bulk="track">Tracking em lote</button>
+            <button type="button" class="base-ghost-btn" data-bm-bulk="clear">Limpar seleção</button>
+          </div>
+
+          <div class="bm-table-wrap" id="bm-table-wrap"></div>
+
+          <div class="bm-table-foot">
+            <div class="bm-pager">
+              <button type="button" class="base-ghost-btn" id="bm-prev">‹ Anterior</button>
+              <span id="bm-page-info">—</span>
+              <button type="button" class="base-ghost-btn" id="bm-next">Próxima ›</button>
+            </div>
+            <div class="bm-actions">
+              <button type="button" class="base-ghost-btn" data-bm-bulk="select-page">Selecionar página</button>
+              <button type="button" class="base-ghost-btn" data-bm-bulk="select-all">Selecionar tudo (filtrado)</button>
+              <button type="button" class="base-ghost-btn" id="bm-copy-filtered">Copiar IDs filtrados</button>
+              <button type="button" class="base-ghost-btn" id="bm-export-csv">CSV</button>
+              <button type="button" class="base-ghost-btn primary" id="bm-export-xlsx">Exportar Excel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== BACKLOG DIÁRIO ===== -->
+      <div class="bm-view" id="bm-view-backlog" style="display:none">
+        <div class="bm-panel">
+          <div class="bm-panel-head">
+            <div>
+              <div class="bm-panel-title">Recebido × saiu em rota × retido, por dia</div>
+              <div class="bm-panel-sub">O backlog é reconstruído por data: um pedido recebido no dia 25 que só saiu no dia 26 continua contando como backlog do dia 25</div>
+            </div>
+            <div class="bm-actions"><button type="button" class="base-ghost-btn" id="bm-export-backlog">Exportar Excel</button></div>
+          </div>
+          <div class="bm-chart-wrap"><canvas id="bmBacklogChart"></canvas><div class="chart-fallback">Grafico indisponivel. Verifique a conexao com a biblioteca Chart.js.</div></div>
+        </div>
+        <div class="bm-panel">
+          <div class="bm-panel-head">
+            <div>
+              <div class="bm-panel-title">Fechamento diário da base</div>
+              <div class="bm-panel-sub">Clique na data para abrir os pedidos retidos naquele dia</div>
+            </div>
+          </div>
+          <div class="bm-table-wrap" id="bm-backlog-table"></div>
+        </div>
+      </div>
+
+      <!-- ===== TRACKING ===== -->
+      <div class="bm-view" id="bm-view-tracking" style="display:none">
+        <div class="bm-panel">
+          <div class="bm-panel-head">
+            <div>
+              <div class="bm-panel-title">Tracking do pedido</div>
+              <div class="bm-panel-sub">Digite o ID / remessa e veja a linha do tempo completa: recebimento, saídas, motoristas, problemas e entrega</div>
+            </div>
+          </div>
+          <div class="bm-search-row">
+            <input type="text" id="base-order-search" placeholder="Digite o ID / remessa do pedido" autocomplete="off">
+            <button type="button" class="base-ghost-btn primary" id="base-order-search-btn">Pesquisar</button>
+          </div>
+          <div class="bm-recents" id="bm-recents"></div>
+          <div id="bm-track-result" style="margin-top:14px"></div>
+        </div>
+        <div class="bm-panel">
+          <div class="bm-panel-head">
+            <div>
+              <div class="bm-panel-title">Consulta em lote</div>
+              <div class="bm-panel-sub">Cole vários IDs (um por linha, vírgula ou espaço). Retorna status atual, aging, motorista e último evento de cada um</div>
+            </div>
+            <div class="bm-actions">
+              <button type="button" class="base-ghost-btn primary" id="bm-batch-run">Consultar</button>
+              <button type="button" class="base-ghost-btn" id="bm-batch-export">Exportar Excel</button>
+            </div>
+          </div>
+          <textarea class="bm-textarea" id="bm-batch-input" placeholder="Ex.: 990001234567&#10;990001234568&#10;990001234569"></textarea>
+          <div id="bm-batch-result" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <!-- ===== ANALYTICS ===== -->
+      <div class="bm-view" id="bm-view-analytics" style="display:none">
+        <div class="bm-panel">
+          <div class="bm-panel-head">
+            <div>
+              <div class="bm-panel-title">Quebra analítica da retenção</div>
+              <div class="bm-panel-sub">Agrupa a fila em aberto e mostra volume, aging médio e concentração de risco</div>
+            </div>
+            <div class="bm-actions">
+              <select id="bm-group-by" aria-label="Agrupar por">
+                <option value="driver">Por motorista</option>
+                <option value="unit">Por unidade</option>
+                <option value="source">Por transportadora</option>
+                <option value="reason">Por motivo do problema</option>
+                <option value="category">Por categoria de retenção</option>
+                <option value="aging">Por faixa de aging</option>
+                <option value="received_day">Por dia de recebimento</option>
+              </select>
+              <button type="button" class="base-ghost-btn" id="bm-export-analytics">Exportar Excel</button>
+            </div>
+          </div>
+          <div class="bm-table-wrap" id="bm-analytics-table"></div>
+        </div>
+        <div class="bm-panel">
+          <div class="bm-panel-head">
+            <div>
+              <div class="bm-panel-title">Leitura recomendada</div>
+              <div class="bm-panel-sub">Interpretação automática dos números da janela — apoio à decisão, não substitui o SLA oficial</div>
+            </div>
+          </div>
+          <div id="bm-insights"></div>
         </div>
       </div>
     </div>
@@ -2880,8 +3240,40 @@ function driversForCarrier(carrier, filtered, opts = {}) {
 
 function unitLabel(u){ return u === 'maua' ? 'Mauá' : u === 'rbp' ? 'Ribeirão Pires' : 'Não identificada'; }
 function filterHistoryPeriod(history){ return (history || []).filter(h => dateInRange(h.date)); }
-const BASE_CACHE = { key: '', loading: false, loaded: false, error: null, orders: [], events: [], backlog: [], summary: null };
+/* =====================================================================
+   GESTÃO DE BASE v3 — camada de dados
+   ---------------------------------------------------------------------
+   Objetivos técnicos desta camada:
+   - uma única leitura da base granular por combinação (janela|unidade|fonte);
+   - cache com TTL + stale-while-revalidate (a tela nunca fica em branco
+     enquanto revalida);
+   - token de requisição, para descartar respostas de filtros já trocados
+     (evita "race condition" de UI, o bug clássico de dashboard);
+   - projeção de colunas com fallback para select('*'), pra não quebrar se
+     a view do Supabase mudar de assinatura;
+   - teto de linhas por leitura, com aviso explícito de truncamento.
+   ===================================================================== */
+const BASE_CACHE = { key: '', loading: false, loaded: false, error: null, orders: [], events: [], summary: null, fetchedAt: null, truncated: false };
 let BASE_DRAWER_ROWS = [];
+const BM_TTL_MS = 90 * 1000;
+const BM_ROW_CAP = 25000;
+
+const BM = {
+  view: 'panorama',
+  token: 0,
+  filters: { search: '', aging: 'all', unit: 'all', status: 'all', category: 'all', driver: 'all' },
+  preset: 'todos',
+  sort: { col: 'aging', dir: 'desc' },
+  page: 1,
+  pageSize: 100,
+  selection: new Set(),
+  rowsIndex: new Map(),
+  batchRows: [],
+  recents: [],
+  chart: null,
+  timer: null,
+  lastTrack: null,
+};
 
 function selectedDateBounds() {
   if (state.period === 'custom' && state.customStart && state.customEnd) return { start: state.customStart, end: state.customEnd };
@@ -2904,14 +3296,8 @@ function baseSourceMatches(row) {
   if (state.carrier === 'jt' || state.carrier === 'jt_real') return src === 'jt' || src.includes('j&t');
   return true;
 }
-
-function baseUnitMatches(row) {
-  return state.unit === 'all' || row.unit === state.unit;
-}
-
-function eventLocalDate(row) {
-  return dateOnly(toDate(row.event_at));
-}
+function baseUnitMatches(row) { return state.unit === 'all' || row.unit === state.unit; }
+function eventLocalDate(row) { return dateOnly(toDate(row.event_at)); }
 
 function isOpenOrder(row) {
   const status = String(row.current_status || '').toLowerCase();
@@ -2919,117 +3305,372 @@ function isOpenOrder(row) {
   return status !== 'delivered' && !row.last_delivered_at && !hasDeliveredEvent;
 }
 
+// Leitura paginada com projeção opcional e fallback seguro.
+async function bmFetchRows(table, cols, extra, cap = BM_ROW_CAP) {
+  const PAGE = 1000;
+  const run = async (selectExpr) => {
+    let out = [];
+    for (let from = 0; from < cap; from += PAGE) {
+      let q = sb.from(table).select(selectExpr).range(from, from + PAGE - 1);
+      if (extra) q = extra(q);
+      const { data, error } = await q;
+      if (error) throw error;
+      out = out.concat(data || []);
+      if (!data || data.length < PAGE) return { rows: out, truncated: false };
+    }
+    return { rows: out, truncated: true };
+  };
+  try { return await run(cols || '*'); }
+  catch (e) { if (!cols) throw e; return run('*'); }
+}
+
+/* ---------------------------------------------------------------------
+   Pedido mãe x volume filho
+   Os relatórios trazem uma linha por volume: 990001234567-001, -002, ...
+   Volume não é pedido — contar volume infla backlog, retenção e aging.
+   Regra: tudo que termina em "-<dígitos>" é volume e é descartado; se o
+   pedido mãe não existir na base, os volumes órfãos são consolidados em
+   uma única linha mãe (nada se perde, nada é contado duas vezes).
+   ------------------------------------------------------------------- */
+const BM_CHILD_RE = /-\d{1,4}$/;
+function bmIsChildOrder(id) { return BM_CHILD_RE.test(String(id || '')); }
+function bmParentKey(id) { return String(id || '').replace(BM_CHILD_RE, ''); }
+
+function bmMergeChildInto(base, child) {
+  const older = (a, b) => (!a ? b : !b ? a : (String(a) <= String(b) ? a : b));
+  const newer = (a, b) => (!a ? b : !b ? a : (String(a) >= String(b) ? a : b));
+  base.first_received_at = older(base.first_received_at, child.first_received_at);
+  base.last_event_at = newer(base.last_event_at, child.last_event_at);
+  base.last_ofd_at = newer(base.last_ofd_at, child.last_ofd_at);
+  base.attempt_count = Math.max(Number(base.attempt_count) || 0, Number(child.attempt_count) || 0);
+  base.driver_count = Math.max(Number(base.driver_count) || 0, Number(child.driver_count) || 0);
+  base.hours_since_received = Math.max(Number(base.hours_since_received) || 0, Number(child.hours_since_received) || 0);
+  base.hours_without_movement = Math.max(Number(base.hours_without_movement) || 0, Number(child.hours_without_movement) || 0);
+  base.last_driver_name = base.last_driver_name || child.last_driver_name;
+  base.last_problem_reason = base.last_problem_reason || child.last_problem_reason;
+  // Mãe só fecha quando todos os volumes fecharam.
+  if (isOpenOrder(child)) {
+    base.current_status = child.current_status || base.current_status;
+    base.last_delivered_at = null;
+    base.has_delivered_event = false;
+  } else if (!isOpenOrder(base)) {
+    base.last_delivered_at = newer(base.last_delivered_at, child.last_delivered_at);
+  }
+  base.volumes = (Number(base.volumes) || 1) + 1;
+  return base;
+}
+
+// Remove volumes e devolve só pedidos mãe.
+function bmMotherOrders(rows, parentKeys) {
+  const kept = [];
+  const orphans = new Map();
+  let ignored = 0;
+  for (const r of rows) {
+    const key = r.order_key || r.tracking_number || '';
+    if (!bmIsChildOrder(key)) { kept.push(r); continue; }
+    ignored++;
+    const p = bmParentKey(key);
+    if (parentKeys.has(p)) continue; // a mãe já está na base
+    const cur = orphans.get(p);
+    if (!cur) orphans.set(p, { ...r, order_key: p, tracking_number: p, volumes: 1, rolled_up: true });
+    else bmMergeChildInto(cur, r);
+  }
+  return { rows: kept.concat([...orphans.values()]), ignored };
+}
+
+// Remove eventos de volume; eventos de volumes órfãos passam a apontar
+// para a mãe (a deduplicação por dia já acontece nos Sets de backlog).
+function bmMotherEvents(rows, parentKeys) {
+  const out = [];
+  for (const e of rows) {
+    const key = e.order_key || '';
+    if (!bmIsChildOrder(key)) { out.push(e); continue; }
+    const p = bmParentKey(key);
+    if (parentKeys.has(p)) continue;
+    out.push({ ...e, order_key: p, tracking_number: p });
+  }
+  return out;
+}
+
+function bmSourceLabel(src) {
+  const s = String(src || '').toLowerCase();
+  if (s.includes('imile')) return 'iMile';
+  if (s === 'jt' || s.includes('j&t') || s.includes('jt')) return 'J&T';
+  return src || 'Outro';
+}
+
+function bmCategory(o) {
+  if (o.attempts >= 2) return 'reincidente';
+  if (o.problemReason) return 'problema';
+  if (o.attempts >= 1) return 'em_rota';
+  return 'nunca_saiu';
+}
+function bmCategoryLabel(c) {
+  return { nunca_saiu: 'Nunca saiu em rota', em_rota: 'Em rota sem baixa', reincidente: 'Reincidente', problema: 'Com problema' }[c] || '—';
+}
+function bmAgingBucket(days) {
+  if (days <= 1) return '0-1';
+  if (days <= 3) return '2-3';
+  if (days <= 6) return '4-6';
+  return '7+';
+}
+function bmAgingLabel(b) { return { '0-1': '0–1 dia', '2-3': '2–3 dias', '4-6': '4–6 dias', '7+': '7+ dias' }[b] || b; }
+function baseAgingLabel(hours) { return bmAgingLabel(bmAgingBucket(Math.floor((Number(hours) || 0) / 24))); }
+
+function bmRiskScore(o) {
+  let s = Math.min(40, o.agingDays * 6);
+  s += Math.min(25, (o.dwellHours || 0) / 2);
+  s += Math.min(20, o.attempts * 8);
+  if (o.driverCount >= 2) s += 8;
+  if (o.problemReason) s += 7;
+  return Math.max(0, Math.min(100, Math.round(s)));
+}
+
+function bmNextAction(o) {
+  if (o.status === 'delivered') return 'Concluído — sem ação';
+  if (o.category === 'nunca_saiu' && o.agingDays >= 2) return 'Auditar posição física e forçar triagem';
+  if (o.category === 'reincidente') return 'Contato com cliente / reendereçamento';
+  if (o.problemReason) return 'Tratar ocorrência: ' + o.problemReason;
+  if (o.dwellHours >= 48) return 'Sem leitura há ' + Math.round(o.dwellHours) + 'h — conferir bipagem';
+  if (o.agingDays >= 3) return 'Priorizar na próxima expedição';
+  return 'Monitorar saída na próxima rota';
+}
+
+// Modelo derivado por pedido: calculado uma vez, consumido por todas as telas.
 function normalizeBaseOrder(row) {
   const first = row.first_received_at ? toDate(row.first_received_at) : null;
   const last = row.last_event_at ? toDate(row.last_event_at) : null;
   const hasDeliveredEvent = row.has_delivered_event === true || String(row.has_delivered_event || '').toLowerCase() === 'true';
-  return {
+  const delivered = !!(row.last_delivered_at || hasDeliveredEvent) || String(row.current_status || '').toLowerCase() === 'delivered';
+  const hoursReceived = Number(row.hours_since_received) || (first ? (Date.now() - first.getTime()) / 3600000 : 0);
+  const dwell = Number(row.hours_without_movement) || (last ? (Date.now() - last.getTime()) / 3600000 : 0);
+  const o = {
     ...row,
     order_key: row.order_key || row.tracking_number || '',
-    current_status: (row.last_delivered_at || hasDeliveredEvent) ? 'delivered' : row.current_status,
-    hours_since_received: Number(row.hours_since_received) || (first ? (Date.now() - first.getTime()) / 3600000 : 0),
-    hours_without_movement: Number(row.hours_without_movement) || (last ? (Date.now() - last.getTime()) / 3600000 : 0),
+    source: row.source || '',
+    sourceLabel: bmSourceLabel(row.source),
+    unit: row.unit || null,
+    unitLabel: row.unit ? unitLabel(row.unit) : 'Não identificada',
+    status: delivered ? 'delivered' : (String(row.current_status || '').toLowerCase() || 'received'),
+    current_status: delivered ? 'delivered' : row.current_status,
+    driver: row.last_driver_name || '',
+    problemReason: row.last_problem_reason || '',
+    receivedAt: row.first_received_at || null,
+    lastEventAt: row.last_event_at || null,
+    deliveredAt: row.last_delivered_at || null,
+    hours_since_received: hoursReceived,
+    hours_without_movement: dwell,
+    agingHours: hoursReceived,
+    agingDays: Math.floor(hoursReceived / 24),
+    dwellHours: dwell,
+    attempts: Number(row.attempt_count) || 0,
     attempt_count: Number(row.attempt_count) || 0,
+    driverCount: Number(row.driver_count) || 0,
     driver_count: Number(row.driver_count) || 0,
+    open: !delivered,
+    volumes: Number(row.volumes) || 1,
+    rolled_up: !!row.rolled_up,
   };
+  o.agingBucket = bmAgingBucket(o.agingDays);
+  o.category = bmCategory(o);
+  o.risk = bmRiskScore(o);
+  o.nextAction = bmNextAction(o);
+  o.rowKey = o.source + '|' + o.order_key;
+  return o;
 }
 
-function baseAgingLabel(hours) {
-  const days = Math.floor((Number(hours) || 0) / 24);
-  if (days <= 1) return '0-1 dia';
-  if (days <= 3) return '2-3 dias';
-  if (days <= 6) return '4-6 dias';
-  return '7+ dias';
+function bmCountBy(rows, keyFn, labelFn) {
+  const map = new Map();
+  for (const r of rows) {
+    const k = keyFn(r) || '—';
+    if (!map.has(k)) map.set(k, { key: k, label: labelFn ? labelFn(r, k) : k, count: 0, aging: 0, over3: 0, over6: 0, noMove: 0, attempts: 0 });
+    const e = map.get(k);
+    e.count++;
+    e.aging += r.agingDays;
+    if (r.agingDays >= 3) e.over3++;
+    if (r.agingDays >= 6) e.over6++;
+    if (r.dwellHours >= 24) e.noMove++;
+    if (r.attempts >= 2) e.attempts++;
+  }
+  return [...map.values()].map(e => ({ ...e, avgAging: e.count ? e.aging / e.count : 0 })).sort((a, b) => b.count - a.count);
 }
 
 function buildBaseSummary(orders, events, bounds) {
-  const scopedOrders = orders.filter(o => baseSourceMatches(o) && baseUnitMatches(o)).map(normalizeBaseOrder);
-  const scopedEvents = events.filter(e => baseSourceMatches(e) && baseUnitMatches(e));
+  const rawOrders = orders.filter(o => baseSourceMatches(o) && baseUnitMatches(o));
+  const rawEvents = events.filter(e => baseSourceMatches(e) && baseUnitMatches(e));
+  // Chaves mãe conhecidas (vindas de qualquer uma das duas fontes).
+  const parentKeys = new Set();
+  for (const o of rawOrders) { const k = o.order_key || o.tracking_number || ''; if (k && !bmIsChildOrder(k)) parentKeys.add(k); }
+  for (const e of rawEvents) { const k = e.order_key || ''; if (k && !bmIsChildOrder(k)) parentKeys.add(k); }
+  const mothers = bmMotherOrders(rawOrders, parentKeys);
+  const childOrdersIgnored = mothers.ignored;
+  const childEventsIgnored = rawEvents.filter(e => bmIsChildOrder(e.order_key) && parentKeys.has(bmParentKey(e.order_key))).length;
+  const scopedOrders = mothers.rows.map(normalizeBaseOrder);
+  const scopedEvents = bmMotherEvents(rawEvents, parentKeys);
+  const orderMap = new Map(scopedOrders.map(o => [o.rowKey, o]));
+
+  // Índices de evento por (fonte|pedido|data) — base do cálculo de backlog.
+  const movementSameDay = new Set();
+  const deliveredSameDay = new Set();
+  for (const e of scopedEvents) {
+    const d = eventLocalDate(e);
+    if (!d) continue;
+    const k = e.source + '|' + e.order_key + '|' + d;
+    if (e.event_type === 'ofd' || e.event_type === 'delivered' || e.event_type === 'problem') movementSameDay.add(k);
+    if (e.event_type === 'delivered') deliveredSameDay.add(k);
+  }
+
   const received = scopedEvents.filter(e => e.event_type === 'received');
-  const movementSameDayKeys = new Set(scopedEvents.filter(e => ['ofd','delivered','problem'].includes(e.event_type)).map(e => `${e.source}|${e.order_key}|${eventLocalDate(e)}`));
-  const orderMap = new Map(scopedOrders.map(o => [`${o.source}|${o.order_key}`, o]));
+  const perDayMap = new Map();
   const backlogMap = new Map();
+  const seenReceived = new Set();
+  const receivedRows = [];
+  const routedRows = [];
+  const deliveredRows = [];
+
   for (const ev of received) {
     const d = eventLocalDate(ev);
     if (!d || d < bounds.start || d > bounds.end) continue;
-    const key = `${ev.source}|${ev.order_key}|${d}`;
-    if (movementSameDayKeys.has(key)) continue;
-    const ord = orderMap.get(`${ev.source}|${ev.order_key}`) || {};
-    if (ord.current_status === 'delivered' && dateOnly(toDate(ord.last_delivered_at || ord.last_event_at)) === d) continue;
-    backlogMap.set(key, {
+    const key = ev.source + '|' + ev.order_key + '|' + d;
+    if (seenReceived.has(key)) continue;
+    seenReceived.add(key);
+    if (!perDayMap.has(d)) perDayMap.set(d, { date: d, received: 0, ofd: 0, delivered: 0, backlog: 0, rows: [] });
+    const day = perDayMap.get(d);
+    day.received++;
+    const ord = orderMap.get(ev.source + '|' + ev.order_key) || {};
+    const row = normalizeBaseOrder({
       ...ord,
       source: ev.source,
       order_key: ev.order_key,
       tracking_number: ev.tracking_number || ev.order_key,
       unit: ev.unit || ord.unit,
-      received_at: ev.event_at,
-      backlog_date: d,
-      current_status: ord.current_status || 'received',
-      last_driver_name: ord.last_driver_name || '',
+      first_received_at: ord.first_received_at || ev.event_at,
       last_event_at: ord.last_event_at || ev.event_at,
-      hours_since_received: ord.hours_since_received || ((Date.now() - toDate(ev.event_at).getTime()) / 3600000),
-      hours_without_movement: ord.hours_without_movement || ((Date.now() - toDate(ev.event_at).getTime()) / 3600000),
-      attempt_count: ord.attempt_count || 0,
-      driver_count: ord.driver_count || 0,
+      current_status: ord.current_status || 'received',
+      hours_since_received: ord.hours_since_received,
+      hours_without_movement: ord.hours_without_movement,
+      attempt_count: ord.attempt_count,
+      driver_count: ord.driver_count,
     });
+    row.receivedDate = d;
+    receivedRows.push(row);
+    if (deliveredSameDay.has(key)) { day.delivered++; deliveredRows.push(row); }
+    if (movementSameDay.has(key)) { day.ofd++; routedRows.push(row); continue; }
+    row.backlogDate = d;
+    day.backlog++;
+    day.rows.push(row);
+    backlogMap.set(key, row);
   }
-  const backlog = [...backlogMap.values()].sort((a,b) => String(a.received_at).localeCompare(String(b.received_at)));
-  const retained = scopedOrders.filter(isOpenOrder).sort((a,b) => b.hours_since_received - a.hours_since_received);
-  const retidos3 = retained.filter(o => o.hours_since_received >= 72);
-  const retidos6 = retained.filter(o => o.hours_since_received >= 144);
-  const aging = { '0-1 dia': 0, '2-3 dias': 0, '4-6 dias': 0, '7+ dias': 0 };
-  for (const o of retained) aging[baseAgingLabel(o.hours_since_received)]++;
-  const uniqueReceived = new Set(received.map(e => `${e.source}|${e.order_key}|${eventLocalDate(e)}`));
-  const ofdForReceived = [...uniqueReceived].filter(k => movementSameDayKeys.has(k)).length;
+
+  // Garante que todos os dias da janela apareçam, mesmo zerados.
+  let cursor = bounds.start;
+  let guard = 0;
+  while (cursor <= bounds.end && guard++ < 400) {
+    if (!perDayMap.has(cursor)) perDayMap.set(cursor, { date: cursor, received: 0, ofd: 0, delivered: 0, backlog: 0, rows: [] });
+    cursor = addDaysYMD(cursor, 1);
+  }
+  const perDay = [...perDayMap.values()].sort((a, b) => a.date.localeCompare(b.date)).map(d => ({
+    ...d,
+    routeRate: d.received ? round1(100 * d.ofd / d.received) : null,
+    retentionRate: d.received ? round1(100 * d.backlog / d.received) : null,
+  }));
+
+  const backlog = [...backlogMap.values()].sort((a, b) => b.risk - a.risk);
+  const retained = scopedOrders.filter(o => o.open).sort((a, b) => b.agingHours - a.agingHours);
+  const retidos3 = retained.filter(o => o.agingDays >= 3);
+  const retidos6 = retained.filter(o => o.agingDays >= 6);
+  const aging = { '0-1': 0, '2-3': 0, '4-6': 0, '7+': 0 };
+  for (const o of retained) aging[o.agingBucket]++;
+
+  const receivedCount = seenReceived.size;
+  const ofdSameDayCount = [...seenReceived].filter(k => movementSameDay.has(k)).length;
+  const deliveredSameDayCount = [...seenReceived].filter(k => deliveredSameDay.has(k)).length;
+
   return {
     orders: scopedOrders,
     events: scopedEvents,
+    childOrdersIgnored,
+    childEventsIgnored,
+    rolledUp: scopedOrders.filter(o => o.rolled_up).length,
+    perDay,
+    receivedRows,
+    routedRows,
+    deliveredRows,
     backlog,
     retained,
     retidos3,
     retidos6,
     aging,
-    receivedCount: uniqueReceived.size,
-    ofdSameDayCount: ofdForReceived,
-    routeRate: uniqueReceived.size ? round1(100 * ofdForReceived / uniqueReceived.size) : null,
-    retentionRate: uniqueReceived.size ? round1(100 * backlog.length / uniqueReceived.size) : null,
-    noMove24: retained.filter(o => o.hours_without_movement >= 24).length,
-    attempts2: retained.filter(o => o.attempt_count >= 2).length,
-    driverSwap: retained.filter(o => o.driver_count >= 2).length,
+    receivedCount,
+    ofdSameDayCount,
+    deliveredSameDayCount,
+    routeRate: receivedCount ? round1(100 * ofdSameDayCount / receivedCount) : null,
+    retentionRate: receivedCount ? round1(100 * backlog.length / receivedCount) : null,
+    noMove24: retained.filter(o => o.dwellHours >= 24).length,
+    attempts2: retained.filter(o => o.attempts >= 2).length,
+    driverSwap: retained.filter(o => o.driverCount >= 2).length,
+    neverRouted: retained.filter(o => o.attempts === 0).length,
+    byUnit: bmCountBy(retained, o => o.unit || 'none', o => o.unitLabel),
+    bySource: bmCountBy(retained, o => o.sourceLabel),
+    byReason: bmCountBy(retained.filter(o => o.problemReason), o => o.problemReason),
+    byDriver: bmCountBy(retained, o => o.driver || '—'),
+    byCategory: bmCountBy(retained, o => o.category, (o, k) => bmCategoryLabel(k)),
+    byAging: bmCountBy(retained, o => o.agingBucket, (o, k) => bmAgingLabel(k)),
+    byReceivedDay: bmCountBy(retained.filter(o => o.receivedAt), o => dateOnly(toDate(o.receivedAt))),
+    drivers: [...new Set(retained.map(o => o.driver).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
   };
 }
 
-async function refreshBaseKnowledge() {
+async function refreshBaseKnowledge(force = false) {
   if (!sb) return;
   const bounds = selectedDateBounds();
-  const key = `${bounds.start}|${bounds.end}|${state.unit}|${state.carrier}`;
-  if (BASE_CACHE.loading || (BASE_CACHE.key === key && BASE_CACHE.loaded && !BASE_CACHE.error)) return;
+  const key = bounds.start + '|' + bounds.end + '|' + state.unit + '|' + state.carrier;
+  const fresh = BASE_CACHE.loaded && BASE_CACHE.key === key && !BASE_CACHE.error && BASE_CACHE.fetchedAt && (Date.now() - BASE_CACHE.fetchedAt) < BM_TTL_MS;
+  if (!force && (BASE_CACHE.loading || fresh)) return;
+  if (BASE_CACHE.key !== key) { BASE_CACHE.summary = null; BASE_CACHE.loaded = false; BM.selection.clear(); BM.page = 1; }
+  const token = ++BM.token;
   BASE_CACHE.loading = true;
   BASE_CACHE.key = key;
   renderBaseManagement();
   try {
     const endNext = addDaysYMD(bounds.end, 1);
-    const [orders, events] = await Promise.all([
-      fetchAllRows('v_order_current_intelligence'),
-      fetchAllRows('order_events', q => q.gte('event_at', `${bounds.start}T00:00:00-03:00`).lt('event_at', `${endNext}T00:00:00-03:00`)),
+    const [ordersRes, eventsRes] = await Promise.all([
+      bmFetchRows('v_order_current_intelligence', null),
+      bmFetchRows('order_events', null, q => q.gte('event_at', bounds.start + 'T00:00:00-03:00').lt('event_at', endNext + 'T00:00:00-03:00')),
     ]);
-    BASE_CACHE.orders = orders || [];
-    BASE_CACHE.events = events || [];
+    if (token !== BM.token) return; // resposta obsoleta: filtro já mudou
+    BASE_CACHE.orders = ordersRes.rows || [];
+    BASE_CACHE.events = eventsRes.rows || [];
+    BASE_CACHE.truncated = !!(ordersRes.truncated || eventsRes.truncated);
     BASE_CACHE.summary = buildBaseSummary(BASE_CACHE.orders, BASE_CACHE.events, bounds);
     BASE_CACHE.error = null;
     BASE_CACHE.loaded = true;
+    BASE_CACHE.fetchedAt = Date.now();
+    bmSyncDriverFilter();
   } catch (e) {
+    if (token !== BM.token) return;
     BASE_CACHE.error = e.message || String(e);
     BASE_CACHE.summary = null;
   } finally {
-    BASE_CACHE.loading = false;
-    renderBaseManagement();
+    if (token === BM.token) {
+      BASE_CACHE.loading = false;
+      renderBaseManagement();
+    }
   }
 }
 
 function ensureBaseKnowledge() {
   if (!sb) return;
   refreshBaseKnowledge().catch(e => console.error('Falha ao carregar Gestão de Base:', e));
+}
+
+// Auto-revalidação enquanto a aba estiver aberta (a base muda durante o turno).
+function bmStartAutoRefresh() {
+  if (BM.timer) return;
+  BM.timer = setInterval(() => {
+    if (state.mode !== 'base' || document.hidden) return;
+    refreshBaseKnowledge(true).catch(() => {});
+  }, 180000);
 }
 
 function renderDataQuality(filtered) {
@@ -3382,132 +4023,925 @@ function formatDateTime(v) {
   const d = toDate(v);
   return d ? d.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—';
 }
-function renderBaseOrderRows(rows, limit = 6) {
-  if (!rows || !rows.length) return '<div class="drawer-empty">Nenhum pedido neste recorte.</div>';
-  return rows.slice(0, limit).map((r, i) => `
-    <button type="button" class="base-order-row" data-base-row-index="${i}">
-      <div class="main"><strong>${escapeHTML(r.order_key || r.tracking_number || 'Pedido sem ID')}</strong><small>${escapeHTML(statusLabel(r.current_status))} · ${r.unit ? unitLabel(r.unit) : 'Unidade não identificada'}</small></div>
-      <div class="base-row-cell"><span>Recebido</span><strong>${formatDateTime(r.first_received_at || r.received_at)}</strong></div>
-      <div class="base-row-cell"><span>Último status</span><strong>${formatDateTime(r.last_event_at)}</strong></div>
-      <div class="base-row-cell"><span>Aging</span><strong>${Math.floor((Number(r.hours_since_received) || 0) / 24)} dia(s)</strong></div>
-    </button>
-  `).join('');
+/* =====================================================================
+   GESTÃO DE BASE v3 — camada de apresentação
+   Panorama · Fila de retenção · Backlog diário · Tracking · Analytics
+   ===================================================================== */
+
+function bmNum(n) { return fmt(n); }
+function bmPct(v) { return v == null ? '—' : v.toFixed(1).replace('.', ',') + '%'; }
+function bmDays(o) { return (Number(o.agingDays) || 0) + 'd'; }
+function bmDateLabel(d) { return d ? d.slice(8, 10) + '/' + d.slice(5, 7) : '—'; }
+
+function bmCopy(text, msg) {
+  const done = () => showToast(msg || 'Copiado para a área de transferência.', 'Gestão de Base');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => bmCopyFallback(text, done));
+  } else bmCopyFallback(text, done);
 }
-function renderBaseStrip() {
+function bmCopyFallback(text, done) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); done(); } catch (e) { showToast('Não foi possível copiar automaticamente.', 'Gestão de Base'); }
+  ta.remove();
+}
+
+function bmStatusTag(status) {
+  const s = String(status || '').toLowerCase();
+  const cls = s === 'delivered' ? 'g' : s === 'problem' ? 'r' : s === 'in_route' || s === 'ofd' ? 'y' : 'n';
+  return '<span class="bm-tag ' + cls + '">' + escapeHTML(statusLabel(s)) + '</span>';
+}
+function bmAgingTag(o) {
+  const cls = o.agingDays >= 6 ? 'r' : o.agingDays >= 3 ? 'y' : 'g';
+  return '<span class="bm-tag ' + cls + '">' + o.agingDays + ' dia(s)</span>';
+}
+function bmRiskBar(v) {
+  return '<span class="bm-risk"><i><b style="width:' + Math.max(4, v) + '%"></b></i>' + v + '</span>';
+}
+
+/* ---------- normalização de linhas para listas/exportação ---------- */
+function bmRowRecord(r) {
+  return {
+    pedido: r.order_key || r.tracking_number || '',
+    status: statusLabel(r.status || r.current_status),
+    categoria: bmCategoryLabel(r.category),
+    unidade: r.unitLabel || (r.unit ? unitLabel(r.unit) : ''),
+    transportadora: r.sourceLabel || bmSourceLabel(r.source),
+    motorista: r.driver || r.last_driver_name || '',
+    recebido: formatDateTime(r.receivedAt || r.first_received_at),
+    ultimo_evento: formatDateTime(r.lastEventAt || r.last_event_at),
+    aging_dias: Number(r.agingDays) || 0,
+    horas_sem_movimento: Math.round(Number(r.dwellHours) || 0),
+    tentativas: Number(r.attempts) || 0,
+    motoristas: Number(r.driverCount) || 0,
+    risco: Number(r.risk) || 0,
+    volumes: Number(r.volumes) || 1,
+    motivo: r.problemReason || '',
+    acao_sugerida: r.nextAction || '',
+    backlog_do_dia: r.backlogDate || '',
+  };
+}
+function baseRowsToText(rows) {
+  if (!rows || !rows.length) return '';
+  const recs = rows.map(bmRowRecord);
+  const head = Object.keys(recs[0]);
+  return [head.join('\t')].concat(recs.map(r => head.map(h => String(r[h] ?? '')).join('\t'))).join('\n');
+}
+function bmRowsToCsv(rows) {
+  const recs = rows.map(bmRowRecord);
+  if (!recs.length) return '';
+  const head = Object.keys(recs[0]);
+  const esc = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  return [head.join(';')].concat(recs.map(r => head.map(h => esc(r[h])).join(';'))).join('\n');
+}
+function bmDownload(content, filename, mime) {
+  const blob = new Blob(['\ufeff' + content], { type: mime || 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+function bmFileStamp() {
+  const b = selectedDateBounds();
+  return b.start === b.end ? b.start : b.start + '_a_' + b.end;
+}
+function exportBaseRows(rows, filename) {
+  if (!rows || !rows.length) { showToast('Nenhum pedido para exportar.', 'Gestão de Base'); return; }
   const s = BASE_CACHE.summary;
-  setText('#base-strip-backlog', s ? fmt(s.backlog.length) : (BASE_CACHE.loading ? '...' : '—'));
-  setText('#base-strip-retidos3', s ? fmt(s.retidos3.length) : (BASE_CACHE.loading ? '...' : '—'));
-  setText('#base-strip-retidos6', s ? fmt(s.retidos6.length) : (BASE_CACHE.loading ? '...' : '—'));
-  setText('#base-strip-route-rate', s && s.routeRate != null ? `${s.routeRate.toFixed(1).replace('.', ',')}%` : (BASE_CACHE.loading ? '...' : '—'));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.map(bmRowRecord)), 'Pedidos');
+  if (s) {
+    const resumo = [
+      { indicador: 'Recebidos na janela', valor: s.receivedCount },
+      { indicador: 'Saíram em rota no mesmo dia', valor: s.ofdSameDayCount },
+      { indicador: 'Entregues no mesmo dia', valor: s.deliveredSameDayCount },
+      { indicador: 'Backlog da janela', valor: s.backlog.length },
+      { indicador: 'Taxa recebidos→rota (%)', valor: s.routeRate ?? '' },
+      { indicador: 'Taxa de retenção (%)', valor: s.retentionRate ?? '' },
+      { indicador: 'Em aberto (fila atual)', valor: s.retained.length },
+      { indicador: 'Retidos > 3 dias', valor: s.retidos3.length },
+      { indicador: 'Retidos > 6 dias', valor: s.retidos6.length },
+      { indicador: 'Sem movimentação > 24h', valor: s.noMove24 },
+      { indicador: '2+ tentativas', valor: s.attempts2 },
+      { indicador: 'Troca de motorista', valor: s.driverSwap },
+      { indicador: 'Nunca saíram em rota', valor: s.neverRouted },
+      { indicador: 'Janela', valor: selectedDateBounds().start + ' a ' + selectedDateBounds().end },
+      { indicador: 'Gerado em', valor: new Date().toLocaleString('pt-BR') },
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumo), 'Resumo');
+  }
+  XLSX.writeFile(wb, filename);
+  showToast(rows.length + ' pedidos exportados.', 'Gestão de Base');
 }
-function renderBaseManagement() {
-  renderBaseStrip();
-  if (!$('#base-section')) return;
-  const s = BASE_CACHE.summary;
-  if (BASE_CACHE.loading && !s) {
-    setText('#base-record-count', '...');
-    setText('#base-route-pct', '...');
-    setText('#base-route-main', 'Carregando');
-    $('#base-critical-list').innerHTML = '<div class="drawer-empty">Carregando base granular...</div>';
-    $('#base-backlog-list').innerHTML = '<div class="drawer-empty">Carregando backlog da janela...</div>';
-    return;
-  }
-  if (BASE_CACHE.error) {
-    setText('#base-record-count', '0');
-    $('#base-critical-list').innerHTML = `<div class="drawer-empty"><strong>Base granular indisponível.</strong><br>${escapeHTML(BASE_CACHE.error)}</div>`;
-    $('#base-backlog-list').innerHTML = '<div class="drawer-empty">Rode a migration da base de pedidos e reimporte os relatórios.</div>';
-    return;
-  }
-  if (!s) {
-    setText('#base-record-count', '0');
-    $('#base-critical-list').innerHTML = '<div class="drawer-empty">Sem dados granulares carregados ainda.</div>';
-    $('#base-backlog-list').innerHTML = '<div class="drawer-empty">Importe recebimento e entrega para alimentar a base.</div>';
-    return;
-  }
-  const routeRate = s.routeRate == null ? null : s.routeRate;
-  $('#base-route-ring')?.style.setProperty('--value', String(routeRate == null ? 0 : Math.max(0, Math.min(100, routeRate))));
-  setText('#base-record-count', fmt(s.orders.length));
-  setText('#base-route-pct', routeRate == null ? '—' : `${Math.round(routeRate)}%`);
-  setText('#base-route-main', routeRate == null ? 'Sem leitura' : `${routeRate.toFixed(1).replace('.', ',')}%`);
-  setText('#base-route-sub', `${fmt(s.ofdSameDayCount)} com OFD no dia de ${fmt(s.receivedCount)} recebidos na janela.`);
-  setText('#base-received', fmt(s.receivedCount));
-  setText('#base-ofd-same-day', fmt(s.ofdSameDayCount));
-  setText('#base-backlog', fmt(s.backlog.length));
-  setText('#base-retention-rate', s.retentionRate == null ? '—' : `${s.retentionRate.toFixed(1).replace('.', ',')}%`);
-  setText('#base-no-move', fmt(s.noMove24));
-  setText('#base-attempts', fmt(s.attempts2));
-  setText('#base-driver-swap', fmt(s.driverSwap));
-  setText('#base-aging-7', fmt(s.aging['7+ dias']));
-  $('#base-critical-list').innerHTML = renderBaseOrderRows(s.retidos3.length ? s.retidos3 : s.retained, 7);
-  $('#base-backlog-list').innerHTML = renderBaseOrderRows(s.backlog, 7);
-}
+
+/* ---------- seleção de conjuntos ---------- */
 function baseRowsForType(type) {
   const s = BASE_CACHE.summary;
   if (!s) return [];
-  if (type === 'backlog') return s.backlog;
-  if (type === 'retidos3') return s.retidos3;
-  if (type === 'retidos6') return s.retidos6;
-  if (type === 'critical-retention') return s.retained;
-  if (type === 'received-route') return s.backlog;
-  return [];
+  switch (type) {
+    case 'backlog': case 'received-route': return s.backlog;
+    case 'recebidos': return s.receivedRows;
+    case 'backlog-ofd': return s.routedRows;
+    case 'entregues-dia': return s.deliveredRows;
+    case 'retidos3': return s.retidos3;
+    case 'retidos6': return s.retidos6;
+    case 'retidos': case 'critical-retention': return s.retained;
+    case 'nunca-saiu': return s.retained.filter(o => o.attempts === 0);
+    case 'sem-movimento': return s.retained.filter(o => o.dwellHours >= 24);
+    case 'tentativas': return s.retained.filter(o => o.attempts >= 2);
+    case 'troca-motorista': return s.retained.filter(o => o.driverCount >= 2);
+    case 'todos': return s.retained;
+    default:
+      if (String(type || '').indexOf('aging:') === 0) {
+        const b = String(type).split(':')[1];
+        return s.retained.filter(o => o.agingBucket === b);
+      }
+      if (String(type || '').indexOf('day:') === 0) {
+        const d = String(type).split(':')[1];
+        return s.backlog.filter(o => o.backlogDate === d);
+      }
+      return [];
+  }
 }
 function baseTypeTitle(type) {
-  if (type === 'backlog') return 'Backlog da data';
-  if (type === 'retidos3') return 'Retidos acima de 3 dias';
-  if (type === 'retidos6') return 'Retidos acima de 6 dias';
-  if (type === 'critical-retention') return 'Fila crítica de retenção';
-  if (type === 'received-route') return 'Recebidos sem rota no dia';
+  const map = {
+    backlog: 'Backlog da janela', 'received-route': 'Recebidos sem rota no dia',
+    retidos3: 'Retidos acima de 3 dias', retidos6: 'Retidos acima de 6 dias',
+    retidos: 'Fila de retenção', 'critical-retention': 'Fila crítica de retenção',
+    'nunca-saiu': 'Nunca saíram em rota', 'sem-movimento': 'Sem movimentação há mais de 24h',
+    tentativas: '2 ou mais tentativas', 'troca-motorista': 'Trocaram de motorista',
+    todos: 'Todos os pedidos em aberto', recebidos: 'Recebidos na janela',
+    'backlog-ofd': 'Recebidos que saíram em rota no mesmo dia', 'entregues-dia': 'Recebidos e entregues no mesmo dia',
+  };
+  if (map[type]) return map[type];
+  if (String(type || '').indexOf('aging:') === 0) return 'Aging ' + bmAgingLabel(String(type).split(':')[1]);
+  if (String(type || '').indexOf('day:') === 0) return 'Backlog de ' + bmDateLabel(String(type).split(':')[1]);
   return 'Pedidos';
 }
-function baseRowsToText(rows) {
-  return rows.map(r => [r.order_key || r.tracking_number || '', statusLabel(r.current_status), r.unit ? unitLabel(r.unit) : '', r.last_driver_name || '', formatDateTime(r.first_received_at || r.received_at), formatDateTime(r.last_event_at), `${Math.floor((Number(r.hours_since_received) || 0) / 24)} dia(s)`].join('\t')).join('\n');
+
+/* ---------- faixa executiva da Visão Geral ---------- */
+function renderBaseStrip() {
+  const s = BASE_CACHE.summary;
+  const load = BASE_CACHE.loading ? '…' : '—';
+  setText('#base-strip-backlog', s ? bmNum(s.backlog.length) : load);
+  setText('#base-strip-retidos3', s ? bmNum(s.retidos3.length) : load);
+  setText('#base-strip-retidos6', s ? bmNum(s.retidos6.length) : load);
+  setText('#base-strip-route-rate', s ? bmPct(s.routeRate) : load);
 }
-function exportBaseRows(rows, filename) {
-  if (!rows.length) { showToast('Nenhum pedido para exportar.', 'Gestão de Base'); return; }
-  const data = rows.map(r => ({
-    pedido: r.order_key || r.tracking_number || '',
-    status: statusLabel(r.current_status),
-    unidade: r.unit ? unitLabel(r.unit) : '',
-    motorista: r.last_driver_name || '',
-    recebido: formatDateTime(r.first_received_at || r.received_at),
-    ultimo_status: formatDateTime(r.last_event_at),
-    aging_dias: Math.floor((Number(r.hours_since_received) || 0) / 24),
-    tentativas: Number(r.attempt_count) || 0,
-    motoristas: Number(r.driver_count) || 0,
-    ultimo_problema: r.last_problem_reason || '',
-  }));
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Pedidos');
-  XLSX.writeFile(wb, filename);
+
+/* ---------- lista compacta de pedidos ---------- */
+function renderBaseOrderRows(rows, limit = 6) {
+  if (!rows || !rows.length) return '<div class="bm-empty">Nenhum pedido neste recorte.</div>';
+  return rows.slice(0, limit).map((r, i) => '' +
+    '<button type="button" class="base-order-row" data-base-row-index="' + i + '">' +
+      '<div class="main"><strong>' + escapeHTML(r.order_key || r.tracking_number || 'Pedido sem ID') + '</strong>' +
+      '<small>' + escapeHTML(statusLabel(r.status || r.current_status)) + ' · ' + escapeHTML(r.unitLabel || 'Unidade não identificada') + ' · ' + escapeHTML(bmCategoryLabel(r.category)) + '</small></div>' +
+      '<div class="base-row-cell"><span>Recebido</span><strong>' + formatDateTime(r.receivedAt || r.first_received_at) + '</strong></div>' +
+      '<div class="base-row-cell"><span>Último evento</span><strong>' + formatDateTime(r.lastEventAt || r.last_event_at) + '</strong></div>' +
+      '<div class="base-row-cell"><span>Aging</span><strong>' + (Number(r.agingDays) || 0) + ' dia(s)</strong></div>' +
+    '</button>').join('');
 }
+
+/* =========================== DISPATCHER =========================== */
+function renderBaseManagement() {
+  renderBaseStrip();
+  if (!$('#base-section')) return;
+  bmRenderFreshness();
+  if (state.mode !== 'base') return; // fora da aba, só a faixa executiva precisa estar viva
+  const s = BASE_CACHE.summary;
+  const alert = $('#bm-alert');
+  if (alert) {
+    if (BASE_CACHE.error) {
+      alert.style.display = ''; alert.className = 'bm-alert error';
+      alert.innerHTML = '<strong>Base granular indisponível.</strong><br>' + escapeHTML(BASE_CACHE.error) + '<br>Confirme se a migration de <code>orders / order_events / v_order_current_intelligence</code> foi aplicada e se os relatórios de bipagem foram importados.';
+    } else if (BASE_CACHE.truncated) {
+      alert.style.display = ''; alert.className = 'bm-alert';
+      alert.innerHTML = '<strong>Leitura truncada.</strong> A base passou de ' + bmNum(BM_ROW_CAP) + ' registros nesta janela. Reduza o período para uma leitura completa.';
+    } else alert.style.display = 'none';
+  }
+  setText('#base-record-count', s ? bmNum(s.orders.length) : (BASE_CACHE.loading ? '…' : '0'));
+  const childNote = $('#bm-child-note');
+  if (childNote) {
+    if (s && s.childOrdersIgnored) {
+      childNote.style.display = '';
+      childNote.textContent = bmNum(s.childOrdersIgnored) + ' volumes filhos ignorados' + (s.rolledUp ? ' · ' + bmNum(s.rolledUp) + ' consolidados na mãe' : '');
+      childNote.title = 'Linhas terminadas em -001, -002… são volumes do mesmo pedido. A Gestão de Base conta apenas pedidos mãe.';
+    } else childNote.style.display = 'none';
+  }
+  const badgeFila = $('#bm-badge-fila'), badgeBack = $('#bm-badge-backlog');
+  if (badgeFila) { badgeFila.textContent = s ? bmNum(s.retidos3.length) : '0'; badgeFila.classList.toggle('hot', !!(s && s.retidos6.length)); }
+  if (badgeBack) badgeBack.textContent = s ? bmNum(s.backlog.length) : '0';
+
+  bmRenderPanorama();
+  bmRenderFila();
+  bmRenderBacklog();
+  bmRenderAnalytics();
+}
+
+function bmRenderFreshness() {
+  const el = $('#bm-freshness');
+  if (!el) return;
+  if (BASE_CACHE.loading) { el.textContent = 'Sincronizando base…'; el.className = 'base-freshness'; return; }
+  if (BASE_CACHE.error) { el.textContent = 'Falha na leitura'; el.className = 'base-freshness stale'; return; }
+  if (!BASE_CACHE.fetchedAt) { el.textContent = 'Base não carregada'; el.className = 'base-freshness'; return; }
+  const mins = Math.floor((Date.now() - BASE_CACHE.fetchedAt) / 60000);
+  el.textContent = mins <= 0 ? 'Atualizada agora' : 'Atualizada há ' + mins + ' min';
+  el.className = 'base-freshness ' + (mins > 10 ? 'stale' : 'live');
+}
+
+/* =========================== PANORAMA =========================== */
+function bmRenderPanorama() {
+  const s = BASE_CACHE.summary;
+  const funnel = $('#bm-funnel'), kpis = $('#bm-kpi-grid'), agingEl = $('#bm-aging');
+  if (!funnel) return;
+  if (!s) {
+    const sk = '<div class="bm-empty">' + (BASE_CACHE.loading ? 'Carregando base granular…' : BASE_CACHE.error ? 'Base indisponível.' : 'Importe os relatórios de bipagem para alimentar a Gestão de Base.') + '</div>';
+    funnel.innerHTML = sk; kpis.innerHTML = ''; agingEl.innerHTML = '';
+    $('#bm-critical-list').innerHTML = sk;
+    $('#bm-by-unit').innerHTML = ''; $('#bm-by-source').innerHTML = ''; $('#bm-by-reason').innerHTML = '';
+    setText('#base-route-pct', '—'); setText('#base-route-main', BASE_CACHE.loading ? 'Carregando' : 'Sem leitura');
+    return;
+  }
+  const rate = s.routeRate;
+  const ring = $('#base-route-ring');
+  if (ring) ring.style.setProperty('--value', String(rate == null ? 0 : Math.max(0, Math.min(100, rate))));
+  setText('#base-route-pct', rate == null ? '—' : Math.round(rate) + '%');
+  setText('#base-route-main', bmPct(rate));
+  setText('#base-route-sub', bmNum(s.ofdSameDayCount) + ' com saída no dia de ' + bmNum(s.receivedCount) + ' recebidos · ' + bmNum(s.backlog.length) + ' ficaram retidos (' + bmPct(s.retentionRate) + ').');
+
+  const base = Math.max(1, s.receivedCount);
+  const steps = [
+    { k: 'recebidos', label: 'Recebidos', v: s.receivedCount, sub: 'entraram na base na janela' },
+    { k: 'backlog-ofd', label: 'Saíram em rota (mesmo dia)', v: s.ofdSameDayCount, sub: bmPct(s.routeRate) + ' dos recebidos' },
+    { k: 'entregues-dia', label: 'Entregues no mesmo dia', v: s.deliveredSameDayCount, sub: bmPct(s.receivedCount ? round1(100 * s.deliveredSameDayCount / s.receivedCount) : null) + ' dos recebidos' },
+    { k: 'backlog', label: 'Retidos na base', v: s.backlog.length, sub: bmPct(s.retentionRate) + ' de retenção', crit: true },
+  ];
+  funnel.innerHTML = steps.map(st => '' +
+    '<button type="button" class="bm-funnel-step ' + (st.crit ? 'retido' : '') + '" data-bm-open="' + st.k + '">' +
+      '<span>' + st.label + '</span><strong>' + bmNum(st.v) + '</strong>' +
+      '<div class="bm-funnel-bar"><i style="width:' + Math.min(100, Math.round(100 * st.v / base)) + '%"></i></div>' +
+      '<small>' + escapeHTML(st.sub) + '</small>' +
+    '</button>').join('');
+
+  const cards = [
+    { t: 'backlog', l: 'Backlog do dia', v: bmNum(s.backlog.length), d: 'recebidos sem saída no mesmo dia', c: 'warn' },
+    { t: 'retidos3', l: 'Retidos > 3 dias', v: bmNum(s.retidos3.length), d: 'pendentes fora da rota', c: 'warn' },
+    { t: 'retidos6', l: 'Retidos > 6 dias', v: bmNum(s.retidos6.length), d: 'fila crítica', c: 'critical' },
+    { t: 'retidos', l: 'Fila em aberto', v: bmNum(s.retained.length), d: 'todos os pedidos não entregues', c: '' },
+    { t: 'received-route', l: 'Recebidos → Rota', v: bmPct(s.routeRate), d: 'taxa de expedição da janela', c: s.routeRate != null && s.routeRate >= 95 ? 'good' : 'warn' },
+    { t: 'nunca-saiu', l: 'Nunca saiu em rota', v: bmNum(s.neverRouted), d: 'sem nenhuma tentativa registrada', c: 'critical' },
+    { t: 'sem-movimento', l: 'Sem mov. > 24h', v: bmNum(s.noMove24), d: 'sem nenhuma leitura recente', c: 'warn' },
+    { t: 'tentativas', l: '2+ tentativas', v: bmNum(s.attempts2), d: 'saíram e voltaram mais de uma vez', c: 'warn' },
+    { t: 'troca-motorista', l: 'Troca de motorista', v: bmNum(s.driverSwap), d: 'passaram por 2+ entregadores', c: '' },
+    { t: 'aging:7+', l: '7+ dias na base', v: bmNum(s.aging['7+']), d: 'envelhecimento máximo', c: 'critical' },
+  ];
+  kpis.innerHTML = cards.map(c => '<button type="button" class="bm-kpi ' + c.c + '" data-bm-open="' + c.t + '"><span>' + c.l + '</span><strong>' + c.v + '</strong><small>' + c.d + '</small></button>').join('');
+
+  const maxAging = Math.max(1, ...Object.values(s.aging));
+  const order = ['0-1', '2-3', '4-6', '7+'];
+  agingEl.innerHTML = order.map((b, i) => '' +
+    '<button type="button" class="bm-aging-row a' + i + '" data-bm-open="aging:' + b + '">' +
+      '<b>' + bmAgingLabel(b) + '</b>' +
+      '<span class="bm-aging-track"><i style="width:' + Math.round(100 * s.aging[b] / maxAging) + '%"></i></span>' +
+      '<em>' + bmNum(s.aging[b]) + '</em>' +
+    '</button>').join('');
+
+  BASE_DRAWER_ROWS = s.retidos3.length ? s.retidos3 : s.retained;
+  $('#bm-critical-list').innerHTML = renderBaseOrderRows(BASE_DRAWER_ROWS, 8);
+
+  const mini = (list, fmtLabel) => list.length
+    ? list.slice(0, 6).map(e => '<div class="bm-mini-row"><strong>' + escapeHTML(fmtLabel ? fmtLabel(e) : e.label) + '</strong><span>' + bmNum(e.count) + ' · média ' + e.avgAging.toFixed(1).replace('.', ',') + 'd</span></div>').join('')
+    : '<div class="bm-empty">Sem dados neste recorte.</div>';
+  $('#bm-by-unit').innerHTML = mini(s.byUnit);
+  $('#bm-by-source').innerHTML = mini(s.bySource);
+  $('#bm-by-reason').innerHTML = mini(s.byReason);
+}
+
+/* =========================== FILA =========================== */
+function bmSyncDriverFilter() {
+  const sel = $('#bm-filter-driver');
+  const s = BASE_CACHE.summary;
+  if (!sel || !s) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="all">Todos os motoristas</option>' + s.drivers.map(d => '<option value="' + escapeHTML(d) + '">' + escapeHTML(d) + '</option>').join('');
+  if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+}
+
+function bmFilteredRows() {
+  const s = BASE_CACHE.summary;
+  if (!s) return [];
+  let rows = baseRowsForType(BM.preset);
+  const f = BM.filters;
+  const term = normalizeSearchText(f.search).trim();
+  if (term) rows = rows.filter(r => normalizeSearchText([r.order_key, r.tracking_number, r.driver, r.problemReason, r.unitLabel].join(' ')).includes(term));
+  if (f.aging !== 'all') rows = rows.filter(r => r.agingBucket === f.aging);
+  if (f.unit !== 'all') rows = rows.filter(r => (r.unit || 'none') === f.unit);
+  if (f.status !== 'all') rows = rows.filter(r => (r.status || '') === f.status);
+  if (f.category !== 'all') rows = rows.filter(r => r.category === f.category);
+  if (f.driver !== 'all') rows = rows.filter(r => (r.driver || '') === f.driver);
+  const dir = BM.sort.dir === 'asc' ? 1 : -1;
+  const get = {
+    pedido: r => String(r.order_key || ''), status: r => String(r.status || ''), categoria: r => r.category,
+    unidade: r => r.unitLabel || '', fonte: r => r.sourceLabel || '', motorista: r => r.driver || '',
+    recebido: r => String(r.receivedAt || ''), evento: r => String(r.lastEventAt || ''),
+    aging: r => r.agingHours || 0, dwell: r => r.dwellHours || 0, tentativas: r => r.attempts || 0,
+    motoristas: r => r.driverCount || 0, risco: r => r.risk || 0,
+  }[BM.sort.col] || (r => r.agingHours || 0);
+  return [...rows].sort((a, b) => {
+    const va = get(a), vb = get(b);
+    if (typeof va === 'string' || typeof vb === 'string') return dir * String(va).localeCompare(String(vb));
+    return dir * (va - vb);
+  });
+}
+
+function bmRenderFila() {
+  const wrap = $('#bm-table-wrap');
+  if (!wrap) return;
+  const s = BASE_CACHE.summary;
+  if (!s) {
+    wrap.innerHTML = '<div class="bm-empty">' + (BASE_CACHE.loading ? 'Carregando pedidos…' : BASE_CACHE.error ? 'Base indisponível.' : 'Sem base granular carregada.') + '</div>';
+    setText('#bm-page-info', '—');
+    return;
+  }
+  const rows = bmFilteredRows();
+  BM.currentRows = rows;
+  BM.rowsIndex = new Map(rows.map(r => [r.rowKey, r]));
+  const pageSize = BM.pageSize;
+  const pages = Math.max(1, Math.ceil(rows.length / pageSize));
+  if (BM.page > pages) BM.page = pages;
+  const start = (BM.page - 1) * pageSize;
+  const slice = rows.slice(start, start + pageSize);
+
+  const cols = [
+    { k: '', l: '', s: false }, { k: 'pedido', l: 'Pedido' }, { k: 'status', l: 'Status' }, { k: 'categoria', l: 'Categoria' },
+    { k: 'unidade', l: 'Unidade' }, { k: 'fonte', l: 'Transp.' }, { k: 'motorista', l: 'Motorista' },
+    { k: 'recebido', l: 'Recebido' }, { k: 'evento', l: 'Último evento' },
+    { k: 'aging', l: 'Aging', n: true }, { k: 'dwell', l: 'Sem mov.', n: true }, { k: 'tentativas', l: 'Tent.', n: true },
+    { k: 'motoristas', l: 'Motoristas', n: true }, { k: 'risco', l: 'Risco', n: true }, { k: 'motivo', l: 'Motivo / ação', s: false },
+  ];
+  const head = cols.map(c => {
+    if (c.k === '') return '<th style="width:30px"><input type="checkbox" id="bm-check-all" aria-label="Selecionar página"></th>';
+    const sortable = c.s === false ? '' : ' sortable';
+    const dir = BM.sort.col === c.k ? '<span class="dir">' + (BM.sort.dir === 'asc' ? '▲' : '▼') + '</span>' : '';
+    return '<th class="' + (c.n ? 'num' : '') + sortable + '"' + (c.s === false ? '' : ' data-bm-sort="' + c.k + '"') + '>' + c.l + dir + '</th>';
+  }).join('');
+
+  const body = slice.length ? slice.map(r => {
+    const sel = BM.selection.has(r.rowKey);
+    return '<tr class="' + (sel ? 'selected' : '') + '" data-bm-row="' + escapeHTML(r.rowKey) + '">' +
+      '<td><input type="checkbox" data-bm-check="' + escapeHTML(r.rowKey) + '"' + (sel ? ' checked' : '') + '></td>' +
+      '<td><button type="button" class="id-link" data-bm-track="' + escapeHTML(r.order_key) + '">' + escapeHTML(r.order_key || '—') + '</button></td>' +
+      '<td>' + bmStatusTag(r.status) + '</td>' +
+      '<td>' + escapeHTML(bmCategoryLabel(r.category)) + '</td>' +
+      '<td>' + escapeHTML(r.unitLabel) + '</td>' +
+      '<td>' + escapeHTML(r.sourceLabel) + '</td>' +
+      '<td>' + escapeHTML(r.driver || '—') + '</td>' +
+      '<td>' + formatDateTime(r.receivedAt) + '</td>' +
+      '<td>' + formatDateTime(r.lastEventAt) + '</td>' +
+      '<td class="num">' + bmAgingTag(r) + '</td>' +
+      '<td class="num">' + Math.round(r.dwellHours) + 'h</td>' +
+      '<td class="num">' + r.attempts + '</td>' +
+      '<td class="num">' + r.driverCount + '</td>' +
+      '<td class="num">' + bmRiskBar(r.risk) + '</td>' +
+      '<td>' + escapeHTML(r.problemReason || r.nextAction) + '</td>' +
+    '</tr>';
+  }).join('') : '<tr><td colspan="15"><div class="bm-empty">Nenhum pedido com os filtros atuais.</div></td></tr>';
+
+  wrap.innerHTML = '<table class="bm-table"><thead><tr>' + head + '</tr></thead><tbody>' + body + '</tbody></table>';
+  setText('#bm-page-info', rows.length ? ('Página ' + BM.page + ' de ' + pages + ' · ' + bmNum(rows.length) + ' pedidos') : 'Nenhum pedido');
+  const sub = $('#bm-fila-sub');
+  if (sub) sub.innerHTML = baseTypeTitle(BM.preset) + ' · <strong>' + bmNum(rows.length) + '</strong> pedidos no recorte · exportação e cópia respeitam os filtros aplicados.';
+  const prev = $('#bm-prev'), next = $('#bm-next');
+  if (prev) prev.disabled = BM.page <= 1;
+  if (next) next.disabled = BM.page >= pages;
+  bmRenderSelectBar();
+}
+
+function bmRenderSelectBar() {
+  const bar = $('#bm-selectbar');
+  if (!bar) return;
+  const n = BM.selection.size;
+  bar.style.display = n ? '' : 'none';
+  setText('#bm-select-count', n + (n === 1 ? ' pedido selecionado' : ' pedidos selecionados'));
+}
+function bmSelectedRows() {
+  const out = [];
+  for (const k of BM.selection) { const r = BM.rowsIndex.get(k); if (r) out.push(r); }
+  return out;
+}
+function bmTargetRows() {
+  const sel = bmSelectedRows();
+  return sel.length ? sel : (BM.currentRows || []);
+}
+
+/* =========================== BACKLOG DIÁRIO =========================== */
+function bmRenderBacklog() {
+  const tableEl = $('#bm-backlog-table');
+  if (!tableEl) return;
+  const s = BASE_CACHE.summary;
+  if (!s) { tableEl.innerHTML = '<div class="bm-empty">Sem base carregada.</div>'; return; }
+  const rows = s.perDay;
+  tableEl.innerHTML = '<table class="bm-table"><thead><tr>' +
+    '<th class="sortable">Data</th><th class="num">Recebidos</th><th class="num">Saíram em rota</th><th class="num">Entregues no dia</th><th class="num">Retidos</th><th class="num">Taxa rota</th><th class="num">Retenção</th><th></th>' +
+    '</tr></thead><tbody>' + (rows.length ? rows.map(d => '<tr>' +
+      '<td><strong>' + bmDateLabel(d.date) + '</strong></td>' +
+      '<td class="num">' + bmNum(d.received) + '</td>' +
+      '<td class="num">' + bmNum(d.ofd) + '</td>' +
+      '<td class="num">' + bmNum(d.delivered) + '</td>' +
+      '<td class="num"><span class="bm-tag ' + (d.retentionRate != null && d.retentionRate >= 10 ? 'r' : d.backlog ? 'y' : 'g') + '">' + bmNum(d.backlog) + '</span></td>' +
+      '<td class="num">' + bmPct(d.routeRate) + '</td>' +
+      '<td class="num">' + bmPct(d.retentionRate) + '</td>' +
+      '<td><button type="button" class="base-ghost-btn" data-bm-open="day:' + d.date + '">Abrir retidos</button></td>' +
+    '</tr>').join('') : '<tr><td colspan="8"><div class="bm-empty">Sem recebimentos na janela.</div></td></tr>') + '</tbody></table>';
+  bmRenderBacklogChart(rows);
+}
+
+function bmRenderBacklogChart(rows) {
+  const canvas = document.getElementById('bmBacklogChart');
+  if (!canvas || BM.view !== 'backlog' || state.mode !== 'base') return;
+  setChartFallback('#bm-view-backlog .bm-chart-wrap', !hasCharts());
+  if (!hasCharts()) return;
+  if (BM.chart) { BM.chart.destroy(); BM.chart = null; }
+  BM.chart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: rows.map(d => bmDateLabel(d.date)),
+      datasets: [
+        { label: 'Saíram em rota', data: rows.map(d => d.ofd), backgroundColor: 'rgba(42,111,151,.75)', borderRadius: 4, stack: 'v' },
+        { label: 'Retidos', data: rows.map(d => d.backlog), backgroundColor: 'rgba(240,74,79,.8)', borderRadius: 4, stack: 'v' },
+        { label: 'Taxa recebidos→rota %', data: rows.map(d => d.routeRate), type: 'line', borderColor: '#16A66D', backgroundColor: '#16A66D', tension: .3, pointRadius: 3, borderWidth: 2, yAxisID: 'y1' },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } },
+      scales: {
+        y: { beginAtZero: true, stacked: true, title: { display: true, text: 'Pedidos', font: { size: 11 } } },
+        y1: { beginAtZero: true, max: 100, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '%', font: { size: 11 } } },
+        x: { stacked: true, grid: { display: false } },
+      },
+    },
+  });
+}
+
+/* =========================== ANALYTICS =========================== */
+function bmGroupRows() {
+  const s = BASE_CACHE.summary;
+  if (!s) return [];
+  const g = ($('#bm-group-by') || {}).value || 'driver';
+  return { driver: s.byDriver, unit: s.byUnit, source: s.bySource, reason: s.byReason, category: s.byCategory, aging: s.byAging, received_day: s.byReceivedDay }[g] || [];
+}
+function bmRenderAnalytics() {
+  const el = $('#bm-analytics-table');
+  if (!el) return;
+  const s = BASE_CACHE.summary;
+  if (!s) { el.innerHTML = '<div class="bm-empty">Sem base carregada.</div>'; return; }
+  const rows = bmGroupRows();
+  el.innerHTML = '<table class="bm-table"><thead><tr><th>Grupo</th><th class="num">Em aberto</th><th class="num">Aging médio</th><th class="num">&gt;3 dias</th><th class="num">&gt;6 dias</th><th class="num">Sem mov. 24h</th><th class="num">2+ tent.</th><th class="num">Participação</th></tr></thead><tbody>' +
+    (rows.length ? rows.slice(0, 60).map(r => {
+      const share = s.retained.length ? 100 * r.count / s.retained.length : 0;
+      return '<tr><td><strong>' + escapeHTML(String(r.label)) + '</strong></td>' +
+        '<td class="num">' + bmNum(r.count) + '</td>' +
+        '<td class="num">' + r.avgAging.toFixed(1).replace('.', ',') + 'd</td>' +
+        '<td class="num">' + bmNum(r.over3) + '</td>' +
+        '<td class="num">' + bmNum(r.over6) + '</td>' +
+        '<td class="num">' + bmNum(r.noMove) + '</td>' +
+        '<td class="num">' + bmNum(r.attempts) + '</td>' +
+        '<td class="num">' + share.toFixed(1).replace('.', ',') + '%</td></tr>';
+    }).join('') : '<tr><td colspan="8"><div class="bm-empty">Sem pedidos em aberto neste recorte.</div></td></tr>') + '</tbody></table>';
+  bmRenderInsights();
+}
+
+function bmRenderInsights() {
+  const el = $('#bm-insights');
+  const s = BASE_CACHE.summary;
+  if (!el || !s) return;
+  const out = [];
+  if (s.receivedCount) {
+    out.push('Na janela entraram <strong>' + bmNum(s.receivedCount) + '</strong> pedidos; <strong>' + bmNum(s.ofdSameDayCount) + '</strong> saíram em rota no mesmo dia (' + bmPct(s.routeRate) + ') e <strong>' + bmNum(s.backlog.length) + '</strong> ficaram retidos.');
+  }
+  if (s.retidos6.length) out.push('Existem <strong>' + bmNum(s.retidos6.length) + '</strong> pedidos com mais de 6 dias na base — fila crítica, exige tratativa individual.');
+  if (s.neverRouted) out.push('<strong>' + bmNum(s.neverRouted) + '</strong> pedidos nunca tiveram uma saída registrada: o problema está na triagem/expedição, não na rota.');
+  if (s.attempts2) out.push('<strong>' + bmNum(s.attempts2) + '</strong> pedidos já saíram 2 ou mais vezes sem baixa — normalmente endereço, destinatário ou janela de entrega.');
+  if (s.byDriver.length && s.byDriver[0].count > 1) out.push('Maior concentração por motorista: <strong>' + escapeHTML(String(s.byDriver[0].label)) + '</strong> com ' + bmNum(s.byDriver[0].count) + ' pedidos em aberto (aging médio ' + s.byDriver[0].avgAging.toFixed(1).replace('.', ',') + ' dias).');
+  if (s.byReason.length) out.push('Motivo mais recorrente de retenção: <strong>' + escapeHTML(String(s.byReason[0].label)) + '</strong> em ' + bmNum(s.byReason[0].count) + ' pedidos.');
+  if (!out.length) out.push('Sem pedidos retidos relevantes na janela selecionada.');
+  el.innerHTML = '<div class="bm-mini-list">' + out.map(t => '<div class="bm-mini-row" style="grid-template-columns:1fr"><strong style="white-space:normal;font-weight:600;line-height:1.5">' + t + '</strong></div>').join('') + '</div>';
+}
+
+/* =========================== TRACKING =========================== */
+function bmTimelineHtml(events) {
+  if (!events.length) return '<div class="bm-empty">Nenhum evento registrado para este pedido.</div>';
+  let prev = null;
+  return '<div class="bm-timeline">' + events.map(e => {
+    const at = toDate(e.event_at);
+    let gap = '';
+    if (prev && at) {
+      const h = (at.getTime() - prev.getTime()) / 3600000;
+      gap = '<div class="bm-tl-gap">+' + (h >= 24 ? (h / 24).toFixed(1).replace('.', ',') + ' dia(s)' : h.toFixed(1).replace('.', ',') + 'h') + ' desde o evento anterior</div>';
+    }
+    if (at) prev = at;
+    const detail = [e.driver_name, e.location, e.problem_reason, e.actor_name].filter(Boolean).join(' · ') || 'evento registrado';
+    return '<div class="bm-tl-item ev-' + escapeHTML(e.event_type || '') + '"><strong>' + formatDateTime(e.event_at) + ' · ' + escapeHTML(statusLabel(e.event_type === 'ofd' ? 'in_route' : e.event_type)) + '</strong><span>' + escapeHTML(detail) + '</span>' + gap + '</div>';
+  }).join('') + '</div>';
+}
+
+function bmTrackingHtml(orderKey, order, events, volumes) {
+  const ofds = events.filter(e => e.event_type === 'ofd').length;
+  const drivers = new Set(events.map(e => e.driver_name).filter(Boolean));
+  const problems = events.filter(e => e.event_type === 'problem').length;
+  const delivered = events.some(e => e.event_type === 'delivered') || order.last_delivered_at;
+  const first = toDate(order.first_received_at || (events[0] || {}).event_at);
+  const lastEv = toDate(order.last_event_at || (events[events.length - 1] || {}).event_at);
+  const days = first ? Math.floor(((delivered && lastEv ? lastEv.getTime() : Date.now()) - first.getTime()) / 86400000) : null;
+  const resume = [
+    days != null ? days + ' dia(s) na operação' : null,
+    ofds ? ofds + ' tentativa(s)' : 'nenhuma saída registrada',
+    drivers.size ? drivers.size + ' motorista(s)' : null,
+    problems ? 'histórico problemático' : null,
+    delivered ? 'entregue' : 'em aberto',
+    volumes && volumes > 1 ? volumes + ' volumes consolidados' : null,
+  ].filter(Boolean).join(' · ');
+  return '<div class="bm-panel" style="border-color:#cfe0ea">' +
+    '<div class="bm-panel-head"><div><div class="bm-panel-title">' + escapeHTML(orderKey) + '</div><div class="bm-panel-sub">' + escapeHTML(resume) + '</div></div>' +
+    '<div class="bm-actions"><button type="button" class="base-ghost-btn" data-bm-copy-track="' + escapeHTML(orderKey) + '">Copiar tracking</button></div></div>' +
+    '<div class="bm-track-head">' +
+      '<div class="bm-track-metric"><span>Status</span><strong>' + escapeHTML(statusLabel(delivered ? 'delivered' : order.current_status)) + '</strong></div>' +
+      '<div class="bm-track-metric"><span>Unidade</span><strong>' + escapeHTML(order.unit ? unitLabel(order.unit) : '—') + '</strong></div>' +
+      '<div class="bm-track-metric"><span>Transportadora</span><strong>' + escapeHTML(bmSourceLabel(order.source)) + '</strong></div>' +
+      '<div class="bm-track-metric"><span>Tentativas</span><strong>' + ofds + '</strong></div>' +
+      '<div class="bm-track-metric"><span>Motoristas</span><strong>' + drivers.size + '</strong></div>' +
+      '<div class="bm-track-metric"><span>Recebido</span><strong>' + formatDateTime(order.first_received_at) + '</strong></div>' +
+      '<div class="bm-track-metric"><span>Último evento</span><strong>' + formatDateTime(order.last_event_at) + '</strong></div>' +
+    '</div>' + bmTimelineHtml(events) + '</div>';
+}
+
+async function bmLoadOrder(orderKey) {
+  const parent = bmParentKey(cleanOrderId(orderKey));
+  const [{ data: orderData, error: orderError }, { data: eventData, error: eventError }] = await Promise.all([
+    sb.from('orders').select('*').eq('order_key', parent).limit(1),
+    sb.from('order_events').select('*').eq('order_key', parent).order('event_at', { ascending: true }).limit(200),
+  ]);
+  if (orderError) throw orderError;
+  if (eventError) throw eventError;
+  let order = (orderData || [])[0] || {};
+  let events = (eventData || []).filter(e => e.event_at);
+  let volumes = 0;
+  // Fallback: só existem os volumes na base — consolida a linha do tempo da mãe.
+  if (!order.order_key || !events.length) {
+    const [o2, e2] = await Promise.all([
+      sb.from('orders').select('*').like('order_key', parent + '-%').limit(60),
+      sb.from('order_events').select('*').like('order_key', parent + '-%').order('event_at', { ascending: true }).limit(400),
+    ]);
+    const childOrders = (o2 && o2.data) || [];
+    const childEvents = ((e2 && e2.data) || []).filter(e => e.event_at);
+    volumes = childOrders.length;
+    if (!order.order_key && childOrders.length) {
+      order = { ...childOrders[0], order_key: parent, tracking_number: parent };
+      for (let i = 1; i < childOrders.length; i++) bmMergeChildInto(order, childOrders[i]);
+    }
+    if (!events.length && childEvents.length) {
+      const seen = new Set();
+      events = childEvents.filter(e => {
+        const k = e.event_type + '|' + String(e.event_at).slice(0, 16) + '|' + (e.driver_name || '');
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+    }
+  }
+  return { order, events, parent, volumes: volumes || Number(order.volumes) || 1 };
+}
+
+function bmPushRecent(orderKey) {
+  BM.recents = [orderKey].concat(BM.recents.filter(x => x !== orderKey)).slice(0, 8);
+  try { localStorage.setItem('pllugo_bm_recents', JSON.stringify(BM.recents)); } catch (e) {}
+  bmRenderRecents();
+}
+function bmRenderRecents() {
+  const el = $('#bm-recents');
+  if (!el) return;
+  el.innerHTML = BM.recents.length ? '<span style="font-size:10px;color:var(--gray-400);font-weight:800;align-self:center">RECENTES</span>' + BM.recents.map(id => '<button type="button" class="bm-chip" data-bm-track="' + escapeHTML(id) + '">' + escapeHTML(id) + '</button>').join('') : '';
+}
+
+async function bmTrackInline(orderKey) {
+  const typed = cleanOrderId(orderKey);
+  const key = bmParentKey(typed);
+  const el = $('#bm-track-result');
+  if (!key || !sb || !el) return;
+  bmSelectView('tracking');
+  const input = $('#base-order-search');
+  if (input) input.value = key;
+  el.innerHTML = '<div class="bm-empty">Consultando linha do tempo de ' + escapeHTML(key) + '…</div>';
+  try {
+    const { order, events, volumes } = await bmLoadOrder(key);
+    if (typed !== key) showToast(typed + ' é um volume. Abrindo o pedido mãe ' + key + '.', 'Gestão de Base');
+    if (!events.length && !order.order_key) {
+      el.innerHTML = '<div class="bm-empty">Pedido <strong>' + escapeHTML(key) + '</strong> não encontrado na base. Confirme o ID ou importe o relatório do período correspondente.</div>';
+      return;
+    }
+    BM.lastTrack = { key, order, events };
+    el.innerHTML = bmTrackingHtml(key, order, events, volumes);
+    bmPushRecent(key);
+  } catch (e) {
+    el.innerHTML = '<div class="bm-empty">Não foi possível carregar o pedido: ' + escapeHTML(e.message || e) + '</div>';
+  }
+}
+
+async function openOrderTracking(orderKey) {
+  const key = bmParentKey(cleanOrderId(orderKey));
+  if (!key || !sb) return;
+  openDrawer({ eyebrow: 'Tracking do pedido', title: key, sub: 'Consultando linha do tempo operacional…', body: '<div class="bm-empty">Carregando eventos do pedido…</div>' });
+  try {
+    const { order, events, volumes } = await bmLoadOrder(key);
+    const delivered = events.some(e => e.event_type === 'delivered') || order.last_delivered_at;
+    const body = bmTrackingHtml(key, order, events, volumes);
+    openDrawer({ eyebrow: 'Tracking do pedido', title: key, sub: statusLabel(delivered ? 'delivered' : order.current_status) + ' · ' + (order.unit ? unitLabel(order.unit) : 'Unidade não identificada'), body });
+    bmPushRecent(key);
+  } catch (e) {
+    const b = $('#app-drawer-body');
+    if (b) b.innerHTML = '<div class="bm-empty"><strong>Não foi possível carregar o pedido.</strong><br>' + escapeHTML(e.message || e) + '</div>';
+  }
+}
+
 function openBaseList(type) {
   const rows = baseRowsForType(type);
   BASE_DRAWER_ROWS = rows;
-  const actions = `<button type="button" class="app-btn primary" id="base-copy-list">Copiar lista</button><button type="button" class="app-btn secondary" id="base-export-list">Exportar Excel</button>`;
-  const body = `<div class="drawer-section"><div class="drawer-section-title">${escapeHTML(baseTypeTitle(type))}<span>${fmt(rows.length)} pedidos</span></div><div class="drawer-list">${renderBaseOrderRows(rows, 100)}</div></div>`;
-  DRAWER_CONTEXT = { type:'base-list', baseType:type, driver:null, tab:'base' };
-  openDrawer({ eyebrow:'Gestão de Base', title:baseTypeTitle(type), sub:'Clique em um pedido para abrir o tracking operacional.', actions, body });
+  DRAWER_CONTEXT = { type: 'base-list', baseType: type, driver: null, tab: 'base' };
+  const actions = '<button type="button" class="app-btn primary" id="base-copy-list">Copiar lista</button><button type="button" class="app-btn secondary" id="base-export-list">Exportar Excel</button>';
+  const body = '<div class="drawer-section"><div class="drawer-section-title">' + escapeHTML(baseTypeTitle(type)) + '<span>' + bmNum(rows.length) + ' pedidos</span></div><div class="drawer-list">' + renderBaseOrderRows(rows, 120) + '</div>' +
+    (rows.length > 120 ? '<div class="bm-panel-sub" style="margin-top:8px">Exibindo os 120 primeiros. A exportação leva a relação completa (' + bmNum(rows.length) + ').</div>' : '') + '</div>';
+  openDrawer({ eyebrow: 'Gestão de Base', title: baseTypeTitle(type), sub: 'Clique em um pedido para abrir o tracking operacional.', actions, body });
 }
-async function openOrderTracking(orderKey) {
-  if (!orderKey || !sb) return;
-  openDrawer({ eyebrow:'Tracking do pedido', title:orderKey, sub:'Consultando linha do tempo operacional...', body:'<div class="drawer-empty">Carregando eventos do pedido...</div>' });
+
+/* --- consulta em lote --- */
+function bmParseIds(text) {
+  // Volumes colados viram o pedido mãe e são deduplicados.
+  return [...new Set(String(text || '').split(/[\s,;]+/).map(v => bmParentKey(cleanOrderId(v))).filter(Boolean))].slice(0, 1000);
+}
+async function bmRunBatch() {
+  const ids = bmParseIds(($('#bm-batch-input') || {}).value);
+  const el = $('#bm-batch-result');
+  if (!el) return;
+  if (!ids.length) { el.innerHTML = '<div class="bm-empty">Cole ao menos um ID de pedido.</div>'; return; }
+  el.innerHTML = '<div class="bm-empty">Consultando ' + ids.length + ' pedidos…</div>';
   try {
-    const [{data:orderData,error:orderError},{data:eventData,error:eventError}] = await Promise.all([
-      sb.from('orders').select('*').eq('order_key', orderKey).limit(1),
-      sb.from('order_events').select('*').eq('order_key', orderKey).order('event_at',{ascending:true}).limit(100),
-    ]);
-    if (orderError) throw orderError;
-    if (eventError) throw eventError;
-    const order = (orderData || [])[0] || {};
-    const events = eventData || [];
-    const effectiveStatus = events.some(e=>e.event_type==='delivered') || order.last_delivered_at ? 'delivered' : order.current_status;
-    const body = `<div class="drawer-metric-grid">${metricCard('Status', statusLabel(effectiveStatus))}${metricCard('Unidade', order.unit ? unitLabel(order.unit) : '—')}${metricCard('Tentativas', events.filter(e=>e.event_type==='ofd').length)}${metricCard('Motoristas', new Set(events.map(e=>e.driver_key).filter(Boolean)).size)}${metricCard('Recebido', formatDateTime(order.first_received_at))}${metricCard('Último evento', formatDateTime(order.last_event_at))}</div><div class="drawer-section"><div class="drawer-section-title">Linha do tempo <span>${events.length} evento(s)</span></div><div class="drawer-timeline">${events.map(e=>`<div class="timeline-item"><strong>${formatDateTime(e.event_at)} · ${escapeHTML(statusLabel(e.event_type === 'ofd' ? 'in_route' : e.event_type))}</strong><span>${escapeHTML([e.driver_name, e.location, e.problem_reason].filter(Boolean).join(' · ') || 'evento registrado')}</span></div>`).join('') || '<div class="drawer-empty">Nenhum evento encontrado para este pedido.</div>'}</div></div>`;
-    openDrawer({ eyebrow:'Tracking do pedido', title:orderKey, sub:`${statusLabel(effectiveStatus)} · ${order.unit ? unitLabel(order.unit) : 'Unidade não identificada'}`, body });
+    const chunks = [];
+    for (let i = 0; i < ids.length; i += 150) chunks.push(ids.slice(i, i + 150));
+    const orders = [], events = [];
+    for (const c of chunks) {
+      const [o, e] = await Promise.all([
+        sb.from('orders').select('*').in('order_key', c),
+        sb.from('order_events').select('order_key,event_type,event_at,driver_name').in('order_key', c),
+      ]);
+      // (a consulta já usa a chave mãe; volumes ficam de fora por construção)
+      if (o.error) throw o.error;
+      if (e.error) throw e.error;
+      orders.push(...(o.data || []));
+      events.push(...(e.data || []));
+    }
+    const evByOrder = new Map();
+    for (const e of events) {
+      if (!evByOrder.has(e.order_key)) evByOrder.set(e.order_key, []);
+      evByOrder.get(e.order_key).push(e);
+    }
+    const byKey = new Map(orders.map(o => [o.order_key, o]));
+    const rows = ids.map(id => {
+      const o = byKey.get(id);
+      if (!o) return { order_key: id, notFound: true };
+      const evs = evByOrder.get(id) || [];
+      return normalizeBaseOrder({
+        ...o,
+        attempt_count: evs.filter(e => e.event_type === 'ofd').length,
+        driver_count: new Set(evs.map(e => e.driver_name).filter(Boolean)).size,
+      });
+    });
+    BM.batchRows = rows.filter(r => !r.notFound);
+    const missing = rows.filter(r => r.notFound).length;
+    el.innerHTML = (missing ? '<div class="bm-alert" style="display:block">' + missing + ' pedido(s) não encontrado(s) na base.</div>' : '') +
+      '<div class="bm-table-wrap"><table class="bm-table"><thead><tr><th>Pedido</th><th>Status</th><th>Unidade</th><th>Motorista</th><th>Recebido</th><th>Último evento</th><th class="num">Aging</th><th class="num">Tent.</th><th>Ação sugerida</th></tr></thead><tbody>' +
+      rows.map(r => r.notFound
+        ? '<tr><td><strong>' + escapeHTML(r.order_key) + '</strong></td><td colspan="8"><span class="bm-tag n">Não encontrado</span></td></tr>'
+        : '<tr><td><button type="button" class="id-link" data-bm-track="' + escapeHTML(r.order_key) + '">' + escapeHTML(r.order_key) + '</button></td>' +
+          '<td>' + bmStatusTag(r.status) + '</td><td>' + escapeHTML(r.unitLabel) + '</td><td>' + escapeHTML(r.driver || '—') + '</td>' +
+          '<td>' + formatDateTime(r.receivedAt) + '</td><td>' + formatDateTime(r.lastEventAt) + '</td>' +
+          '<td class="num">' + bmAgingTag(r) + '</td><td class="num">' + r.attempts + '</td><td>' + escapeHTML(r.nextAction) + '</td></tr>').join('') +
+      '</tbody></table></div>';
   } catch (e) {
-    $('#app-drawer-body').innerHTML = `<div class="drawer-empty"><strong>Não foi possível carregar o pedido.</strong><br>${escapeHTML(e.message || e)}</div>`;
+    el.innerHTML = '<div class="bm-empty">Falha na consulta em lote: ' + escapeHTML(e.message || e) + '</div>';
   }
 }
+
+/* =========================== NAVEGAÇÃO / EVENTOS =========================== */
+function bmSelectView(view) {
+  BM.view = view;
+  $$('.base-subtab').forEach(b => b.classList.toggle('active', b.dataset.bmView === view));
+  ['panorama', 'fila', 'backlog', 'tracking', 'analytics'].forEach(v => {
+    const el = $('#bm-view-' + v);
+    if (el) el.style.display = v === view ? '' : 'none';
+  });
+  if (state.mode === 'base') { try { history.replaceState(null, '', '#base/' + view); } catch (e) {} }
+  if (view === 'backlog') bmRenderBacklog();
+}
+
+function bmApplyPreset(preset) {
+  BM.preset = preset;
+  BM.page = 1;
+  BM.selection.clear();
+  $$('#bm-presets .bm-chip').forEach(c => c.classList.toggle('active', c.dataset.bmPreset === preset));
+  bmRenderFila();
+}
+
+function bmOpenTarget(type) {
+  ensureBaseKnowledge();
+  if (!BASE_CACHE.summary) { showToast('Carregando a base granular. Tente novamente em alguns segundos.', 'Gestão de Base'); return; }
+  if (state.mode === 'base') {
+    const presetable = ['backlog', 'retidos3', 'retidos6', 'retidos', 'todos', 'nunca-saiu', 'sem-movimento', 'tentativas', 'troca-motorista', 'received-route', 'recebidos', 'backlog-ofd', 'entregues-dia'];
+    if (presetable.includes(type) || String(type).indexOf('aging:') === 0 || String(type).indexOf('day:') === 0) {
+      if (String(type).indexOf('aging:') === 0) {
+        bmApplyPreset('retidos');
+        BM.filters.aging = String(type).split(':')[1];
+        const sel = $('#bm-filter-aging'); if (sel) sel.value = BM.filters.aging;
+      } else if (String(type).indexOf('day:') === 0) {
+        BM.preset = type; BM.page = 1; BM.selection.clear();
+        $$('#bm-presets .bm-chip').forEach(c => c.classList.remove('active'));
+      } else {
+        bmApplyPreset(type === 'received-route' ? 'backlog' : type);
+      }
+      bmSelectView('fila');
+      bmRenderFila();
+      return;
+    }
+  }
+  openBaseList(type);
+}
+
+function bmResetFilters() {
+  BM.filters = { search: '', aging: 'all', unit: 'all', status: 'all', category: 'all', driver: 'all' };
+  BM.sort = { col: 'aging', dir: 'desc' };
+  BM.page = 1;
+  BM.selection.clear();
+  const ids = { '#bm-filter-search': '', '#bm-filter-aging': 'all', '#bm-filter-unit': 'all', '#bm-filter-status': 'all', '#bm-filter-category': 'all', '#bm-filter-driver': 'all' };
+  Object.entries(ids).forEach(([sel, v]) => { const el = $(sel); if (el) el.value = v; });
+  bmApplyPreset('todos');
+}
+
+function bmSaveView() {
+  try {
+    localStorage.setItem('pllugo_bm_view', JSON.stringify({ filters: BM.filters, sort: BM.sort, preset: BM.preset, pageSize: BM.pageSize }));
+    showToast('Visão salva neste navegador.', 'Gestão de Base');
+  } catch (e) { showToast('Não foi possível salvar a visão.', 'Gestão de Base'); }
+}
+function bmLoadView() {
+  try {
+    const raw = localStorage.getItem('pllugo_bm_view');
+    if (!raw) { showToast('Nenhuma visão salva ainda.', 'Gestão de Base'); return; }
+    const v = JSON.parse(raw);
+    BM.filters = { ...BM.filters, ...(v.filters || {}) };
+    BM.sort = v.sort || BM.sort;
+    BM.pageSize = v.pageSize || BM.pageSize;
+    const map = { '#bm-filter-search': BM.filters.search, '#bm-filter-aging': BM.filters.aging, '#bm-filter-unit': BM.filters.unit, '#bm-filter-status': BM.filters.status, '#bm-filter-category': BM.filters.category, '#bm-filter-driver': BM.filters.driver, '#bm-page-size': String(BM.pageSize) };
+    Object.entries(map).forEach(([sel, val]) => { const el = $(sel); if (el) el.value = val; });
+    bmApplyPreset(v.preset || 'todos');
+    showToast('Visão restaurada.', 'Gestão de Base');
+  } catch (e) { showToast('Visão salva inválida.', 'Gestão de Base'); }
+}
+
+let BM_SEARCH_TIMER = null;
+function bmInstallHandlers() {
+  try { BM.recents = JSON.parse(localStorage.getItem('pllugo_bm_recents') || '[]'); } catch (e) { BM.recents = []; }
+  bmRenderRecents();
+
+  $('#bm-subtabs')?.addEventListener('click', e => {
+    const b = e.target.closest('[data-bm-view]');
+    if (b) bmSelectView(b.dataset.bmView);
+  });
+  $('#bm-refresh')?.addEventListener('click', () => { refreshBaseKnowledge(true); showToast('Recarregando a base granular…', 'Gestão de Base'); });
+
+  $('#base-intel-strip')?.addEventListener('click', e => {
+    const drill = e.target.closest('[data-base-drill]');
+    if (!drill) return;
+    bmOpenTarget(drill.dataset.baseDrill);
+  });
+
+  $('#base-section')?.addEventListener('click', e => {
+    const open = e.target.closest('[data-bm-open]');
+    if (open) { bmOpenTarget(open.dataset.bmOpen); return; }
+    const exp = e.target.closest('[data-bm-export]');
+    if (exp) { exportBaseRows(baseRowsForType(exp.dataset.bmExport), 'pllugo_' + exp.dataset.bmExport.replace(/[:+]/g, '_') + '_' + bmFileStamp() + '.xlsx'); return; }
+    const track = e.target.closest('[data-bm-track]');
+    if (track) { bmTrackInline(track.dataset.bmTrack); return; }
+    const copyTrack = e.target.closest('[data-bm-copy-track]');
+    if (copyTrack && BM.lastTrack) {
+      const t = BM.lastTrack;
+      bmCopy([t.key].concat(t.events.map(ev => [formatDateTime(ev.event_at), statusLabel(ev.event_type === 'ofd' ? 'in_route' : ev.event_type), ev.driver_name || '', ev.problem_reason || ''].join('\t'))).join('\n'), 'Tracking copiado.');
+      return;
+    }
+    const preset = e.target.closest('[data-bm-preset]');
+    if (preset) { bmApplyPreset(preset.dataset.bmPreset); return; }
+    const sort = e.target.closest('[data-bm-sort]');
+    if (sort) {
+      const col = sort.dataset.bmSort;
+      BM.sort = BM.sort.col === col ? { col, dir: BM.sort.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: col === 'pedido' || col === 'motorista' ? 'asc' : 'desc' };
+      bmRenderFila();
+      return;
+    }
+    const bulk = e.target.closest('[data-bm-bulk]');
+    if (bulk) { bmBulk(bulk.dataset.bmBulk); return; }
+    const row = e.target.closest('[data-base-row-index]');
+    if (row) {
+      const list = row.closest('#bm-critical-list') ? BASE_DRAWER_ROWS : BASE_DRAWER_ROWS;
+      const r = list[Number(row.dataset.baseRowIndex)];
+      if (r) openOrderTracking(r.order_key || r.tracking_number);
+    }
+  });
+
+  $('#base-section')?.addEventListener('change', e => {
+    const check = e.target.closest('[data-bm-check]');
+    if (check) {
+      const k = check.dataset.bmCheck;
+      if (check.checked) BM.selection.add(k); else BM.selection.delete(k);
+      check.closest('tr')?.classList.toggle('selected', check.checked);
+      bmRenderSelectBar();
+      return;
+    }
+    if (e.target.id === 'bm-check-all') { bmBulk(e.target.checked ? 'select-page' : 'clear'); return; }
+    const map = { 'bm-filter-aging': 'aging', 'bm-filter-unit': 'unit', 'bm-filter-status': 'status', 'bm-filter-category': 'category', 'bm-filter-driver': 'driver' };
+    if (map[e.target.id]) { BM.filters[map[e.target.id]] = e.target.value; BM.page = 1; bmRenderFila(); return; }
+    if (e.target.id === 'bm-page-size') { BM.pageSize = Number(e.target.value) || 100; BM.page = 1; bmRenderFila(); return; }
+    if (e.target.id === 'bm-group-by') { bmRenderAnalytics(); return; }
+  });
+
+  $('#bm-filter-search')?.addEventListener('input', e => {
+    clearTimeout(BM_SEARCH_TIMER);
+    const v = e.target.value;
+    BM_SEARCH_TIMER = setTimeout(() => { BM.filters.search = v; BM.page = 1; bmRenderFila(); }, 220);
+  });
+  $('#bm-prev')?.addEventListener('click', () => { if (BM.page > 1) { BM.page--; bmRenderFila(); } });
+  $('#bm-next')?.addEventListener('click', () => { BM.page++; bmRenderFila(); });
+  $('#bm-reset-filters')?.addEventListener('click', bmResetFilters);
+  $('#bm-save-view')?.addEventListener('click', bmSaveView);
+  $('#bm-load-view')?.addEventListener('click', bmLoadView);
+  $('#bm-copy-filtered')?.addEventListener('click', () => bmCopy((BM.currentRows || []).map(r => r.order_key).join('\n'), bmNum((BM.currentRows || []).length) + ' IDs copiados.'));
+  $('#bm-export-csv')?.addEventListener('click', () => bmDownload(bmRowsToCsv(bmTargetRows()), 'pllugo_fila_' + bmFileStamp() + '.csv', 'text/csv;charset=utf-8'));
+  $('#bm-export-xlsx')?.addEventListener('click', () => exportBaseRows(bmTargetRows(), 'pllugo_fila_' + bmFileStamp() + '.xlsx'));
+  $('#bm-export-backlog')?.addEventListener('click', () => {
+    const s = BASE_CACHE.summary;
+    if (!s) return;
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(s.perDay.map(d => ({ data: d.date, recebidos: d.received, sairam_em_rota: d.ofd, entregues_no_dia: d.delivered, retidos: d.backlog, taxa_rota: d.routeRate, taxa_retencao: d.retentionRate }))), 'Backlog diário');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(s.backlog.map(bmRowRecord)), 'Pedidos retidos');
+    XLSX.writeFile(wb, 'pllugo_backlog_' + bmFileStamp() + '.xlsx');
+  });
+  $('#bm-export-analytics')?.addEventListener('click', () => {
+    const rows = bmGroupRows();
+    if (!rows.length) { showToast('Nada para exportar.', 'Gestão de Base'); return; }
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.map(r => ({ grupo: r.label, em_aberto: r.count, aging_medio: Number(r.avgAging.toFixed(2)), acima_3_dias: r.over3, acima_6_dias: r.over6, sem_movimento_24h: r.noMove, duas_ou_mais_tentativas: r.attempts }))), 'Analytics');
+    XLSX.writeFile(wb, 'pllugo_analytics_' + bmFileStamp() + '.xlsx');
+  });
+  $('#bm-batch-run')?.addEventListener('click', bmRunBatch);
+  $('#bm-batch-export')?.addEventListener('click', () => exportBaseRows(BM.batchRows, 'pllugo_lote_' + bmFileStamp() + '.xlsx'));
+  $('#base-order-search-btn')?.addEventListener('click', () => bmTrackInline(($('#base-order-search') || {}).value));
+  $('#base-order-search')?.addEventListener('keydown', e => { if (e.key === 'Enter') bmTrackInline(e.target.value); });
+
+  document.addEventListener('keydown', e => {
+    if (state.mode !== 'base') return;
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (e.key === '/') { e.preventDefault(); bmSelectView('fila'); $('#bm-filter-search')?.focus(); }
+    if (e.key.toLowerCase() === 'b') { bmSelectView('backlog'); }
+    if (e.key.toLowerCase() === 't') { bmSelectView('tracking'); $('#base-order-search')?.focus(); }
+  });
+
+  bmStartAutoRefresh();
+  try {
+    const h = String(location.hash || '');
+    if (h.indexOf('#base/') === 0) BM.view = h.split('/')[1] || 'panorama';
+  } catch (e) {}
+  bmSelectView(BM.view);
+}
+
+function bmBulk(action) {
+  const rows = BM.currentRows || [];
+  const pageRows = rows.slice((BM.page - 1) * BM.pageSize, BM.page * BM.pageSize);
+  if (action === 'select-page') { pageRows.forEach(r => BM.selection.add(r.rowKey)); bmRenderFila(); return; }
+  if (action === 'select-all') { rows.forEach(r => BM.selection.add(r.rowKey)); bmRenderFila(); showToast(bmNum(rows.length) + ' pedidos selecionados.', 'Gestão de Base'); return; }
+  if (action === 'clear') { BM.selection.clear(); bmRenderFila(); return; }
+  const target = bmTargetRows();
+  if (!target.length) { showToast('Nenhum pedido no recorte atual.', 'Gestão de Base'); return; }
+  if (action === 'copy-ids') bmCopy(target.map(r => r.order_key).join('\n'), bmNum(target.length) + ' IDs copiados.');
+  if (action === 'copy-table') bmCopy(baseRowsToText(target), bmNum(target.length) + ' linhas copiadas.');
+  if (action === 'export') exportBaseRows(target, 'pllugo_selecao_' + bmFileStamp() + '.xlsx');
+  if (action === 'track') {
+    const input = $('#bm-batch-input');
+    if (input) input.value = target.map(r => r.order_key).join('\n');
+    bmSelectView('tracking');
+    bmRunBatch();
+  }
+}
+
 function openDrawer({eyebrow='Torre de Controle',title='Detalhamento',sub='',actions='',tabs='',body=''}){
   $('#app-drawer-eyebrow').textContent=eyebrow; $('#app-drawer-title').textContent=title; $('#app-drawer-sub').textContent=sub||'—';
   $('#app-drawer-actions').innerHTML=actions||''; $('#app-drawer-body').innerHTML=body||'';
@@ -3657,7 +5091,7 @@ function installMatureInteractions(){
     const driverRow=e.target.closest('[data-drawer-driver-index]');
     if(driverRow){const d=DRAWER_DRIVER_ROWS[Number(driverRow.dataset.drawerDriverIndex)]; if(d)openDriverDrawer(d); return;}
     const baseRow=e.target.closest('[data-base-row-index]');
-    if(baseRow){const r=BASE_DRAWER_ROWS[Number(baseRow.dataset.baseRowIndex)]; if(r)openOrderTracking(r.order_key||r.tracking_number); return;}
+    if(baseRow){const r=BASE_DRAWER_ROWS[Number(baseRow.dataset.baseRowIndex)]; if(r){closeDrawer();openOrderTracking(r.order_key||r.tracking_number);} return;}
   });
   $('#app-drawer-actions')?.addEventListener('click',e=>{
     if(e.target.closest('#drawer-whatsapp-btn')&&DRAWER_CONTEXT.driver)openWhatsAppForDriver(DRAWER_CONTEXT.driver);
@@ -3665,28 +5099,8 @@ function installMatureInteractions(){
     if(e.target.closest('#base-copy-list')){navigator.clipboard?.writeText(baseRowsToText(BASE_DRAWER_ROWS));showToast('Lista copiada para a área de transferência.','Gestão de Base');}
     if(e.target.closest('#base-export-list'))exportBaseRows(BASE_DRAWER_ROWS, `pllugo_${DRAWER_CONTEXT.baseType||'pedidos'}_${selectedDateBounds().start}_${selectedDateBounds().end}.xlsx`);
   });
-  $('#base-intel-strip')?.addEventListener('click',e=>{
-    const drill=e.target.closest('[data-base-drill]');
-    if(!drill)return;
-    ensureBaseKnowledge();
-    if(BASE_CACHE.summary)openBaseList(drill.dataset.baseDrill);
-    else showToast('Carregando a base granular. Tente novamente em alguns segundos.','Gestão de Base');
-  });
-  $('#base-section')?.addEventListener('click',e=>{
-    const drill=e.target.closest('[data-base-drill]');
-    if(drill){ensureBaseKnowledge(); if(BASE_CACHE.summary)openBaseList(drill.dataset.baseDrill); else showToast('Carregando a base granular.','Gestão de Base'); return;}
-    const exp=e.target.closest('[data-base-export]');
-    if(exp){exportBaseRows(baseRowsForType(exp.dataset.baseExport), `pllugo_${exp.dataset.baseExport}_${selectedDateBounds().start}_${selectedDateBounds().end}.xlsx`); return;}
-    const row=e.target.closest('[data-base-row-index]');
-    if(row){
-      const list=row.closest('#base-backlog-list')?baseRowsForType('backlog'):(BASE_CACHE.summary?.retidos3.length?BASE_CACHE.summary.retidos3:BASE_CACHE.summary?.retained||[]);
-      const r=list[Number(row.dataset.baseRowIndex)];
-      if(r)openOrderTracking(r.order_key||r.tracking_number);
-    }
-  });
-  $('#base-order-search-btn')?.addEventListener('click',()=>openOrderTracking(cleanOrderId($('#base-order-search')?.value||'')));
-  $('#base-order-search')?.addEventListener('keydown',e=>{if(e.key==='Enter')openOrderTracking(cleanOrderId(e.target.value||''));});
   $('#tower-clear-filter')?.addEventListener('click',()=>{$('#tower-search-input').value='';$('#tower-status-filter').value='all';renderTower();showToast('Filtros da Torre removidos.','Torre de Controle');});
+  bmInstallHandlers();
   if(window.Chart){Chart.defaults.animation.duration=UI_REDUCED_MOTION?0:650;Chart.defaults.animation.easing='easeOutQuart';Chart.defaults.interaction.mode='nearest';Chart.defaults.interaction.intersect=false;}
 }
 
@@ -4026,6 +5440,7 @@ function refresh() {
 
 function selectMode(m) {
   state.mode = m;
+  if (m === 'base') { ensureBaseKnowledge(); if (typeof bmSelectView === 'function') bmSelectView(BM.view); }
   if (m === 'operacao') state.operationView = state.operationView || 'resumo';
   state.selectedDriver = null;
   $$('.mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
@@ -4161,6 +5576,12 @@ $('#upload-input').addEventListener('change', (e) => {
 });
 
 installMatureInteractions();
+
+// Deep-link: /#base/fila, /#base/backlog, /#base/tracking, /#base/analytics
+try {
+  const h = String(location.hash || '');
+  if (h.indexOf('#base/') === 0) selectMode('base');
+} catch (e) {}
 
 (async function boot() {
   if (!sb) {
