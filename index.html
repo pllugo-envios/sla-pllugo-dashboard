@@ -556,6 +556,8 @@
   .drawer-list { display:flex; flex-direction:column; gap:7px; }
   .drawer-row { display:grid; grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(68px,.6fr)); gap:9px; align-items:center; border:1px solid var(--gray-200); background:#fff; border-radius:10px; padding:9px 10px; }
   .drawer-row:hover { border-color:var(--gray-300); background:var(--gray-50); }
+  button.drawer-row { width:100%; text-align:left; font-family:inherit; color:inherit; cursor:pointer; }
+  button.drawer-row:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(15,15,17,.055); }
   .drawer-row .main strong { display:block; font-size:11px; }
   .drawer-row .main small { display:block; color:var(--gray-500); font-size:9px; margin-top:2px; }
   .drawer-cell span { display:block; font-size:7.5px; text-transform:uppercase; color:var(--gray-400); font-weight:800; }
@@ -1231,6 +1233,7 @@ function processJt(rows) {
 
   const tempoDates = rows.map(r => dateOnly(toDate(r['Tempo de entrega'])));
   const reportDay = modeDate(tempoDates);
+  const colPedido = findOrderIdColumn(Object.keys(rows[0])) || Object.keys(rows[0])[0];
 
   let entregues = 0, problematicos = 0;
   const driverAgg = new Map();
@@ -1254,11 +1257,19 @@ function processJt(rows) {
     // corrigido em 21/08/2026.
     const name = canonicalizeName(titleCaseName(stripFPrefix(String(rawName)).trim()));
     const gkey = _nameKey(name);
-    if (!driverAgg.has(gkey)) driverAgg.set(gkey, { name, total: 0, delivered: 0, problems: 0 });
+    if (!driverAgg.has(gkey)) driverAgg.set(gkey, { name, total: 0, delivered: 0, problems: 0, orders: [] });
     const a = driverAgg.get(gkey);
     a.total++;
     if (noPrazo) a.delivered++;
     if (hasProblem) a.problems++;
+    a.orders.push({
+      pedido: String(r[colPedido] ?? '').trim(),
+      status: noPrazo ? 'Entregue' : 'Pendente',
+      problem: hasProblem ? 'Problemático' : '',
+      ofd_at: tDate,
+      delivered_at: eDate,
+      source: 'J&T',
+    });
   }
 
   const drivers = [];
@@ -1268,6 +1279,7 @@ function processJt(rows) {
       name, total: a.total, delivered: a.delivered,
       pendentes: a.total - a.delivered, problems: a.problems,
       sla: a.total ? round1(100 * a.delivered / a.total) : 0,
+      orders: a.orders.filter(o => o.pedido),
     });
   }
   return {
@@ -1291,6 +1303,31 @@ function isJtRealOperationalException(problemStr) {
     || s.includes('EXPEDIDO MAS NAO CHEGOU');
 }
 
+function findOrderIdColumn(headers) {
+  const normalized = headers.map(h => ({ raw: h, key: normalizeSearchText(h).toLowerCase() }));
+  const exact = normalized.find(h =>
+    h.key === 'remessa' ||
+    h.key === 'numero da etiqueta' ||
+    h.key === 'numero etiqueta' ||
+    h.key === 'etiqueta' ||
+    h.key === 'pedido' ||
+    h.key === 'order id' ||
+    h.key === 'tracking number' ||
+    h.key === 'waybill' ||
+    h.key === 'awb'
+  );
+  if (exact) return exact.raw;
+  const partial = normalized.find(h =>
+    h.key.includes('remessa') ||
+    h.key.includes('etiqueta') ||
+    h.key.includes('pedido') ||
+    h.key.includes('tracking') ||
+    h.key.includes('waybill') ||
+    h.key.includes('awb')
+  );
+  return partial ? partial.raw : null;
+}
+
 function processJtReal(rows) {
   if (!rows.length) return {};
   const headers = Object.keys(rows[0]);
@@ -1299,7 +1336,7 @@ function processJtReal(rows) {
   const colRecebimento = findColIncludes(headers, 'recebimento na base');
   const colProblem = findColIncludes(headers, 'tipo problem');
   const colPrazo = headers.find(h => lc(h).includes('prazo') && !lc(h).includes('data')) || null;
-  const colPedido = findColIncludes(headers, 'remessa') || headers[0];
+  const colPedido = findOrderIdColumn(headers) || headers[0];
   const colEntregador = headers.find(h => lc(h) === 'entregador') || null;
 
   const byDay = new Map();
@@ -1388,6 +1425,14 @@ function processJtReal(rows) {
           problems: sub.filter(x => !x.sameday).length,
           sla: dTotal ? round1(100 * dDelivered / dTotal) : 0,
           occurrences: occ,
+          orders: sub.map(x => ({
+            pedido: String(x.pedido || '').trim(),
+            status: x.sameday ? 'Entregue na rota' : 'Pendente/fora da rota',
+            problem: x.problemStr || '',
+            ofd_at: x.saidaDay || '',
+            delivered_at: x.entregaDay || '',
+            source: 'J&T',
+          })).filter(o => o.pedido),
         });
       }
     }
@@ -1654,6 +1699,10 @@ function dedupeDriverRows(rows) {
         m.occurrences[label] = (m.occurrences[label] || 0) + (Number(val) || 0);
       }
     }
+    if (Array.isArray(r.orders)) {
+      m.orders = Array.isArray(m.orders) ? m.orders : [];
+      m.orders.push(...r.orders);
+    }
   }
   return order.map(k => map.get(k));
 }
@@ -1777,13 +1826,14 @@ function driverRowsFromMergedDays(dayRows) {
       for (const drv of ((u && u.drivers) || [])) {
         const name = drv.name;
         const key = _nameKey(name);
-        if (!byDriver.has(key)) byDriver.set(key, { name, total: 0, delivered: 0, pendentes: 0, problems: 0, occurrences: {} });
+        if (!byDriver.has(key)) byDriver.set(key, { name, total: 0, delivered: 0, pendentes: 0, problems: 0, occurrences: {}, orders: [] });
         const item = byDriver.get(key);
         item.total += Number(drv.total) || 0;
         item.delivered += Number(drv.delivered) || 0;
         item.pendentes += Number(drv.pendentes) || 0;
         item.problems += Number(drv.problems) || 0;
         item.occurrences = mergeOccurrenceMaps(item.occurrences, drv.occurrences);
+        if (Array.isArray(drv.orders)) item.orders.push(...drv.orders);
       }
     }
     for (const d of byDriver.values()) rows.push({
@@ -2558,12 +2608,13 @@ function towerDriverRowsForDay(day) {
     if (!d || !d.name) return;
     const name = displayDriverName(d.name);
     const key = `${carrier || 'Pllugo'}|${normalizeDriverName(name)}`;
-    if (!map.has(key)) map.set(key, { name, carrier: carrier || 'Pllugo', total: 0, delivered: 0, pendentes: 0, sla: 0, unit: unit || null });
+    if (!map.has(key)) map.set(key, { name, carrier: carrier || 'Pllugo', total: 0, delivered: 0, pendentes: 0, sla: 0, unit: unit || null, orders: [] });
     const item = map.get(key);
     item.total += Number(d.total) || 0;
     item.delivered += Number(d.delivered) || 0;
     item.pendentes += Number(d.pendentes) || 0;
     if (unit && !item.unit) item.unit = unit;
+    if (Array.isArray(d.orders)) item.orders.push(...d.orders);
   };
   const addSource = (src, carrier) => {
     if (!src) return;
@@ -2592,6 +2643,7 @@ function towerDriversSignature(drivers) {
     Number(d.delivered) || 0,
     Number(d.pendentes) || 0,
     Number(d.sla) || 0,
+    (d.orders || []).map(o => o.pedido || o.tracking_number || o.order_number || '').filter(Boolean).sort().join(','),
   ]).sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1])));
 }
 async function captureTowerSnapshot(){
@@ -2752,6 +2804,7 @@ function renderTower(){
 
 /* ===== Drill-down profissional da Torre ===== */
 let DRAWER_CONTEXT={type:null,driver:null,tab:'agora'};
+let DRAWER_DRIVER_ROWS = [];
 function showToast(message,title='Pllugo'){
   const stack=$('#app-toast-stack'); if(!stack)return;
   const el=document.createElement('div'); el.className='app-toast'; el.innerHTML=`<strong>${escapeHTML(title)}</strong><br>${escapeHTML(message)}`; stack.appendChild(el);
@@ -2767,16 +2820,22 @@ function openDrawer({eyebrow='Torre de Controle',title='Detalhamento',sub='',act
 }
 function closeDrawer(){ $('#app-drawer').classList.remove('open'); $('#app-drawer-backdrop').classList.remove('open'); $('#app-drawer').setAttribute('aria-hidden','true'); $('#app-drawer-backdrop').setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
 function metricCard(label,value,cls=''){return `<div class="drawer-metric ${cls}"><span>${escapeHTML(label)}</span><strong>${escapeHTML(String(value))}</strong></div>`;}
-function driverRowsHtml(rows, mode='pending'){
+function driverRowsHtml(rows, mode='pending', opts={}){
   if(!rows.length)return '<div class="drawer-empty">Nenhum dado para este recorte.</div>';
-  return `<div class="drawer-list">${rows.map(d=>`<div class="drawer-row"><div class="main"><strong>${escapeHTML(d.name)}</strong><small>${d.unit?unitLabel(d.unit):'Unidade não identificada'} · ${escapeHTML(d.carrier||'Pllugo')} · ${towerStatusLabel(d.status)}</small></div><div class="drawer-cell"><span>OFD</span><strong>${fmt(d.total)}</strong></div><div class="drawer-cell"><span>Pendentes</span><strong>${fmt(d.pendentes)}</strong></div><div class="drawer-cell"><span>${mode==='delivered'?'Entregues':'Projeção'}</span><strong>${mode==='delivered'?fmt(d.delivered):(d.projected==null?'—':d.projected.toFixed(1).replace('.',',')+'%')}</strong></div></div>`).join('')}</div>`;
+  const clickable = !!opts.clickable;
+  if (clickable) DRAWER_DRIVER_ROWS = rows;
+  return `<div class="drawer-list">${rows.map((d,i)=>{
+    const tag = clickable ? 'button' : 'div';
+    const attrs = clickable ? ` type="button" data-drawer-driver-index="${i}" aria-label="Abrir análise de ${escapeHTML(d.name)}"` : '';
+    return `<${tag} class="drawer-row"${attrs}><div class="main"><strong>${escapeHTML(d.name)}</strong><small>${d.unit?unitLabel(d.unit):'Unidade não identificada'} · ${escapeHTML(d.carrier||'Pllugo')} · ${towerStatusLabel(d.status)}</small></div><div class="drawer-cell"><span>OFD</span><strong>${fmt(d.total)}</strong></div><div class="drawer-cell"><span>Pendentes</span><strong>${fmt(d.pendentes)}</strong></div><div class="drawer-cell"><span>${mode==='delivered'?'Entregues':'Projeção'}</span><strong>${mode==='delivered'?fmt(d.delivered):(d.projected==null?'—':d.projected.toFixed(1).replace('.',',')+'%')}</strong></div></${tag}>`;
+  }).join('')}</div>`;
 }
 function openCockpitDrill(type){
   const all=TOWER_LAST_ALL||[], s=TOWER_COCKPIT_SUMMARY||{};
   let title='Visão operacional',sub='Detalhamento do recorte atual',body='';
   if(type==='expedidos'){title='Pedidos expedidos';sub=`${fmt(s.total||0)} pedidos em rota monitorada`;body=`<div class="drawer-metric-grid">${metricCard('Expedidos',fmt(s.total||0))}${metricCard('Entregues',fmt(s.delivered||0))}${metricCard('Pendentes',fmt(s.pending||0))}</div><div class="drawer-section"><div class="drawer-section-title">Distribuição por motorista <span>${all.length}</span></div>${driverRowsHtml([...all].sort((a,b)=>b.total-a.total))}</div>`;}
   else if(type==='entregues'){title='Entregas concluídas';sub=`${(s.deliveredPct||0).toFixed(1).replace('.',',')}% dos expedidos já concluídos`;body=`<div class="drawer-metric-grid">${metricCard('Entregues',fmt(s.delivered||0))}${metricCard('Expedidos',fmt(s.total||0))}${metricCard('Conclusão',(s.deliveredPct||0).toFixed(1).replace('.',',')+'%')}</div><div class="drawer-section"><div class="drawer-section-title">Maiores volumes concluídos</div>${driverRowsHtml([...all].sort((a,b)=>b.delivered-a.delivered),'delivered')}</div>`;}
-  else if(type==='pendentes'){title='Pendências da operação';sub=`${fmt(s.pending||0)} pedidos ainda em aberto`;body=`<div class="drawer-metric-grid">${metricCard('Pendentes',fmt(s.pending||0))}${metricCard('Sob risco',fmt(s.atRisk||0))}${metricCard('Recuperáveis',fmt(s.recoverable||0))}</div><div class="drawer-section"><div class="drawer-section-title">Prioridade por motorista</div>${driverRowsHtml([...all].sort((a,b)=>b.score-a.score||b.pendentes-a.pendentes))}</div><div class="drawer-section"><div class="drawer-insight"><strong>Profundidade por pedido</strong><br>Quando a tabela <code>operational_orders</code> estiver disponível no Supabase, este mesmo painel passa a abrir o tracking individual sem alterar a lógica oficial de SLA.</div></div>`;}
+  else if(type==='pendentes'){const pendingDrivers=[...all].filter(d=>(Number(d.pendentes)||0)>0).sort((a,b)=>b.pendentes-a.pendentes||b.score-a.score);title='Pendências da operação';sub=`${fmt(s.pending||0)} pedidos ainda em aberto em ${pendingDrivers.length} motorista(s)`;body=`<div class="drawer-metric-grid">${metricCard('Pendentes',fmt(s.pending||0))}${metricCard('Motoristas com pendência',pendingDrivers.length)}${metricCard('Sob risco',fmt(s.atRisk||0))}${metricCard('Recuperáveis',fmt(s.recoverable||0))}</div><div class="drawer-section"><div class="drawer-section-title">Motoristas com pedido em aberto <span>clique para detalhar</span></div>${driverRowsHtml(pendingDrivers,'pending',{clickable:true})}</div>`;}
   else if(type==='sla'){const needed=Math.max(0,Math.ceil((s.total||0)*TARGET_SLA/100-(s.delivered||0)));title='Composição do SLA';sub='Leitura atual do fechamento operacional';body=`<div class="drawer-metric-grid">${metricCard('SLA atual',(s.sla||0).toFixed(1).replace('.',',')+'%')}${metricCard('Meta',TARGET_SLA+'%')}${metricCard('SLA projetado',s.projected==null?'—':s.projected.toFixed(1).replace('.',',')+'%')}${metricCard('Entregues',fmt(s.delivered||0))}${metricCard('Pendentes',fmt(s.pending||0))}${metricCard('Entregas p/ meta',fmt(needed))}</div><div class="drawer-section"><div class="drawer-insight"><strong>Importante</strong><br>O SLA projetado é um indicador de apoio à decisão. Ele não substitui o SLA oficial calculado pelas regras já consolidadas da ferramenta.</div></div>`;}
   else if(type==='monitorados'){title='Motoristas monitorados';sub=`${all.length} motoristas presentes no snapshot atual`;body=driverRowsHtml(all);}
   else if(type==='projetado'){title='SLA projetado';sub=s.projected==null?'Aguardando evolução suficiente para projetar':`Fechamento estimado em ${s.projected.toFixed(1).replace('.',',')}%`;body=`<div class="drawer-metric-grid">${metricCard('Atual',(s.sla||0).toFixed(1).replace('.',',')+'%')}${metricCard('Projetado',s.projected==null?'—':s.projected.toFixed(1).replace('.',',')+'%')}${metricCard('Meta',TARGET_SLA+'%')}</div><div class="drawer-section"><div class="drawer-section-title">Motoristas com projeção disponível</div>${driverRowsHtml(all.filter(d=>d.projected!=null).sort((a,b)=>(a.projected??999)-(b.projected??999)))}</div>`;}
@@ -2813,20 +2872,32 @@ function renderDriverTab(tab){
     body.innerHTML='<div class="drawer-empty"><strong>Consultando intervenções…</strong><br>Esta consulta é carregada somente quando necessária.</div>'; loadDriverInterventions(d);
   }
 }
+function orderIdFromRow(r){ return r.tracking_number || r.order_number || r.pedido || r.id || ''; }
+function renderDriverOrdersRows(rows, d, note='') {
+  const body = $('#app-drawer-body');
+  const titleNote = note ? `<div class="drawer-insight" style="margin-bottom:10px"><strong>Fonte do detalhe</strong><br>${escapeHTML(note)}</div>` : '';
+  body.innerHTML=`<div class="drawer-section">${titleNote}<div class="drawer-section-title">Pedidos do motorista <span>até 100 registros</span></div><div class="drawer-list">${rows.slice(0,100).map(r=>`<div class="drawer-row"><div class="main"><strong>${escapeHTML(orderIdFromRow(r)||'Pedido sem ID')}</strong><small>${escapeHTML(r.operational_status||r.status||'status não informado')} ${r.occurrence_type||r.problem?'· '+escapeHTML(r.occurrence_type||r.problem):''}</small></div><div class="drawer-cell"><span>OFD</span><strong>${r.ofd_at?escapeHTML(String(r.ofd_at).includes('T')?new Date(r.ofd_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):String(r.ofd_at)):'—'}</strong></div><div class="drawer-cell"><span>Entrega</span><strong>${r.delivered_at?escapeHTML(String(r.delivered_at).includes('T')?new Date(r.delivered_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):String(r.delivered_at)):'—'}</strong></div><div class="drawer-cell"><span>Fonte</span><strong>${escapeHTML(r.source||d.carrier||'Pllugo')}</strong></div></div>`).join('')}</div></div>`;
+}
 async function loadDriverOrders(d){
-  const body=$('#app-drawer-body'); if(!sb){body.innerHTML='<div class="drawer-empty">Supabase indisponível neste momento.</div>';return;}
+  const body=$('#app-drawer-body');
+  const localRows = (Array.isArray(d.orders) ? d.orders : []).filter(r => orderIdFromRow(r));
+  if (localRows.length) {
+    renderDriverOrdersRows(localRows, d, 'Pedidos carregados do snapshot operacional. Para bases antigas, reimporte o relatório de monitoramento para gravar esse nível de detalhe.');
+    return;
+  }
+  if(!sb){body.innerHTML='<div class="drawer-empty">Supabase indisponível neste momento e este snapshot não possui IDs de pedidos.</div>';return;}
   try{
     const key=normalizeDriverName(d.name); const {data,error}=await sb.from('operational_orders').select('tracking_number,order_number,operational_status,occurrence_type,ofd_at,delivered_at,unit,source').eq('operational_date',towerReferenceDate()).eq('driver_key',key).limit(100);
     if(error)throw error; const rows=data||[];
-    if(!rows.length){body.innerHTML='<div class="drawer-empty">Nenhum pedido granular encontrado para este motorista no dia. A fonte pode estar disponível apenas de forma agregada.</div>';return;}
-    body.innerHTML=`<div class="drawer-section"><div class="drawer-section-title">Pedidos do motorista <span>até 100 registros</span></div><div class="drawer-list">${rows.map(r=>`<div class="drawer-row"><div class="main"><strong>${escapeHTML(r.tracking_number||r.order_number||'Pedido')}</strong><small>${escapeHTML(r.operational_status||'status não informado')} ${r.occurrence_type?'· '+escapeHTML(r.occurrence_type):''}</small></div><div class="drawer-cell"><span>OFD</span><strong>${r.ofd_at?new Date(r.ofd_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—'}</strong></div><div class="drawer-cell"><span>Entrega</span><strong>${r.delivered_at?new Date(r.delivered_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—'}</strong></div><div class="drawer-cell"><span>Fonte</span><strong>${escapeHTML(r.source||d.carrier)}</strong></div></div>`).join('')}</div></div>`;
-  }catch(e){body.innerHTML='<div class="drawer-empty"><strong>Detalhamento por pedido ainda não está conectado nesta versão.</strong><br>A interface já está preparada para <code>operational_orders</code> sem interferir no SLA atual.</div>';}
+    if(!rows.length){body.innerHTML='<div class="drawer-empty"><strong>Nenhum ID de pedido encontrado para este motorista.</strong><br>A fonte atual pode estar agregada por motorista ou o snapshot foi criado antes desta melhoria. Reimporte o relatório de monitoramento para popular os IDs quando o arquivo tiver pedido/remessa.</div>';return;}
+    renderDriverOrdersRows(rows, d, 'Pedidos carregados da tabela operacional granular.');
+  }catch(e){body.innerHTML='<div class="drawer-empty"><strong>Detalhamento por pedido não encontrado no Supabase.</strong><br>Quando o relatório tiver pedido/remessa, a Torre passa a mostrar os IDs gravados no próprio snapshot após nova importação.</div>';}
 }
 async function loadDriverInterventions(d){
   const body=$('#app-drawer-body'); if(!sb){body.innerHTML='<div class="drawer-empty">Supabase indisponível neste momento.</div>';return;}
   try{
     const {data,error}=await sb.from('driver_interventions').select('*').eq('operational_date',towerReferenceDate()).eq('driver_key',normalizeDriverName(d.name)).order('created_at',{ascending:false}).limit(50); if(error)throw error; const rows=data||[];
-    if(!rows.length){body.innerHTML='<div class="drawer-empty">Nenhuma intervenção registrada hoje para este motorista.</div>';return;}
+    if(!rows.length){body.innerHTML='<div class="drawer-empty">Nenhuma intervenção registrada para esta data neste motorista.</div>';return;}
     body.innerHTML=`<div class="drawer-timeline">${rows.map(r=>`<div class="timeline-item"><strong>${r.created_at?new Date(r.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—'} · ${escapeHTML(r.actor_name_snapshot||'Usuário')}</strong><span>${escapeHTML(r.action_type||r.channel||'Intervenção')} ${r.reason?'· '+escapeHTML(r.reason):''}${r.status?' · '+escapeHTML(r.status):''}</span></div>`).join('')}</div>`;
   }catch(e){body.innerHTML='<div class="drawer-empty"><strong>Histórico de intervenções ainda não está conectado nesta versão.</strong><br>A interface está pronta para a tabela <code>driver_interventions</code>.</div>';}
 }
@@ -2842,9 +2913,11 @@ async function openWhatsAppForDriver(d){
   try{
     const {data,error}=await sb.from('driver_profiles').select('phone_e164,whatsapp_enabled,display_name').eq('driver_key',normalizeDriverName(d.name)).limit(1); if(error)throw error;
     const profile=data&&data[0]; if(!profile||!profile.phone_e164){showToast('Telefone ainda não cadastrado para este motorista.','WhatsApp');return;}
-    const msg=`Olá, ${profile.display_name||d.name}. Aqui é a Torre de Controle Pllugo. Identificamos ${d.pendentes} pedidos pendentes${d.noProgress!=null?` e ${Math.round(d.noProgress)} minutos sem evolução`:''}. Como está a operação? Precisamos de uma atualização para acompanhar o fechamento de hoje.`;
+    const refDate=towerReferenceDate();
+    const refLabel=refDate===saoPauloToday()?'hoje':refDate.split('-').reverse().join('/');
+    const msg=`Olá, ${profile.display_name||d.name}. Aqui é a Torre de Controle Pllugo. Identificamos ${d.pendentes} pedidos pendentes${d.noProgress!=null?` e ${Math.round(d.noProgress)} minutos sem evolução`:''}. Como está a operação? Precisamos de uma atualização para acompanhar o fechamento de ${refLabel}.`;
     let actor=null; try{const {data:u}=await sb.auth.getUser();actor=u&&u.user;}catch(e){}
-    if(actor){try{await sb.from('driver_interventions').insert([{operational_date:saoPauloToday(),driver_key:normalizeDriverName(d.name),driver_name_snapshot:d.name,unit:d.unit||null,carrier:d.carrier||null,action_type:'whatsapp_contact',channel:'whatsapp',reason:'tower_contact',message:msg,tower_status:d.status,risk_score:d.score,pending_count:d.pendentes,sla_projected:d.projected, no_progress_minutes:d.noProgress, actor_user_id:actor.id, actor_name_snapshot:actor.email||'Usuário', status:'initiated'}]);}catch(e){console.warn('Não foi possível registrar intervenção:',e);}}
+    if(actor){try{await sb.from('driver_interventions').insert([{operational_date:refDate,driver_key:normalizeDriverName(d.name),driver_name_snapshot:d.name,unit:d.unit||null,carrier:d.carrier||null,action_type:'whatsapp_contact',channel:'whatsapp',reason:'tower_contact',message:msg,tower_status:d.status,risk_score:d.score,pending_count:d.pendentes,sla_projected:d.projected, no_progress_minutes:d.noProgress, actor_user_id:actor.id, actor_name_snapshot:actor.email||'Usuário', status:'initiated'}]);}catch(e){console.warn('Não foi possível registrar intervenção:',e);}}
     window.open(`https://wa.me/${String(profile.phone_e164).replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`,'_blank','noopener'); showToast(actor?'Acionamento aberto e registro solicitado.':'WhatsApp aberto. Faça login para registrar a autoria da intervenção.','WhatsApp');
   }catch(e){showToast('Cadastro de WhatsApp ainda não está conectado nesta versão.','WhatsApp');}
 }
@@ -2858,6 +2931,7 @@ function installMatureInteractions(){
   $('#tower-v2-cockpit')?.addEventListener('click',e=>{const status=e.target.closest('[data-status]'); if(status){$('#tower-status-filter').value=status.dataset.status; renderTower(); showToast(`Filtro aplicado: ${towerStatusLabel(status.dataset.status)}.`,'Torre de Controle'); return;} const drill=e.target.closest('[data-cockpit-drill]'); if(drill)openCockpitDrill(drill.dataset.cockpitDrill);});
   $('#tower-list')?.addEventListener('click',e=>{const row=e.target.closest('.tower-driver'); if(!row)return; const d=TOWER_LAST_VISIBLE[Number(row.dataset.towerIndex)]; if(d)openDriverDrawer(d);});
   $('#app-drawer-tabs')?.addEventListener('click',e=>{const b=e.target.closest('[data-drawer-tab]');if(b)renderDriverTab(b.dataset.drawerTab);});
+  $('#app-drawer-body')?.addEventListener('click',e=>{const row=e.target.closest('[data-drawer-driver-index]'); if(!row)return; const d=DRAWER_DRIVER_ROWS[Number(row.dataset.drawerDriverIndex)]; if(d)openDriverDrawer(d);});
   $('#app-drawer-actions')?.addEventListener('click',e=>{if(e.target.closest('#drawer-whatsapp-btn')&&DRAWER_CONTEXT.driver)openWhatsAppForDriver(DRAWER_CONTEXT.driver); if(e.target.closest('#drawer-filter-driver-btn')&&DRAWER_CONTEXT.driver){$('#tower-search-input').value=DRAWER_CONTEXT.driver.name;closeDrawer();renderTower();showToast('Motorista isolado na Torre.','Filtro');}});
   $('#tower-clear-filter')?.addEventListener('click',()=>{$('#tower-search-input').value='';$('#tower-status-filter').value='all';renderTower();showToast('Filtros da Torre removidos.','Torre de Controle');});
   if(window.Chart){Chart.defaults.animation.duration=UI_REDUCED_MOTION?0:650;Chart.defaults.animation.easing='easeOutQuart';Chart.defaults.interaction.mode='nearest';Chart.defaults.interaction.intersect=false;}
