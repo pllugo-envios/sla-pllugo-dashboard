@@ -1394,6 +1394,8 @@ function buildOrderKnowledge(filename, rows) {
     const colStation = headers.find(h => normalizeSearchText(h).toLowerCase().includes('estacao de chegada'));
     const colLastStop = headers.find(h => normalizeSearchText(h).toLowerCase().includes('ultima parada'));
     const colScanner = headers.find(h => normalizeSearchText(h).toLowerCase().includes('digitalizador'));
+    const colInternalId = headers.find(h => normalizeSearchText(h).toLowerCase().includes('numero do id'));
+    const colDestinationDc = headers.find(h => normalizeSearchText(h).toLowerCase().includes('dc destino'));
     for (const r of rows) {
       const orderKey = cleanOrderId(r[colOrder]);
       if (!orderKey) continue;
@@ -1413,7 +1415,12 @@ function buildOrderKnowledge(filename, rows) {
         location: r[colStation] || null,
         actor_name: r[colScanner] || null,
         source_report: reportKind,
-        metadata: { last_stop: r[colLastStop] || null, filename },
+        metadata: {
+          last_stop: r[colLastStop] || null,
+          internal_id: colInternalId ? r[colInternalId] : null,
+          destination_dc: colDestinationDc ? r[colDestinationDc] : null,
+          filename,
+        },
       });
     }
   }
@@ -2143,32 +2150,53 @@ async function upsertOrderKnowledge(knowledgeList) {
       recognized_rows: k.orders.length || 0,
       order_rows: k.orders.length || 0,
       aggregate_rows: 0,
-      status: 'success',
+      status: 'processing',
       metadata: { granular_base: true, events: k.events.length },
     };
     const { data: batchData, error: batchError } = await sb.from('import_batches').insert([batchRow]).select('id').single();
     if (batchError) throw batchError;
     batchId = batchData && batchData.id;
 
-    const orderFields = k.reportKind === 'jt_receiving' ? receivingOrderFields : deliveryOrderFields;
-    for (const part of chunkArray(normalizeRowsForColumns(k.orders, orderFields), 500)) {
-      const { error } = await sb.from('orders').upsert(part, { onConflict: 'source,order_key' });
-      if (error) throw error;
-      orderCount += part.length;
-    }
-    const events = k.events.map(e => ({ ...e, import_batch_id: batchId }));
-    for (const part of chunkArray(normalizeRowsForColumns(events, eventFields), 500)) {
-      const { error } = await sb.from('order_events').upsert(part, { onConflict: 'event_key' });
-      if (error) throw error;
-      eventCount += part.length;
-    }
-    const operationalOrders = k.operationalOrders.map(o => ({ ...o, import_batch_id: batchId }));
-    for (const part of chunkArray(normalizeRowsForColumns(operationalOrders, operationalFields), 500)) {
-      const { error } = await sb.from('operational_orders').upsert(part, { onConflict: 'source,operational_date,order_key' });
-      if (error) {
-        console.warn('operational_orders não recebeu detalhamento auxiliar:', error);
-        break;
+    let batchOrders = 0, batchEvents = 0, batchOperational = 0;
+    try {
+      const orderFields = k.reportKind === 'jt_receiving' ? receivingOrderFields : deliveryOrderFields;
+      for (const part of chunkArray(normalizeRowsForColumns(k.orders, orderFields), 500)) {
+        const { error } = await sb.from('orders').upsert(part, { onConflict: 'source,order_key' });
+        if (error) throw error;
+        orderCount += part.length;
+        batchOrders += part.length;
       }
+      const events = k.events.map(e => ({ ...e, import_batch_id: batchId }));
+      for (const part of chunkArray(normalizeRowsForColumns(events, eventFields), 500)) {
+        const { error } = await sb.from('order_events').upsert(part, { onConflict: 'event_key' });
+        if (error) throw error;
+        eventCount += part.length;
+        batchEvents += part.length;
+      }
+      const operationalOrders = k.operationalOrders.map(o => ({ ...o, import_batch_id: batchId }));
+      for (const part of chunkArray(normalizeRowsForColumns(operationalOrders, operationalFields), 500)) {
+        const { error } = await sb.from('operational_orders').upsert(part, { onConflict: 'source,operational_date,order_key' });
+        if (error) {
+          console.warn('operational_orders não recebeu detalhamento auxiliar:', error);
+          break;
+        }
+        batchOperational += part.length;
+      }
+      await sb.from('import_batches').update({
+        status: 'success',
+        metadata: { granular_base: true, events: batchEvents, orders: batchOrders, operational_orders: batchOperational },
+      }).eq('id', batchId);
+    } catch (e) {
+      try {
+        await sb.from('import_batches').update({
+          status: 'failed',
+          warnings: [{ message: e.message || String(e) }],
+          metadata: { granular_base: true, events: batchEvents, orders: batchOrders, operational_orders: batchOperational },
+        }).eq('id', batchId);
+      } catch (updateError) {
+        console.warn('Não foi possível marcar lote granular como failed:', updateError);
+      }
+      throw e;
     }
   }
   return { orders: orderCount, events: eventCount };
