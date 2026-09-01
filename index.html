@@ -2151,6 +2151,116 @@ function computeImileResult(rows) {
   };
 }
 
+function buildMonitoringDayResults(knowledgeList) {
+  const buckets = new Map();
+  const ensure = (date, unit = null) => {
+    if (!date) return null;
+    const key = date;
+    if (!buckets.has(key)) {
+      buckets.set(key, {
+        received: new Set(),
+        route: new Set(),
+        delivered: new Set(),
+        problem: new Set(),
+        units: { maua: null, rbp: null },
+        drivers: new Map(),
+      });
+    }
+    const b = buckets.get(key);
+    if (unit && !b.units[unit]) b.units[unit] = { received: new Set(), route: new Set(), delivered: new Set(), problem: new Set(), drivers: new Map() };
+    return unit ? b.units[unit] : b;
+  };
+  const driverKey = (name) => normalizeDriverName(name || 'Sem motorista');
+  const addDriver = (map, op) => {
+    if (!op.driver_name) return;
+    const key = driverKey(op.driver_name);
+    if (!map.has(key)) map.set(key, { name: op.driver_name, total: 0, delivered: 0, problems: 0, orders: [] });
+    const d = map.get(key);
+    const sameDayDelivered = !!(op.delivered_at && dateOnly(toDate(op.delivered_at)) === op.operational_date);
+    d.total++;
+    if (sameDayDelivered) d.delivered++;
+    if (op.occurrence_type) d.problems++;
+    d.orders.push({
+      pedido: op.order_key,
+      status: sameDayDelivered ? 'Entregue' : 'Pendente',
+      problem: op.occurrence_type || '',
+      ofd_at: op.ofd_at,
+      delivered_at: op.delivered_at,
+      source: 'J&T',
+    });
+  };
+  for (const k of knowledgeList || []) {
+    if (k.reportKind === 'jt_receiving') {
+      for (const ev of k.events || []) {
+        if (ev.event_type !== 'received') continue;
+        const d = dateOnly(toDate(ev.event_at));
+        const id = ev.order_key || ev.tracking_number;
+        const b = ensure(d);
+        if (!b || !id) continue;
+        b.received.add(id);
+        const u = ensure(d, ev.unit);
+        if (u) u.received.add(id);
+      }
+    }
+    if (k.reportKind === 'jt_delivery_monitoring') {
+      for (const op of k.operationalOrders || []) {
+        const d = op.operational_date;
+        const id = op.order_key || op.tracking_number || op.order_number;
+        const b = ensure(d);
+        if (!b || !id) continue;
+        b.route.add(id);
+        if (op.delivered_at && dateOnly(toDate(op.delivered_at)) === d) b.delivered.add(id);
+        if (op.occurrence_type) b.problem.add(id);
+        addDriver(b.drivers, op);
+        const u = ensure(d, op.unit);
+        if (u) {
+          u.route.add(id);
+          if (op.delivered_at && dateOnly(toDate(op.delivered_at)) === d) u.delivered.add(id);
+          if (op.occurrence_type) u.problem.add(id);
+          addDriver(u.drivers, op);
+        }
+      }
+    }
+  }
+  const packDrivers = (map) => [...map.values()].map(d => ({
+    name: d.name,
+    total: d.total,
+    delivered: d.delivered,
+    pendentes: d.total - d.delivered,
+    problems: d.problems,
+    sla: d.total ? round1(100 * d.delivered / d.total) : 0,
+    orders: d.orders,
+  })).sort((a, b) => b.total - a.total);
+  const pack = (b) => {
+    const total = b.received.size || b.route.size;
+    const entregues = b.delivered.size;
+    const routeTotal = b.route.size;
+    return {
+      total,
+      entregues,
+      pendentes: Math.max(0, total - entregues),
+      problematicos: b.problem.size,
+      recebidos: b.received.size || null,
+      rota_total: routeTotal,
+      rota_entregues: entregues,
+      rota_pendentes: Math.max(0, routeTotal - entregues),
+      sla: total ? round1(100 * entregues / total) : 0,
+      drivers: packDrivers(b.drivers),
+    };
+  };
+  const results = [];
+  for (const [date, b] of buckets) {
+    if (!b.received.size && !b.route.size) continue;
+    const data = pack(b);
+    data.by_unit = {};
+    for (const unit of ['maua', 'rbp']) {
+      if (b.units[unit]) data.by_unit[unit] = pack(b.units[unit]);
+    }
+    results.push({ source: 'jt', date, data, fileSize: 0, provisional: true });
+  }
+  return results;
+}
+
 function processImileMultiday(rows) {
   if (!rows.length) return {};
   const headers = Object.keys(rows[0]);
@@ -2185,6 +2295,8 @@ function processImile(rows) {
 function classifyAndProcess(filename, rows) {
   const name = lc(filename);
   const results = [];
+  const knowledgeKind = detectOrderKnowledgeReport(filename, rows);
+  if (knowledgeKind === 'jt_receiving' || knowledgeKind === 'jt_delivery_monitoring') return results;
 
   const headers = rows.length ? Object.keys(rows[0]) : [];
   const headerLc = headers.map(h => lc(h));
@@ -2771,6 +2883,10 @@ async function handleFilesSelected(fileList) {
   // dia consolidado, em vez de o arquivo maior descartar o menor.
   const byKey = new Map();
   for (const r of allResults) {
+    const key = `${r.date}|${r.source}`;
+    byKey.set(key, mergeResultInBatch(byKey.get(key), r));
+  }
+  for (const r of buildMonitoringDayResults(allKnowledge)) {
     const key = `${r.date}|${r.source}`;
     byKey.set(key, mergeResultInBatch(byKey.get(key), r));
   }
