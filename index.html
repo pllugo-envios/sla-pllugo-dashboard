@@ -941,7 +941,7 @@
 
     <div class="base-intel-strip" id="base-intel-strip">
       <button type="button" class="base-intel-card" data-base-drill="backlog">
-        <span>Backlog do dia</span><strong id="base-strip-backlog">—</strong><small>recebidos sem OFD no mesmo dia</small>
+        <span>Backlog do dia</span><strong id="base-strip-backlog">—</strong><small>recebidos até 11:30 sem OFD</small>
       </button>
       <button type="button" class="base-intel-card warn" data-base-drill="retidos3">
         <span>Retidos &gt; 3 dias</span><strong id="base-strip-retidos3">—</strong><small>pendentes fora da rota</small>
@@ -950,7 +950,7 @@
         <span>Retidos &gt; 6 dias</span><strong id="base-strip-retidos6">—</strong><small>fila crítica</small>
       </button>
       <button type="button" class="base-intel-card" data-base-drill="received-route">
-        <span>Recebidos → Rota</span><strong id="base-strip-route-rate">—</strong><small>taxa de expedição da janela</small>
+        <span>Recebidos → Rota</span><strong id="base-strip-route-rate">—</strong><small>sobre elegíveis até 11:30</small>
       </button>
     </div>
 
@@ -1296,7 +1296,7 @@
           <div class="bm-panel-head">
             <div>
               <div class="bm-panel-title">Recebido × saiu em rota × retido, por dia</div>
-              <div class="bm-panel-sub">O backlog é reconstruído por data: um pedido recebido no dia 25 que só saiu no dia 26 continua contando como backlog do dia 25</div>
+            <div class="bm-panel-sub">O backlog é reconstruído por data e considera apenas recebidos até 11:30. Cargas recebidas depois disso são tratadas como antecipação do dia seguinte.</div>
             </div>
             <div class="bm-actions"><button type="button" class="base-ghost-btn" id="bm-export-backlog">Exportar Excel</button></div>
           </div>
@@ -2151,6 +2151,24 @@ function computeImileResult(rows) {
   };
 }
 
+const BACKLOG_CUTOFF_MINUTES = 11 * 60 + 30;
+function eventMinutesInSaoPaulo(value) {
+  const d = toDate(value);
+  if (!d) return null;
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(d);
+    const h = Number(parts.find(p => p.type === 'hour')?.value);
+    const m = Number(parts.find(p => p.type === 'minute')?.value);
+    return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null;
+  } catch (e) {
+    return d.getHours() * 60 + d.getMinutes();
+  }
+}
+function isSameDayBacklogEligible(value) {
+  const minutes = eventMinutesInSaoPaulo(value);
+  return minutes != null && minutes <= BACKLOG_CUTOFF_MINUTES;
+}
+
 function buildMonitoringDayResults(knowledgeList) {
   const buckets = new Map();
   const ensure = (date, unit = null) => {
@@ -2159,6 +2177,8 @@ function buildMonitoringDayResults(knowledgeList) {
     if (!buckets.has(key)) {
       buckets.set(key, {
         received: new Set(),
+        receivedEligible: new Set(),
+        anticipated: new Set(),
         route: new Set(),
         delivered: new Set(),
         problem: new Set(),
@@ -2167,7 +2187,7 @@ function buildMonitoringDayResults(knowledgeList) {
       });
     }
     const b = buckets.get(key);
-    if (unit && !b.units[unit]) b.units[unit] = { received: new Set(), route: new Set(), delivered: new Set(), problem: new Set(), drivers: new Map() };
+    if (unit && !b.units[unit]) b.units[unit] = { received: new Set(), receivedEligible: new Set(), anticipated: new Set(), route: new Set(), delivered: new Set(), problem: new Set(), drivers: new Map() };
     return unit ? b.units[unit] : b;
   };
   const driverKey = (name) => normalizeDriverName(name || 'Sem motorista');
@@ -2198,8 +2218,14 @@ function buildMonitoringDayResults(knowledgeList) {
         const b = ensure(d);
         if (!b || !id) continue;
         b.received.add(id);
+        if (isSameDayBacklogEligible(ev.event_at)) b.receivedEligible.add(id);
+        else b.anticipated.add(id);
         const u = ensure(d, ev.unit);
-        if (u) u.received.add(id);
+        if (u) {
+          u.received.add(id);
+          if (isSameDayBacklogEligible(ev.event_at)) u.receivedEligible.add(id);
+          else u.anticipated.add(id);
+        }
       }
     }
     if (k.reportKind === 'jt_delivery_monitoring') {
@@ -2231,9 +2257,15 @@ function buildMonitoringDayResults(knowledgeList) {
     sla: d.total ? round1(100 * d.delivered / d.total) : 0,
     orders: d.orders,
   })).sort((a, b) => b.total - a.total);
+  const countInSet = (values, base) => {
+    let n = 0;
+    for (const v of values) if (base.has(v)) n++;
+    return n;
+  };
   const pack = (b) => {
-    const total = b.received.size || b.route.size;
-    const entregues = b.delivered.size;
+    const eligibleBase = b.receivedEligible.size ? b.receivedEligible : b.route;
+    const total = eligibleBase.size;
+    const entregues = countInSet(b.delivered, eligibleBase);
     const routeTotal = b.route.size;
     return {
       total,
@@ -2241,9 +2273,11 @@ function buildMonitoringDayResults(knowledgeList) {
       pendentes: Math.max(0, total - entregues),
       problematicos: b.problem.size,
       recebidos: b.received.size || null,
+      recebidos_elegiveis: b.receivedEligible.size || null,
+      recebidos_antecipados: b.anticipated.size || 0,
       rota_total: routeTotal,
-      rota_entregues: entregues,
-      rota_pendentes: Math.max(0, routeTotal - entregues),
+      rota_entregues: b.delivered.size,
+      rota_pendentes: Math.max(0, routeTotal - b.delivered.size),
       sla: total ? round1(100 * entregues / total) : 0,
       drivers: packDrivers(b.drivers),
     };
@@ -3640,7 +3674,11 @@ function buildBaseSummary(orders, events, bounds) {
   const perDayMap = new Map();
   const backlogMap = new Map();
   const seenReceived = new Set();
+  const seenEligibleReceived = new Set();
+  const seenAnticipatedReceived = new Set();
   const receivedRows = [];
+  const eligibleReceivedRows = [];
+  const anticipatedRows = [];
   const routedRows = [];
   const deliveredRows = [];
 
@@ -3650,9 +3688,14 @@ function buildBaseSummary(orders, events, bounds) {
     const key = ev.source + '|' + ev.order_key + '|' + d;
     if (seenReceived.has(key)) continue;
     seenReceived.add(key);
-    if (!perDayMap.has(d)) perDayMap.set(d, { date: d, received: 0, ofd: 0, delivered: 0, backlog: 0, rows: [] });
+    const eligible = isSameDayBacklogEligible(ev.event_at);
+    if (eligible) seenEligibleReceived.add(key);
+    else seenAnticipatedReceived.add(key);
+    if (!perDayMap.has(d)) perDayMap.set(d, { date: d, received: 0, eligible: 0, anticipated: 0, ofd: 0, delivered: 0, backlog: 0, rows: [] });
     const day = perDayMap.get(d);
     day.received++;
+    if (eligible) day.eligible++;
+    else day.anticipated++;
     const ord = orderMap.get(ev.source + '|' + ev.order_key) || {};
     const row = normalizeBaseOrder({
       ...ord,
@@ -3669,9 +3712,13 @@ function buildBaseSummary(orders, events, bounds) {
       driver_count: ord.driver_count,
     });
     row.receivedDate = d;
+    row.receivedEligible = eligible;
     receivedRows.push(row);
+    if (eligible) eligibleReceivedRows.push(row);
+    else anticipatedRows.push(row);
     if (deliveredSameDay.has(key)) { day.delivered++; deliveredRows.push(row); }
     if (movementSameDay.has(key)) { day.ofd++; routedRows.push(row); continue; }
+    if (!eligible) continue;
     row.backlogDate = d;
     day.backlog++;
     day.rows.push(row);
@@ -3682,13 +3729,13 @@ function buildBaseSummary(orders, events, bounds) {
   let cursor = bounds.start;
   let guard = 0;
   while (cursor <= bounds.end && guard++ < 400) {
-    if (!perDayMap.has(cursor)) perDayMap.set(cursor, { date: cursor, received: 0, ofd: 0, delivered: 0, backlog: 0, rows: [] });
+    if (!perDayMap.has(cursor)) perDayMap.set(cursor, { date: cursor, received: 0, eligible: 0, anticipated: 0, ofd: 0, delivered: 0, backlog: 0, rows: [] });
     cursor = addDaysYMD(cursor, 1);
   }
   const perDay = [...perDayMap.values()].sort((a, b) => a.date.localeCompare(b.date)).map(d => ({
     ...d,
-    routeRate: d.received ? round1(100 * d.ofd / d.received) : null,
-    retentionRate: d.received ? round1(100 * d.backlog / d.received) : null,
+    routeRate: d.eligible ? round1(100 * d.ofd / d.eligible) : null,
+    retentionRate: d.eligible ? round1(100 * d.backlog / d.eligible) : null,
   }));
 
   const backlog = [...backlogMap.values()].sort((a, b) => b.risk - a.risk);
@@ -3699,8 +3746,10 @@ function buildBaseSummary(orders, events, bounds) {
   for (const o of retained) aging[o.agingBucket]++;
 
   const receivedCount = seenReceived.size;
-  const ofdSameDayCount = [...seenReceived].filter(k => movementSameDay.has(k)).length;
-  const deliveredSameDayCount = [...seenReceived].filter(k => deliveredSameDay.has(k)).length;
+  const eligibleReceivedCount = seenEligibleReceived.size;
+  const anticipatedCount = seenAnticipatedReceived.size;
+  const ofdSameDayCount = [...seenEligibleReceived].filter(k => movementSameDay.has(k)).length;
+  const deliveredSameDayCount = [...seenEligibleReceived].filter(k => deliveredSameDay.has(k)).length;
 
   return {
     orders: scopedOrders,
@@ -3710,6 +3759,8 @@ function buildBaseSummary(orders, events, bounds) {
     rolledUp: scopedOrders.filter(o => o.rolled_up).length,
     perDay,
     receivedRows,
+    eligibleReceivedRows,
+    anticipatedRows,
     routedRows,
     deliveredRows,
     backlog,
@@ -3718,10 +3769,12 @@ function buildBaseSummary(orders, events, bounds) {
     retidos6,
     aging,
     receivedCount,
+    eligibleReceivedCount,
+    anticipatedCount,
     ofdSameDayCount,
     deliveredSameDayCount,
-    routeRate: receivedCount ? round1(100 * ofdSameDayCount / receivedCount) : null,
-    retentionRate: receivedCount ? round1(100 * backlog.length / receivedCount) : null,
+    routeRate: eligibleReceivedCount ? round1(100 * ofdSameDayCount / eligibleReceivedCount) : null,
+    retentionRate: eligibleReceivedCount ? round1(100 * backlog.length / eligibleReceivedCount) : null,
     noMove24: retained.filter(o => o.dwellHours >= 24).length,
     attempts2: retained.filter(o => o.attempts >= 2).length,
     driverSwap: retained.filter(o => o.driverCount >= 2).length,
@@ -4230,6 +4283,8 @@ function exportBaseRows(rows, filename) {
   if (s) {
     const resumo = [
       { indicador: 'Recebidos na janela', valor: s.receivedCount },
+      { indicador: 'Recebidos elegíveis até 11:30', valor: s.eligibleReceivedCount },
+      { indicador: 'Recebidos antecipados após 11:30', valor: s.anticipatedCount },
       { indicador: 'Saíram em rota no mesmo dia', valor: s.ofdSameDayCount },
       { indicador: 'Entregues no mesmo dia', valor: s.deliveredSameDayCount },
       { indicador: 'Backlog da janela', valor: s.backlog.length },
@@ -4384,14 +4439,14 @@ function bmRenderPanorama() {
   if (ring) ring.style.setProperty('--value', String(rate == null ? 0 : Math.max(0, Math.min(100, rate))));
   setText('#base-route-pct', rate == null ? '—' : Math.round(rate) + '%');
   setText('#base-route-main', bmPct(rate));
-  setText('#base-route-sub', bmNum(s.ofdSameDayCount) + ' com saída no dia de ' + bmNum(s.receivedCount) + ' recebidos · ' + bmNum(s.backlog.length) + ' ficaram retidos (' + bmPct(s.retentionRate) + ').');
+  setText('#base-route-sub', bmNum(s.ofdSameDayCount) + ' com saída no dia de ' + bmNum(s.eligibleReceivedCount) + ' elegíveis até 11:30 · ' + bmNum(s.anticipatedCount) + ' antecipados D+1.');
 
   const base = Math.max(1, s.receivedCount);
   const steps = [
-    { k: 'recebidos', label: 'Recebidos', v: s.receivedCount, sub: 'entraram na base na janela' },
-    { k: 'backlog-ofd', label: 'Saíram em rota (mesmo dia)', v: s.ofdSameDayCount, sub: bmPct(s.routeRate) + ' dos recebidos' },
-    { k: 'entregues-dia', label: 'Entregues no mesmo dia', v: s.deliveredSameDayCount, sub: bmPct(s.receivedCount ? round1(100 * s.deliveredSameDayCount / s.receivedCount) : null) + ' dos recebidos' },
-    { k: 'backlog', label: 'Retidos na base', v: s.backlog.length, sub: bmPct(s.retentionRate) + ' de retenção', crit: true },
+    { k: 'recebidos', label: 'Recebidos', v: s.receivedCount, sub: bmNum(s.eligibleReceivedCount) + ' elegíveis · ' + bmNum(s.anticipatedCount) + ' antecipados' },
+    { k: 'backlog-ofd', label: 'Saíram em rota (mesmo dia)', v: s.ofdSameDayCount, sub: bmPct(s.routeRate) + ' dos elegíveis' },
+    { k: 'entregues-dia', label: 'Entregues no mesmo dia', v: s.deliveredSameDayCount, sub: bmPct(s.eligibleReceivedCount ? round1(100 * s.deliveredSameDayCount / s.eligibleReceivedCount) : null) + ' dos elegíveis' },
+    { k: 'backlog', label: 'Retidos na base', v: s.backlog.length, sub: bmPct(s.retentionRate) + ' dos elegíveis', crit: true },
   ];
   funnel.innerHTML = steps.map(st => '' +
     '<button type="button" class="bm-funnel-step ' + (st.crit ? 'retido' : '') + '" data-bm-open="' + st.k + '">' +
@@ -4401,11 +4456,11 @@ function bmRenderPanorama() {
     '</button>').join('');
 
   const cards = [
-    { t: 'backlog', l: 'Backlog do dia', v: bmNum(s.backlog.length), d: 'recebidos sem saída no mesmo dia', c: 'warn' },
+    { t: 'backlog', l: 'Backlog do dia', v: bmNum(s.backlog.length), d: 'recebidos até 11:30 sem saída', c: 'warn' },
     { t: 'retidos3', l: 'Retidos > 3 dias', v: bmNum(s.retidos3.length), d: 'pendentes fora da rota', c: 'warn' },
     { t: 'retidos6', l: 'Retidos > 6 dias', v: bmNum(s.retidos6.length), d: 'fila crítica', c: 'critical' },
     { t: 'retidos', l: 'Fila em aberto', v: bmNum(s.retained.length), d: 'todos os pedidos não entregues', c: '' },
-    { t: 'received-route', l: 'Recebidos → Rota', v: bmPct(s.routeRate), d: 'taxa de expedição da janela', c: s.routeRate != null && s.routeRate >= 95 ? 'good' : 'warn' },
+    { t: 'received-route', l: 'Recebidos → Rota', v: bmPct(s.routeRate), d: 'taxa sobre elegíveis até 11:30', c: s.routeRate != null && s.routeRate >= 95 ? 'good' : 'warn' },
     { t: 'nunca-saiu', l: 'Nunca saiu em rota', v: bmNum(s.neverRouted), d: 'sem nenhuma tentativa registrada', c: 'critical' },
     { t: 'sem-movimento', l: 'Sem mov. > 24h', v: bmNum(s.noMove24), d: 'sem nenhuma leitura recente', c: 'warn' },
     { t: 'tentativas', l: '2+ tentativas', v: bmNum(s.attempts2), d: 'saíram e voltaram mais de uma vez', c: 'warn' },
@@ -4559,17 +4614,19 @@ function bmRenderBacklog() {
   if (!s) { tableEl.innerHTML = '<div class="bm-empty">Sem base carregada.</div>'; return; }
   const rows = s.perDay;
   tableEl.innerHTML = '<table class="bm-table"><thead><tr>' +
-    '<th class="sortable">Data</th><th class="num">Recebidos</th><th class="num">Saíram em rota</th><th class="num">Entregues no dia</th><th class="num">Retidos</th><th class="num">Taxa rota</th><th class="num">Retenção</th><th></th>' +
+    '<th class="sortable">Data</th><th class="num">Recebidos</th><th class="num">Elegíveis</th><th class="num">Antecipados</th><th class="num">Saíram em rota</th><th class="num">Entregues no dia</th><th class="num">Retidos</th><th class="num">Taxa rota</th><th class="num">Retenção</th><th></th>' +
     '</tr></thead><tbody>' + (rows.length ? rows.map(d => '<tr>' +
       '<td><strong>' + bmDateLabel(d.date) + '</strong></td>' +
       '<td class="num">' + bmNum(d.received) + '</td>' +
+      '<td class="num">' + bmNum(d.eligible) + '</td>' +
+      '<td class="num">' + bmNum(d.anticipated) + '</td>' +
       '<td class="num">' + bmNum(d.ofd) + '</td>' +
       '<td class="num">' + bmNum(d.delivered) + '</td>' +
       '<td class="num"><span class="bm-tag ' + (d.retentionRate != null && d.retentionRate >= 10 ? 'r' : d.backlog ? 'y' : 'g') + '">' + bmNum(d.backlog) + '</span></td>' +
       '<td class="num">' + bmPct(d.routeRate) + '</td>' +
       '<td class="num">' + bmPct(d.retentionRate) + '</td>' +
       '<td><button type="button" class="base-ghost-btn" data-bm-open="day:' + d.date + '">Abrir retidos</button></td>' +
-    '</tr>').join('') : '<tr><td colspan="8"><div class="bm-empty">Sem recebimentos na janela.</div></td></tr>') + '</tbody></table>';
+    '</tr>').join('') : '<tr><td colspan="10"><div class="bm-empty">Sem recebimentos na janela.</div></td></tr>') + '</tbody></table>';
   bmRenderBacklogChart(rows);
 }
 
@@ -5006,7 +5063,7 @@ function bmInstallHandlers() {
     const s = BASE_CACHE.summary;
     if (!s) return;
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(s.perDay.map(d => ({ data: d.date, recebidos: d.received, sairam_em_rota: d.ofd, entregues_no_dia: d.delivered, retidos: d.backlog, taxa_rota: d.routeRate, taxa_retencao: d.retentionRate }))), 'Backlog diário');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(s.perDay.map(d => ({ data: d.date, recebidos: d.received, elegiveis_ate_1130: d.eligible, antecipados_apos_1130: d.anticipated, sairam_em_rota: d.ofd, entregues_no_dia: d.delivered, retidos: d.backlog, taxa_rota: d.routeRate, taxa_retencao: d.retentionRate }))), 'Backlog diário');
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(s.backlog.map(bmRowRecord)), 'Pedidos retidos');
     XLSX.writeFile(wb, 'pllugo_backlog_' + bmFileStamp() + '.xlsx');
   });
