@@ -1328,6 +1328,182 @@ function findOrderIdColumn(headers) {
   return partial ? partial.raw : null;
 }
 
+function cleanOrderId(v) {
+  if (v == null) return '';
+  return String(v).trim().replace(/\.0$/, '').replace(/\s+/g, '');
+}
+
+function localIsoOrNull(v) {
+  const d = toDate(v);
+  return d ? d.toISOString() : null;
+}
+
+function currentOrderStatus({ receivedAt, ofdAt, deliveredAt, problemAt }) {
+  if (deliveredAt) return 'delivered';
+  if (problemAt) return 'problem';
+  if (ofdAt) return 'in_route';
+  if (receivedAt) return 'received';
+  return 'unknown';
+}
+
+function orderEventKey(source, orderKey, eventType, eventAt, driverKey, detail) {
+  return [source || 'unknown', orderKey || '', eventType || '', eventAt || '', driverKey || '', detail || '']
+    .map(v => String(v).trim().slice(0, 180))
+    .join('|');
+}
+
+function detectOrderKnowledgeReport(filename, rows) {
+  if (!rows || !rows.length) return null;
+  const headers = Object.keys(rows[0]);
+  const normalized = headers.map(h => normalizeSearchText(h).toLowerCase());
+  const name = normalizeSearchText(filename).toLowerCase();
+  const hasOrder = !!findOrderIdColumn(headers);
+  const hasReceivingTime = normalized.some(h => h.includes('data e hora') && (h.includes('coletada') || h.includes('recebimento') || h.includes('chegada')));
+  const hasDeliveryFlow = normalized.some(h => h.includes('tempo de entrega')) && normalized.some(h => h.includes('entregador'));
+  if (hasOrder && (name.includes('bipagem de recebimento') || hasReceivingTime) && !hasDeliveryFlow) return 'jt_receiving';
+  if (hasOrder && (name.includes('bipagem de entrega') || hasDeliveryFlow)) return 'jt_delivery_monitoring';
+  return null;
+}
+
+function buildOrderKnowledge(filename, rows) {
+  const reportKind = detectOrderKnowledgeReport(filename, rows);
+  if (!reportKind) return { reportKind: null, filename, rowCount: rows.length, orders: [], events: [], operationalOrders: [] };
+  const headers = Object.keys(rows[0] || {});
+  const colOrder = findOrderIdColumn(headers);
+  const eventsMap = new Map();
+  const ordersMap = new Map();
+  const operationalMap = new Map();
+  const source = 'jt';
+
+  const addEvent = (ev) => {
+    if (!ev.order_key || !ev.event_type || !ev.event_at) return;
+    ev.event_key = orderEventKey(ev.source, ev.order_key, ev.event_type, ev.event_at, ev.driver_key, ev.problem_reason || ev.location || '');
+    if (!eventsMap.has(ev.event_key)) eventsMap.set(ev.event_key, ev);
+  };
+  const mergeOrder = (orderKey, patch) => {
+    if (!orderKey) return;
+    const prev = ordersMap.get(orderKey) || { source, order_key: orderKey, tracking_number: orderKey };
+    ordersMap.set(orderKey, Object.fromEntries(Object.entries({ ...prev, ...patch }).filter(([,v]) => v !== undefined && v !== null && v !== '')));
+  };
+
+  if (reportKind === 'jt_receiving') {
+    const colReceived = headers.find(h => {
+      const n = normalizeSearchText(h).toLowerCase();
+      return n.includes('data e hora') && (n.includes('coletada') || n.includes('recebimento') || n.includes('chegada'));
+    });
+    const colStation = headers.find(h => normalizeSearchText(h).toLowerCase().includes('estacao de chegada'));
+    const colLastStop = headers.find(h => normalizeSearchText(h).toLowerCase().includes('ultima parada'));
+    const colScanner = headers.find(h => normalizeSearchText(h).toLowerCase().includes('digitalizador'));
+    for (const r of rows) {
+      const orderKey = cleanOrderId(r[colOrder]);
+      if (!orderKey) continue;
+      const receivedAt = localIsoOrNull(r[colReceived]);
+      const unit = inferUnitFromRow(r);
+      mergeOrder(orderKey, {
+        unit,
+        first_received_at: receivedAt,
+        last_event_at: receivedAt,
+        current_status: currentOrderStatus({ receivedAt }),
+        last_import_kind: reportKind,
+        last_import_file: filename,
+      });
+      addEvent({
+        source, order_key: orderKey, tracking_number: orderKey,
+        event_type: 'received', event_at: receivedAt, unit,
+        location: r[colStation] || null,
+        actor_name: r[colScanner] || null,
+        source_report: reportKind,
+        metadata: { last_stop: r[colLastStop] || null, filename },
+      });
+    }
+  }
+
+  if (reportKind === 'jt_delivery_monitoring') {
+    const colOfd = findColIncludes(headers, 'tempo de entrega');
+    const colDriver = headers.find(h => lc(h) === 'entregador') || findColIncludes(headers, 'entregador');
+    const colDelivered = findColIncludes(headers, 'horário da entrega') || findColIncludes(headers, 'horario da entrega');
+    const colProblemAt = findColIncludes(headers, 'registro pacote problem');
+    const colProblem = findColIncludes(headers, 'motivos dos pacotes problem') || findColIncludes(headers, 'tipo problem') || findColIncludes(headers, 'razão de retenção');
+    const colBase = findColIncludes(headers, 'base de entrega') || findColIncludes(headers, 'pdd de entrega');
+    for (const r of rows) {
+      const orderKey = cleanOrderId(r[colOrder]);
+      if (!orderKey) continue;
+      const ofdAt = localIsoOrNull(r[colOfd]);
+      const deliveredAt = localIsoOrNull(r[colDelivered]);
+      const problemAt = localIsoOrNull(r[colProblemAt]);
+      const driverName = colDriver && r[colDriver] != null ? canonicalizeName(titleCaseName(stripFPrefix(String(r[colDriver])).trim())) : null;
+      const driverKey = driverName ? normalizeDriverName(driverName) : null;
+      const problemReason = colProblem && r[colProblem] != null && String(r[colProblem]).trim() !== '' ? String(r[colProblem]).trim() : null;
+      const unit = inferUnitFromRow(r);
+      const operationalDate = dateOnly(toDate(r[colOfd])) || dateOnly(toDate(r[colDelivered])) || dateOnly(toDate(r[colProblemAt]));
+      mergeOrder(orderKey, {
+        unit,
+        last_ofd_at: ofdAt,
+        last_driver_key: driverKey,
+        last_driver_name: driverName,
+        last_delivered_at: deliveredAt,
+        last_problem_at: problemAt,
+        last_problem_reason: problemReason,
+        last_event_at: deliveredAt || problemAt || ofdAt,
+        current_status: currentOrderStatus({ ofdAt, deliveredAt, problemAt }),
+        last_import_kind: reportKind,
+        last_import_file: filename,
+      });
+      addEvent({
+        source, order_key: orderKey, tracking_number: orderKey,
+        event_type: 'ofd', event_at: ofdAt, unit, driver_key: driverKey, driver_name: driverName,
+        location: colBase ? r[colBase] : null,
+        source_report: reportKind,
+        metadata: { filename },
+      });
+      addEvent({
+        source, order_key: orderKey, tracking_number: orderKey,
+        event_type: 'delivered', event_at: deliveredAt, unit, driver_key: driverKey, driver_name: driverName,
+        location: colBase ? r[colBase] : null,
+        source_report: reportKind,
+        metadata: { filename },
+      });
+      addEvent({
+        source, order_key: orderKey, tracking_number: orderKey,
+        event_type: 'problem', event_at: problemAt, unit, driver_key: driverKey, driver_name: driverName,
+        problem_reason: problemReason,
+        source_report: reportKind,
+        metadata: { filename },
+      });
+      if (operationalDate && driverKey) {
+        const status = currentOrderStatus({ ofdAt, deliveredAt, problemAt });
+        const opKey = `${source}|${operationalDate}|${orderKey}`;
+        operationalMap.set(opKey, {
+          source: 'J&T',
+          data_granularity: 'order',
+          operational_date: operationalDate,
+          order_number: orderKey,
+          tracking_number: orderKey,
+          order_key: orderKey,
+          unit,
+          driver_name: driverName,
+          driver_key: driverKey,
+          ofd_at: ofdAt,
+          delivered_at: deliveredAt,
+          last_event_at: deliveredAt || problemAt || ofdAt,
+          operational_status: status,
+          occurrence_type: problemReason,
+          same_day_success: !!(ofdAt && deliveredAt && dateOnly(toDate(ofdAt)) === dateOnly(toDate(deliveredAt))),
+        });
+      }
+    }
+  }
+
+  return {
+    reportKind,
+    filename,
+    rowCount: rows.length,
+    orders: [...ordersMap.values()],
+    events: [...eventsMap.values()],
+    operationalOrders: [...operationalMap.values()],
+  };
+}
+
 function processJtReal(rows) {
   if (!rows.length) return {};
   const headers = Object.keys(rows[0]);
@@ -1934,10 +2110,73 @@ async function upsertResults(results) {
   }
 }
 
+function normalizeRowsForColumns(rows, columns) {
+  return rows.map(row => {
+    const out = {};
+    for (const col of columns) out[col] = row[col] ?? null;
+    return out;
+  });
+}
+
+function eventReportDate(events) {
+  const dates = (events || []).map(e => dateOnly(toDate(e.event_at))).filter(Boolean);
+  return modeDate(dates);
+}
+
+async function upsertOrderKnowledge(knowledgeList) {
+  if (!sb || !knowledgeList.length) return { orders: 0, events: 0 };
+  let orderCount = 0, eventCount = 0;
+  const receivingOrderFields = ['source', 'order_key', 'tracking_number', 'unit', 'first_received_at', 'last_event_at', 'current_status', 'last_import_kind', 'last_import_file'];
+  const deliveryOrderFields = ['source', 'order_key', 'tracking_number', 'unit', 'last_ofd_at', 'last_driver_key', 'last_driver_name', 'last_delivered_at', 'last_problem_at', 'last_problem_reason', 'last_event_at', 'current_status', 'last_import_kind', 'last_import_file'];
+  const eventFields = ['event_key', 'source', 'order_key', 'tracking_number', 'event_type', 'event_at', 'unit', 'driver_key', 'driver_name', 'location', 'actor_name', 'problem_reason', 'source_report', 'metadata', 'import_batch_id'];
+  const operationalFields = ['source', 'data_granularity', 'operational_date', 'order_number', 'tracking_number', 'order_key', 'unit', 'driver_name', 'driver_key', 'ofd_at', 'delivered_at', 'last_event_at', 'operational_status', 'occurrence_type', 'same_day_success', 'import_batch_id'];
+
+  for (const k of knowledgeList) {
+    if (!k.reportKind || (!k.orders.length && !k.events.length && !k.operationalOrders.length)) continue;
+    let batchId = null;
+    const reportDate = eventReportDate(k.events);
+    const batchRow = {
+      source: k.reportKind,
+      filename: k.filename,
+      report_date: reportDate,
+      row_count: k.rowCount || 0,
+      recognized_rows: k.orders.length || 0,
+      order_rows: k.orders.length || 0,
+      aggregate_rows: 0,
+      status: 'success',
+      metadata: { granular_base: true, events: k.events.length },
+    };
+    const { data: batchData, error: batchError } = await sb.from('import_batches').insert([batchRow]).select('id').single();
+    if (batchError) throw batchError;
+    batchId = batchData && batchData.id;
+
+    const orderFields = k.reportKind === 'jt_receiving' ? receivingOrderFields : deliveryOrderFields;
+    for (const part of chunkArray(normalizeRowsForColumns(k.orders, orderFields), 500)) {
+      const { error } = await sb.from('orders').upsert(part, { onConflict: 'source,order_key' });
+      if (error) throw error;
+      orderCount += part.length;
+    }
+    const events = k.events.map(e => ({ ...e, import_batch_id: batchId }));
+    for (const part of chunkArray(normalizeRowsForColumns(events, eventFields), 500)) {
+      const { error } = await sb.from('order_events').upsert(part, { onConflict: 'event_key' });
+      if (error) throw error;
+      eventCount += part.length;
+    }
+    const operationalOrders = k.operationalOrders.map(o => ({ ...o, import_batch_id: batchId }));
+    for (const part of chunkArray(normalizeRowsForColumns(operationalOrders, operationalFields), 500)) {
+      const { error } = await sb.from('operational_orders').upsert(part, { onConflict: 'source,operational_date,order_key' });
+      if (error) {
+        console.warn('operational_orders não recebeu detalhamento auxiliar:', error);
+        break;
+      }
+    }
+  }
+  return { orders: orderCount, events: eventCount };
+}
+
 // ──────────────────────────────────────────────
 // Limpar Dados — botão temporário só pra testes (Renato, 21/08/2026): apaga
-// TUDO do banco (sla_days, sla_drivers, tower_snapshots e tower_status) pra
-// recomeçar do zero.
+// TUDO do banco operacional (incluindo a base granular nova) pra recomeçar do zero.
 // ──────────────────────────────────────────────
 async function clearAllData() {
   if (!sb) { setImportStatus('Supabase não configurado — nada pra limpar.', 'err'); return; }
@@ -1955,6 +2194,19 @@ async function clearAllData() {
     if (e3) throw e3;
     const { error: e4 } = await sb.from('tower_status').delete().gte('date', '1900-01-01');
     if (e4) throw e4;
+    for (const op of [
+      () => sb.from('operational_orders').delete().gte('operational_date', '1900-01-01'),
+      () => sb.from('order_events').delete().gte('created_at', '1900-01-01'),
+      () => sb.from('orders').delete().neq('order_key', ''),
+      () => sb.from('import_batches').delete().gte('imported_at', '1900-01-01'),
+    ]) {
+      try {
+        const { error } = await op();
+        if (error) console.warn('Limpeza granular ignorada:', error);
+      } catch (e) {
+        console.warn('Tabela granular ainda não existe ou não pôde ser limpa:', e);
+      }
+    }
     DASH_DATA.history = [];
     DASH_DATA.generated_at = null;
     state.selectedDriver = null;
@@ -1988,6 +2240,7 @@ async function handleFilesSelected(fileList) {
   setImportStatus(`Lendo ${files.length} arquivo(s)...`, 'busy');
 
   const allResults = [];
+  const allKnowledge = [];
   const warnings = [];
   for (const file of files) {
     try {
@@ -1995,9 +2248,11 @@ async function handleFilesSelected(fileList) {
       const wb = XLSX.read(buf, { cellDates: true });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { defval: null, raw: false });
+      const knowledge = buildOrderKnowledge(file.name, rows);
+      if (knowledge.reportKind) allKnowledge.push(knowledge);
       const results = classifyAndProcess(file.name, rows);
       if (!results.length) {
-        warnings.push(`${file.name}: não reconhecido ou sem data identificável.`);
+        if (!knowledge.reportKind) warnings.push(`${file.name}: não reconhecido ou sem data identificável.`);
         continue;
       }
       const unitBreakdown = computeUnitBreakdown(file.name, rows);
@@ -2021,7 +2276,7 @@ async function handleFilesSelected(fileList) {
   }
   const finalResults = [...byKey.values()];
 
-  if (!finalResults.length) {
+  if (!finalResults.length && !allKnowledge.length) {
     btn.disabled = false; btn.classList.remove('loading');
     setImportStatus('Nenhum dia novo identificado.' + (warnings.length ? ' ' + warnings.join(' ') : ''), 'err');
     return;
@@ -2034,8 +2289,16 @@ async function handleFilesSelected(fileList) {
   }
 
   try {
-    setImportStatus(`Enviando ${finalResults.length} dia(s) pro banco...`, 'busy');
-    await upsertResults(finalResults);
+    setImportStatus(`Enviando ${finalResults.length} dia(s) e ${allKnowledge.length} base(s) granular(es) pro banco...`, 'busy');
+    if (finalResults.length) await upsertResults(finalResults);
+    let granularSummary = null;
+    if (allKnowledge.length) {
+      try {
+        granularSummary = await upsertOrderKnowledge(allKnowledge);
+      } catch (granularError) {
+        warnings.push(`base granular não gravada (${granularError.message || granularError}).`);
+      }
+    }
 
     setImportStatus('Recarregando dashboard...', 'busy');
     const { history, generated_at } = await fetchHistoryFromSupabase();
@@ -2044,7 +2307,8 @@ async function handleFilesSelected(fileList) {
     await applyLoadedData();
 
     const summary = finalResults.map(r => `${r.source} ${r.date} (${r.data.sla}%)`).join(' · ');
-    setImportStatus(`Atualizado: ${finalResults.length} dia(s) — ${summary}` + (warnings.length ? ` | Avisos: ${warnings.join(' ')}` : ''), warnings.length ? 'busy' : 'ok');
+    const granularText = granularSummary ? ` · Base granular: ${fmt(granularSummary.orders)} pedido(s), ${fmt(granularSummary.events)} evento(s)` : '';
+    setImportStatus(`Atualizado: ${finalResults.length} dia(s)${summary ? ' — ' + summary : ''}${granularText}` + (warnings.length ? ` | Avisos: ${warnings.join(' ')}` : ''), warnings.length ? 'busy' : 'ok');
   } catch (e) {
     setImportStatus(`Erro ao salvar no Supabase: ${e.message || e}`, 'err');
   } finally {
@@ -2873,6 +3137,24 @@ function renderDriverTab(tab){
   }
 }
 function orderIdFromRow(r){ return r.tracking_number || r.order_number || r.pedido || r.id || ''; }
+function addDaysYMD(ymd, days) {
+  const d = parseDate(ymd);
+  d.setDate(d.getDate() + days);
+  return dateOnly(d);
+}
+function ordersFromDriverEvents(events) {
+  const map = new Map();
+  for (const ev of (events || []).sort((a,b) => String(a.event_at).localeCompare(String(b.event_at)))) {
+    const key = ev.order_key || ev.tracking_number;
+    if (!key) continue;
+    if (!map.has(key)) map.set(key, { pedido: key, tracking_number: ev.tracking_number || key, source: ev.source || 'J&T' });
+    const row = map.get(key);
+    if (ev.event_type === 'ofd') { row.ofd_at = ev.event_at; row.status = row.status || 'Saiu em rota'; }
+    if (ev.event_type === 'delivered') { row.delivered_at = ev.event_at; row.status = 'Entregue'; }
+    if (ev.event_type === 'problem') { row.problem = ev.problem_reason || 'Problemático'; if (!row.status || row.status === 'Saiu em rota') row.status = 'Problemático'; }
+  }
+  return [...map.values()];
+}
 function renderDriverOrdersRows(rows, d, note='') {
   const body = $('#app-drawer-body');
   const titleNote = note ? `<div class="drawer-insight" style="margin-bottom:10px"><strong>Fonte do detalhe</strong><br>${escapeHTML(note)}</div>` : '';
@@ -2887,6 +3169,13 @@ async function loadDriverOrders(d){
   }
   if(!sb){body.innerHTML='<div class="drawer-empty">Supabase indisponível neste momento e este snapshot não possui IDs de pedidos.</div>';return;}
   try{
+    const refDate = towerReferenceDate();
+    const nextDate = addDaysYMD(refDate, 1);
+    const {data:eventData,error:eventError}=await sb.from('order_events').select('order_key,tracking_number,event_type,event_at,problem_reason,unit,source').eq('driver_key',normalizeDriverName(d.name)).gte('event_at',`${refDate}T00:00:00-03:00`).lt('event_at',`${nextDate}T00:00:00-03:00`).limit(300);
+    if(!eventError){
+      const eventRows = ordersFromDriverEvents(eventData || []);
+      if(eventRows.length){renderDriverOrdersRows(eventRows, d, 'Pedidos carregados da linha do tempo granular por pedido.');return;}
+    }
     const key=normalizeDriverName(d.name); const {data,error}=await sb.from('operational_orders').select('tracking_number,order_number,operational_status,occurrence_type,ofd_at,delivered_at,unit,source').eq('operational_date',towerReferenceDate()).eq('driver_key',key).limit(100);
     if(error)throw error; const rows=data||[];
     if(!rows.length){body.innerHTML='<div class="drawer-empty"><strong>Nenhum ID de pedido encontrado para este motorista.</strong><br>A fonte atual pode estar agregada por motorista ou o snapshot foi criado antes desta melhoria. Reimporte o relatório de monitoramento para popular os IDs quando o arquivo tiver pedido/remessa.</div>';return;}
