@@ -2165,6 +2165,12 @@ function towerReferenceDate() {
   }
   return saoPauloToday();
 }
+function syncStickyOffsets() {
+  const topbar = document.querySelector('.topbar');
+  const filters = document.querySelector('.filters');
+  if (topbar) document.documentElement.style.setProperty('--topbar-height', `${Math.ceil(topbar.getBoundingClientRect().height)}px`);
+  if (filters) document.documentElement.style.setProperty('--filters-height', `${Math.ceil(filters.getBoundingClientRect().height)}px`);
+}
 
 function aggregateDriversForHero(drivers, filtered) {
   const out = { total: 0, entregues: 0, pendentes: 0, problematicos: 0, dailySLA: [], dailyEnt: [], dailyPend: [], dailySameday: [], labels: [], desconsiderados: 0, desconsideradosPedidos: [], samedayWeightedDelivered: 0, samedayWeightedTotal: 0 };
@@ -3291,6 +3297,8 @@ $$('th[data-sort]').forEach(th => th.addEventListener('click', () => {
   refresh();
 }));
 updateSortIndicators();
+syncStickyOffsets();
+window.addEventListener('resize', syncStickyOffsets);
 
 // Chamado no carregamento da página (depois do fetch inicial no Supabase) e
 // de novo depois de cada "Atualizar Dashboard" bem-sucedido.
@@ -3302,6 +3310,7 @@ async function applyLoadedData() {
   } else {
     $('#last-update').textContent = DASH_DATA.history.length ? 'Atualizado' : 'Sem dados ainda';
   }
+  syncStickyOffsets();
 
   const allDates = DASH_DATA.history.map(h => h.date).sort();
   if (allDates.length) {
