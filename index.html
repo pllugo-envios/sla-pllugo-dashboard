@@ -2914,15 +2914,19 @@ function eventLocalDate(row) {
 }
 
 function isOpenOrder(row) {
-  return String(row.current_status || '').toLowerCase() !== 'delivered' && !row.last_delivered_at;
+  const status = String(row.current_status || '').toLowerCase();
+  const hasDeliveredEvent = row.has_delivered_event === true || String(row.has_delivered_event || '').toLowerCase() === 'true';
+  return status !== 'delivered' && !row.last_delivered_at && !hasDeliveredEvent;
 }
 
 function normalizeBaseOrder(row) {
   const first = row.first_received_at ? toDate(row.first_received_at) : null;
   const last = row.last_event_at ? toDate(row.last_event_at) : null;
+  const hasDeliveredEvent = row.has_delivered_event === true || String(row.has_delivered_event || '').toLowerCase() === 'true';
   return {
     ...row,
     order_key: row.order_key || row.tracking_number || '',
+    current_status: (row.last_delivered_at || hasDeliveredEvent) ? 'delivered' : row.current_status,
     hours_since_received: Number(row.hours_since_received) || (first ? (Date.now() - first.getTime()) / 3600000 : 0),
     hours_without_movement: Number(row.hours_without_movement) || (last ? (Date.now() - last.getTime()) / 3600000 : 0),
     attempt_count: Number(row.attempt_count) || 0,
@@ -2942,15 +2946,16 @@ function buildBaseSummary(orders, events, bounds) {
   const scopedOrders = orders.filter(o => baseSourceMatches(o) && baseUnitMatches(o)).map(normalizeBaseOrder);
   const scopedEvents = events.filter(e => baseSourceMatches(e) && baseUnitMatches(e));
   const received = scopedEvents.filter(e => e.event_type === 'received');
-  const ofdSameDayKeys = new Set(scopedEvents.filter(e => e.event_type === 'ofd').map(e => `${e.source}|${e.order_key}|${eventLocalDate(e)}`));
+  const movementSameDayKeys = new Set(scopedEvents.filter(e => ['ofd','delivered','problem'].includes(e.event_type)).map(e => `${e.source}|${e.order_key}|${eventLocalDate(e)}`));
   const orderMap = new Map(scopedOrders.map(o => [`${o.source}|${o.order_key}`, o]));
   const backlogMap = new Map();
   for (const ev of received) {
     const d = eventLocalDate(ev);
     if (!d || d < bounds.start || d > bounds.end) continue;
     const key = `${ev.source}|${ev.order_key}|${d}`;
-    if (ofdSameDayKeys.has(key)) continue;
+    if (movementSameDayKeys.has(key)) continue;
     const ord = orderMap.get(`${ev.source}|${ev.order_key}`) || {};
+    if (ord.current_status === 'delivered' && dateOnly(toDate(ord.last_delivered_at || ord.last_event_at)) === d) continue;
     backlogMap.set(key, {
       ...ord,
       source: ev.source,
@@ -2975,7 +2980,7 @@ function buildBaseSummary(orders, events, bounds) {
   const aging = { '0-1 dia': 0, '2-3 dias': 0, '4-6 dias': 0, '7+ dias': 0 };
   for (const o of retained) aging[baseAgingLabel(o.hours_since_received)]++;
   const uniqueReceived = new Set(received.map(e => `${e.source}|${e.order_key}|${eventLocalDate(e)}`));
-  const ofdForReceived = [...uniqueReceived].filter(k => ofdSameDayKeys.has(k)).length;
+  const ofdForReceived = [...uniqueReceived].filter(k => movementSameDayKeys.has(k)).length;
   return {
     orders: scopedOrders,
     events: scopedEvents,
@@ -3496,8 +3501,9 @@ async function openOrderTracking(orderKey) {
     if (eventError) throw eventError;
     const order = (orderData || [])[0] || {};
     const events = eventData || [];
-    const body = `<div class="drawer-metric-grid">${metricCard('Status', statusLabel(order.current_status))}${metricCard('Unidade', order.unit ? unitLabel(order.unit) : '—')}${metricCard('Tentativas', events.filter(e=>e.event_type==='ofd').length)}${metricCard('Motoristas', new Set(events.map(e=>e.driver_key).filter(Boolean)).size)}${metricCard('Recebido', formatDateTime(order.first_received_at))}${metricCard('Último evento', formatDateTime(order.last_event_at))}</div><div class="drawer-section"><div class="drawer-section-title">Linha do tempo <span>${events.length} evento(s)</span></div><div class="drawer-timeline">${events.map(e=>`<div class="timeline-item"><strong>${formatDateTime(e.event_at)} · ${escapeHTML(statusLabel(e.event_type === 'ofd' ? 'in_route' : e.event_type))}</strong><span>${escapeHTML([e.driver_name, e.location, e.problem_reason].filter(Boolean).join(' · ') || 'evento registrado')}</span></div>`).join('') || '<div class="drawer-empty">Nenhum evento encontrado para este pedido.</div>'}</div></div>`;
-    openDrawer({ eyebrow:'Tracking do pedido', title:orderKey, sub:`${statusLabel(order.current_status)} · ${order.unit ? unitLabel(order.unit) : 'Unidade não identificada'}`, body });
+    const effectiveStatus = events.some(e=>e.event_type==='delivered') || order.last_delivered_at ? 'delivered' : order.current_status;
+    const body = `<div class="drawer-metric-grid">${metricCard('Status', statusLabel(effectiveStatus))}${metricCard('Unidade', order.unit ? unitLabel(order.unit) : '—')}${metricCard('Tentativas', events.filter(e=>e.event_type==='ofd').length)}${metricCard('Motoristas', new Set(events.map(e=>e.driver_key).filter(Boolean)).size)}${metricCard('Recebido', formatDateTime(order.first_received_at))}${metricCard('Último evento', formatDateTime(order.last_event_at))}</div><div class="drawer-section"><div class="drawer-section-title">Linha do tempo <span>${events.length} evento(s)</span></div><div class="drawer-timeline">${events.map(e=>`<div class="timeline-item"><strong>${formatDateTime(e.event_at)} · ${escapeHTML(statusLabel(e.event_type === 'ofd' ? 'in_route' : e.event_type))}</strong><span>${escapeHTML([e.driver_name, e.location, e.problem_reason].filter(Boolean).join(' · ') || 'evento registrado')}</span></div>`).join('') || '<div class="drawer-empty">Nenhum evento encontrado para este pedido.</div>'}</div></div>`;
+    openDrawer({ eyebrow:'Tracking do pedido', title:orderKey, sub:`${statusLabel(effectiveStatus)} · ${order.unit ? unitLabel(order.unit) : 'Unidade não identificada'}`, body });
   } catch (e) {
     $('#app-drawer-body').innerHTML = `<div class="drawer-empty"><strong>Não foi possível carregar o pedido.</strong><br>${escapeHTML(e.message || e)}</div>`;
   }
