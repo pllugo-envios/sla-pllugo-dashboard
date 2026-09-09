@@ -2404,11 +2404,11 @@ function mergePllugo(jt, imile) {
 // porque tem uma linha por motorista por dia por fonte, mas com o tempo
 // tower_snapshots (uma linha por motorista por atualização do dia) e as
 // outras também vão bater.
-async function fetchAllRows(table, extra) {
+async function fetchAllRows(table, extra, selectFields = '*') {
   const PAGE = 1000;
   let out = [];
   for (let from = 0; ; from += PAGE) {
-    let q = sb.from(table).select('*').range(from, from + PAGE - 1);
+    let q = sb.from(table).select(selectFields).range(from, from + PAGE - 1);
     if (extra) q = extra(q);
     const { data, error } = await q;
     if (error) throw error;
@@ -2418,11 +2418,23 @@ async function fetchAllRows(table, extra) {
   return out;
 }
 
+const HISTORY_LOAD_DAYS = 95;
+const SLA_DAYS_SELECT = 'date,source,total,entregues,pendentes,problematicos,sla,sla_sameday,desconsiderados,desconsiderados_pedidos,updated_at';
+const SLA_DRIVERS_SELECT = 'date,source,driver_name,total,delivered,pendentes,problems,sla,occurrences';
+
+function historyLoadStartDate() {
+  const [y, m, d] = saoPauloToday().split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() - HISTORY_LOAD_DAYS);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+}
+
 async function fetchHistoryFromSupabase() {
   if (!sb) return { history: [], generated_at: null, offline: true };
+  const since = historyLoadStartDate();
   const [daysData, driversData] = await Promise.all([
-    fetchAllRows('sla_days'),
-    fetchAllRows('sla_drivers'),
+    fetchAllRows('sla_days', q => q.gte('date', since).order('date', { ascending: true }), SLA_DAYS_SELECT),
+    fetchAllRows('sla_drivers', q => q.gte('date', since).order('date', { ascending: true }), SLA_DRIVERS_SELECT),
   ]);
 
   const driversByDaySource = new Map();
