@@ -2421,6 +2421,7 @@ async function fetchAllRows(table, extra, selectFields = '*') {
 const HISTORY_LOAD_DAYS = 95;
 const SLA_DAYS_SELECT = 'date,source,total,entregues,pendentes,problematicos,sla,sla_sameday,desconsiderados,desconsiderados_pedidos,updated_at';
 const SLA_DRIVERS_SELECT = 'date,source,driver_name,total,delivered,pendentes,problems,sla,occurrences';
+const SLA_UNIT_SELECT = 'date,source,by_unit,updated_at';
 
 function historyLoadStartDate() {
   const [y, m, d] = saoPauloToday().split('-').map(Number);
@@ -2476,6 +2477,57 @@ async function fetchHistoryFromSupabase() {
   const history = [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
   for (const day of history) day.pllugo = mergePllugo(day.jt_real || day.jt, day.imile);
   return { history, generated_at: latestUpdate };
+}
+
+function mergeUnitBreakdownRows(rows) {
+  if (!Array.isArray(rows) || !rows.length) return false;
+  const byDate = new Map(DASH_DATA.history.map(day => [day.date, day]));
+  let changed = false;
+  for (const row of rows) {
+    const day = byDate.get(row.date);
+    if (!day || !row.source || !day[row.source] || !row.by_unit) continue;
+    const src = day[row.source];
+    src.by_unit = row.by_unit;
+    const unitSummary = summarizeUnits(src.by_unit);
+    src.recebidos = unitSummary.recebidos;
+    src.rota_total = unitSummary.rota_total;
+    src.rota_entregues = unitSummary.rota_entregues;
+    src.rota_pendentes = unitSummary.rota_pendentes;
+    changed = true;
+  }
+  if (changed) for (const day of DASH_DATA.history) day.pllugo = mergePllugo(day.jt_real || day.jt, day.imile);
+  return changed;
+}
+
+let UNIT_BREAKDOWN_LOADING = false;
+let UNIT_BREAKDOWN_TOKEN = 0;
+function unitBreakdownMissingForCurrentRange() {
+  if (!state || !state.unit || state.unit === 'all') return [];
+  return DASH_DATA.history
+    .filter(day => dateInRange(day.date))
+    .filter(day => ['jt', 'imile', 'jt_real'].some(src => day[src] && !day[src].by_unit))
+    .map(day => day.date);
+}
+async function ensureUnitBreakdownForCurrentRange() {
+  if (!sb || !state || state.unit === 'all' || UNIT_BREAKDOWN_LOADING) return;
+  const dates = [...new Set(unitBreakdownMissingForCurrentRange())].sort();
+  if (!dates.length) return;
+  const token = ++UNIT_BREAKDOWN_TOKEN;
+  UNIT_BREAKDOWN_LOADING = true;
+  setImportStatus('Carregando detalhe da unidade selecionada...', 'busy');
+  try {
+    const rows = [];
+    for (const part of chunkArray(dates, 20)) {
+      rows.push(...await fetchAllRows('sla_days', q => q.in('date', part).order('date', { ascending: true }), SLA_UNIT_SELECT));
+    }
+    if (token === UNIT_BREAKDOWN_TOKEN && mergeUnitBreakdownRows(rows)) refresh();
+    if (token === UNIT_BREAKDOWN_TOKEN) $('#import-status-bar').className = '';
+  } catch (e) {
+    console.error('Falha ao carregar detalhe por unidade:', e);
+    if (token === UNIT_BREAKDOWN_TOKEN) setImportStatus(`Erro ao carregar detalhe da unidade: ${e.message || e}`, 'err');
+  } finally {
+    if (token === UNIT_BREAKDOWN_TOKEN) UNIT_BREAKDOWN_LOADING = false;
+  }
 }
 
 // ──────────────────────────────────────────────
@@ -5592,6 +5644,7 @@ function applyModeVisibility() {
   vis('#ranking-section', mode==='operacao'&&state.operationView==='motoristas');
 }
 function refresh() {
+  if (state.unit !== 'all' && unitBreakdownMissingForCurrentRange().length) ensureUnitBreakdownForCurrentRange();
   const filtered = filteredHistory();
   const agg = aggregate(filtered, state.carrier);
   const drivers = driversForCarrier(state.carrier, filtered, { operationalJt: state.mode === 'operacao' || state.mode === 'torre' });
