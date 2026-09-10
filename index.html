@@ -1614,6 +1614,22 @@ function dateOnly(d) {
   const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
+function dateOnlySaoPauloValue(value) {
+  if (value == null || value === '') return null;
+  let d = null;
+  if (typeof value === 'string') {
+    const s = value.trim();
+    if (/[zZ]$|[+-]\d{2}:?\d{2}$/.test(s)) {
+      const t = Date.parse(s);
+      if (!isNaN(t)) d = new Date(t);
+    }
+  }
+  if (!d) d = toDate(value);
+  if (!d || isNaN(d.getTime())) return null;
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone:'America/Sao_Paulo', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(d);
+  const o = Object.fromEntries(parts.filter(x => x.type !== 'literal').map(x => [x.type, x.value]));
+  return `${o.year}-${o.month}-${o.day}`;
+}
 function dateOnlyFromCell(v) {
   if (typeof v === 'string') {
     const s = v.trim();
@@ -1965,7 +1981,7 @@ function buildOrderKnowledge(filename, rows) {
           last_event_at: deliveredAt || problemAt || ofdAt,
           operational_status: status,
           occurrence_type: problemReason,
-          same_day_success: !!(ofdAt && deliveredAt && dateOnly(toDate(ofdAt)) === dateOnly(toDate(deliveredAt))),
+          same_day_success: !!(ofdAt && deliveredAt && dateOnlySaoPauloValue(ofdAt) === dateOnlySaoPauloValue(deliveredAt)),
         });
       }
     }
@@ -2196,7 +2212,7 @@ function buildMonitoringDayResults(knowledgeList) {
     const key = driverKey(op.driver_name);
     if (!map.has(key)) map.set(key, { name: op.driver_name, total: 0, delivered: 0, problems: 0, orders: [] });
     const d = map.get(key);
-    const sameDayDelivered = !!(op.delivered_at && dateOnly(toDate(op.delivered_at)) === op.operational_date);
+    const sameDayDelivered = !!(op.delivered_at && dateOnlySaoPauloValue(op.delivered_at) === op.operational_date);
     d.total++;
     if (sameDayDelivered) d.delivered++;
     if (op.occurrence_type) d.problems++;
@@ -2235,13 +2251,13 @@ function buildMonitoringDayResults(knowledgeList) {
         const b = ensure(d);
         if (!b || !id) continue;
         b.route.add(id);
-        if (op.delivered_at && dateOnly(toDate(op.delivered_at)) === d) b.delivered.add(id);
+        if (op.delivered_at && dateOnlySaoPauloValue(op.delivered_at) === d) b.delivered.add(id);
         if (op.occurrence_type) b.problem.add(id);
         addDriver(b.drivers, op);
         const u = ensure(d, op.unit);
         if (u) {
           u.route.add(id);
-          if (op.delivered_at && dateOnly(toDate(op.delivered_at)) === d) u.delivered.add(id);
+          if (op.delivered_at && dateOnlySaoPauloValue(op.delivered_at) === d) u.delivered.add(id);
           if (op.occurrence_type) u.problem.add(id);
           addDriver(u.drivers, op);
         }
