@@ -813,9 +813,46 @@
     *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.001ms !important; }
   }
 
+  /* Login interno — dashboard fechado para o time (RLS: authenticated) */
+  #login-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--gray-50); padding:1.5rem; }
+  .login-card { width:100%; max-width:360px; background:var(--gray-0); border:1px solid var(--gray-200); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); padding:2rem 1.75rem; }
+  .login-card h1 { font-size:1.25rem; font-weight:700; margin-bottom:.25rem; }
+  .login-card p.login-sub { font-size:.85rem; color:var(--gray-500); margin-bottom:1.5rem; }
+  .login-field { display:flex; flex-direction:column; gap:.35rem; margin-bottom:1rem; }
+  .login-field label { font-size:.78rem; font-weight:600; color:var(--gray-700); }
+  .login-field input { border:1px solid var(--gray-300); border-radius:var(--radius-sm); padding:.6rem .7rem; font-size:.9rem; font-family:var(--font); }
+  .login-field input:focus { outline:2px solid var(--pllugo-red-200); border-color:var(--pllugo-red); }
+  .login-btn { width:100%; background:var(--pllugo-red); color:#fff; border:none; border-radius:var(--radius-sm); padding:.7rem; font-size:.9rem; font-weight:700; cursor:pointer; margin-top:.25rem; }
+  .login-btn:hover { background:var(--pllugo-red-hover); }
+  .login-btn:disabled { opacity:.6; cursor:default; }
+  .login-error { font-size:.8rem; color:var(--crit); background:var(--crit-50); border-radius:var(--radius-sm); padding:.55rem .7rem; margin-bottom:1rem; display:none; }
+  .login-error.show { display:block; }
+  .topbar-user { font-size:.78rem; color:var(--gray-500); margin-right:.4rem; white-space:nowrap; }
+  .btn-logout { background:transparent; border:1px solid var(--gray-300); border-radius:var(--radius-sm); padding:.4rem .7rem; font-size:.78rem; color:var(--gray-700); cursor:pointer; }
+  .btn-logout:hover { background:var(--gray-100); }
+
 </style>
 </head>
 <body>
+
+<div id="login-screen">
+  <form class="login-card" id="login-form">
+    <h1>Pllugo — SLA &amp; Torre de Controle</h1>
+    <p class="login-sub">Acesso restrito ao time. Entre com o e-mail e senha da sua conta.</p>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-field">
+      <label for="login-email">E-mail</label>
+      <input type="email" id="login-email" autocomplete="username" required>
+    </div>
+    <div class="login-field">
+      <label for="login-password">Senha</label>
+      <input type="password" id="login-password" autocomplete="current-password" required>
+    </div>
+    <button type="submit" class="login-btn" id="login-submit">Entrar</button>
+  </form>
+</div>
+
+<div id="app-shell" style="display:none">
 
 <header class="topbar">
   <div class="container topbar-inner">
@@ -833,6 +870,8 @@
         <span id="last-update">Carregando…</span>
       </div>
       <input type="file" id="upload-input" accept=".xlsx" multiple style="display:none">
+      <span class="topbar-user" id="topbar-user"></span>
+      <button class="btn-logout" id="btn-logout" title="Sair">Sair</button>
       <button class="btn-clear" id="btn-sound-alerts" title="Ativar/desativar alerta sonoro da Torre">🔊 Alertas</button>
       <button class="btn-clear" id="btn-clear-data" title="Apaga TODOS os dados salvos — uso temporário, só pra testar do zero">Limpar Dados</button>
       <button class="btn-update" id="btn-update-dash">
@@ -1492,6 +1531,8 @@
   <div class="app-drawer-body" id="app-drawer-body"></div>
 </aside>
 <div class="app-toast-stack" id="app-toast-stack" aria-live="polite"></div>
+
+</div><!-- /app-shell -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -5837,7 +5878,11 @@ try {
   if (h.indexOf('#base/') === 0) selectMode('base');
 } catch (e) {}
 
-(async function boot() {
+// Chamado só depois que existe sessão autenticada (login interno do time).
+// A RLS das tabelas do dashboard exige `authenticated` — sem sessão, o
+// Supabase simplesmente não devolve linha nenhuma (não é um erro, é a RLS
+// funcionando).
+async function loadDashboard() {
   if (!sb) {
     setImportStatus('Supabase não configurado ainda — edite SUPABASE_URL/SUPABASE_ANON_KEY no topo do arquivo (veja o README) e recarregue a página.', 'err');
     await applyLoadedData();
@@ -5858,6 +5903,75 @@ try {
     setImportStatus(`Erro ao carregar do Supabase: ${e.message || e}`, 'err');
     await applyLoadedData();
   }
+}
+
+/* ==========================================================================
+ * LOGIN INTERNO — dashboard fechado para o time (Supabase Auth, e-mail+senha).
+ * Contas criadas em Authentication → Users no painel do Supabase.
+ * ========================================================================== */
+let dashboardLoaded = false;
+
+function showLogin(errorMsg) {
+  $('#app-shell').style.display = 'none';
+  $('#login-screen').style.display = 'flex';
+  const errBox = $('#login-error');
+  if (errorMsg) { errBox.textContent = errorMsg; errBox.classList.add('show'); }
+  else { errBox.classList.remove('show'); }
+}
+
+async function showApp(session) {
+  $('#login-screen').style.display = 'none';
+  $('#app-shell').style.display = '';
+  $('#topbar-user').textContent = session?.user?.email || '';
+  if (!dashboardLoaded) {
+    dashboardLoaded = true;
+    await loadDashboard();
+  }
+}
+
+$('#login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!sb) { showLogin('Supabase não configurado neste arquivo.'); return; }
+  const email = $('#login-email').value.trim();
+  const password = $('#login-password').value;
+  const btn = $('#login-submit');
+  btn.disabled = true;
+  btn.textContent = 'Entrando…';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false;
+  btn.textContent = 'Entrar';
+  if (error) {
+    showLogin('E-mail ou senha incorretos, ou sua conta ainda não foi criada. Fale com o administrador.');
+    return;
+  }
+  await showApp(data.session);
+});
+
+$('#btn-logout').addEventListener('click', async () => {
+  if (sb) await sb.auth.signOut();
+  dashboardLoaded = false;
+  showLogin();
+});
+
+(async function boot() {
+  if (!sb) {
+    showLogin('Supabase não configurado neste arquivo — veja o README.');
+    return;
+  }
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    await showApp(session);
+  } else {
+    showLogin();
+  }
+  sb.auth.onAuthStateChange((event, newSession) => {
+    if (event === 'SIGNED_OUT') {
+      dashboardLoaded = false;
+      showLogin();
+    } else if (event === 'SIGNED_IN' && newSession) {
+      showApp(newSession);
+    }
+  });
 })();
 </script>
 <script src="assets/gael/gael.config.js"></script>
