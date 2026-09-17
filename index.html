@@ -871,6 +871,20 @@
       </div>
       <input type="file" id="upload-input" accept=".xlsx" multiple style="display:none">
       <span class="topbar-user" id="topbar-user"></span>
+      <div id="robot-menu" style="position:relative; display:none;">
+        <button class="btn-clear" id="btn-robot" title="Motor de dados" style="position:relative;">
+          ⚙️<span id="robot-badge" style="display:none; position:absolute; top:-3px; right:-3px; width:9px; height:9px; border-radius:50%; background:#e5484d; border:1.5px solid #fff;"></span>
+        </button>
+        <div id="robot-panel" style="display:none; position:absolute; top:calc(100% + 8px); right:0; width:340px; background:#fff; border:1px solid var(--gray-200); border-radius:var(--radius-md); box-shadow:0 8px 24px rgba(0,0,0,0.12); padding:12px 14px; z-index:200; font-size:13px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+            <strong style="font-size:13px;">Motor de dados</strong>
+            <span style="font-size:11px; color:var(--gray-500);">visível só para admin</span>
+          </div>
+          <div id="robot-panel-body" style="display:flex; flex-direction:column;">
+            <div style="padding:8px 0; color:var(--gray-500);">Carregando…</div>
+          </div>
+        </div>
+      </div>
       <button class="btn-logout" id="btn-logout" title="Sair">Sair</button>
       <button class="btn-clear" id="btn-sound-alerts" title="Ativar/desativar alerta sonoro da Torre">🔊 Alertas</button>
       <button class="btn-clear" id="btn-clear-data" title="Apaga TODOS os dados salvos — uso temporário, só pra testar do zero">Limpar Dados</button>
@@ -1506,6 +1520,121 @@
   </div>
 </main>
 
+<section id="pd-root" style="margin:28px 0;">
+  <div class="container">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+      <div>
+        <h2 style="font-size:18px; font-weight:700; color:var(--gray-900); margin:0;">Operação DRIVER</h2>
+        <p style="font-size:12px; color:var(--gray-500); margin:2px 0 0;">Comunicados, conciliação e pendências do app do motorista — mesmas tabelas, mesma verdade.</p>
+      </div>
+      <button id="pd-refresh" class="btn-clear" type="button">↻ Atualizar</button>
+    </div>
+
+    <div id="pd-kpis" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:18px;"></div>
+
+    <div style="display:flex; gap:8px; border-bottom:1px solid var(--gray-100, #eee); margin-bottom:16px; flex-wrap:wrap;">
+      <button class="pd-tab pd-tab-active" data-pd-tab="comunicados" type="button">Comunicados</button>
+      <button class="pd-tab" data-pd-tab="conciliacao" type="button">Fila de conciliação</button>
+      <button class="pd-tab" data-pd-tab="pendencias" type="button">Pendências</button>
+      <button class="pd-tab" data-pd-tab="risco" type="button">Motoristas em risco</button>
+    </div>
+
+    <div id="pd-msg" style="display:none; font-size:13px; padding:10px 14px; border-radius:var(--radius-md); margin-bottom:14px;"></div>
+
+    <!-- Comunicados -->
+    <div id="pd-panel-comunicados" class="pd-panel">
+      <div style="background:#fff; border:1px solid var(--gray-100,#eee); border-radius:var(--radius-lg); padding:16px; margin-bottom:16px;">
+        <h3 style="font-size:14px; font-weight:700; margin:0 0 10px;">Publicar comunicado</h3>
+        <div style="display:grid; grid-template-columns:1fr; gap:10px; max-width:560px;">
+          <input id="pd-ann-titulo" type="text" placeholder="Título" style="padding:9px 12px; border:1px solid var(--gray-300,#ccc); border-radius:var(--radius-md); font-family:inherit; font-size:13px;">
+          <textarea id="pd-ann-corpo" rows="3" placeholder="Texto do comunicado" style="padding:9px 12px; border:1px solid var(--gray-300,#ccc); border-radius:var(--radius-md); font-family:inherit; font-size:13px; resize:vertical;"></textarea>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <select id="pd-ann-prioridade" style="padding:8px 10px; border:1px solid var(--gray-300,#ccc); border-radius:var(--radius-md); font-family:inherit; font-size:13px;">
+              <option value="normal">Prioridade normal</option>
+              <option value="importante">Importante</option>
+            </select>
+            <select id="pd-ann-base" style="padding:8px 10px; border:1px solid var(--gray-300,#ccc); border-radius:var(--radius-md); font-family:inherit; font-size:13px;">
+              <option value="">Selecione a base…</option>
+            </select>
+            <button id="pd-ann-publicar" class="btn-update" type="button" style="margin-left:auto;">Publicar</button>
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Título</th><th>Prioridade</th><th>Publicado em</th><th>Leitura</th><th></th></tr></thead>
+          <tbody id="pd-ann-body"><tr><td colspan="5" style="color:var(--gray-500);">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Conciliação -->
+    <div id="pd-panel-conciliacao" class="pd-panel" style="display:none;">
+      <p style="font-size:12px; color:var(--gray-500); margin:0 0 10px;">Nomes que apareceram no import mas ainda não têm motorista vinculado. Vincular resolve o histórico inteiro daquele nome.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nome (import)</th><th>Transportadora</th><th>Ocorrências</th><th>Pedidos</th><th>Visto até</th><th>Vincular a</th><th></th></tr></thead>
+          <tbody id="pd-conc-body"><tr><td colspan="7" style="color:var(--gray-500);">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pendências -->
+    <div id="pd-panel-pendencias" class="pd-panel" style="display:none;">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Motorista</th><th>Tipo</th><th>Motivo</th><th>Prazo</th><th>Status</th><th></th></tr></thead>
+          <tbody id="pd-tix-body"><tr><td colspan="6" style="color:var(--gray-500);">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Motoristas em risco -->
+    <div id="pd-panel-risco" class="pd-panel" style="display:none;">
+      <p style="font-size:12px; color:var(--gray-500); margin:0 0 10px;">Alertas críticos e de atenção gerados pelo motor de alertas (pendências acumulando ou SLA baixo).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Motorista</th><th>Alerta</th><th>Severidade</th><th>Quando</th></tr></thead>
+          <tbody id="pd-risco-body"><tr><td colspan="4" style="color:var(--gray-500);">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="pd-ticket-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:2000; align-items:center; justify-content:center;">
+  <div style="background:#fff; border-radius:var(--radius-lg); width:min(560px, 92vw); max-height:82vh; overflow:auto; padding:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <h3 id="pd-ticket-modal-title" style="font-size:15px; font-weight:700; margin:0;">Pendência</h3>
+      <button id="pd-ticket-modal-close" class="btn-clear" type="button" style="padding:4px 10px;">Fechar</button>
+    </div>
+    <div id="pd-ticket-modal-body" style="margin-top:12px; font-size:13px;"></div>
+    <textarea id="pd-ticket-modal-msg" rows="2" placeholder="Mensagem para o motorista (opcional)" style="width:100%; margin-top:12px; padding:9px 12px; border:1px solid var(--gray-300,#ccc); border-radius:var(--radius-md); font-family:inherit; font-size:13px; resize:vertical;"></textarea>
+    <div style="display:flex; gap:8px; margin-top:10px; justify-content:flex-end;">
+      <button class="btn-clear" data-pd-ticket-action="em_analise" type="button">Marcar em análise</button>
+      <button class="btn-update" data-pd-ticket-action="concluido" type="button">Marcar concluído</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .pd-tab { font-family:inherit; font-size:13px; font-weight:600; padding:9px 4px; border:none; background:none; color:var(--gray-500); cursor:pointer; border-bottom:2px solid transparent; }
+  .pd-tab:hover { color:var(--pllugo-red); }
+  .pd-tab-active { color:var(--pllugo-red) !important; border-bottom-color:var(--pllugo-red) !important; }
+  .pd-kpi { background:#fff; border:1px solid var(--gray-100,#eee); border-radius:var(--radius-lg); padding:14px 16px; }
+  .pd-kpi .pd-kpi-l { font-size:11px; color:var(--gray-500); text-transform:uppercase; letter-spacing:.03em; }
+  .pd-kpi .pd-kpi-v { font-size:22px; font-weight:700; color:var(--gray-900); margin-top:4px; }
+  #pd-root table { width:100%; border-collapse:collapse; font-size:13px; }
+  #pd-root th { text-align:left; font-size:11px; text-transform:uppercase; color:var(--gray-500); padding:8px 10px; border-bottom:1px solid var(--gray-100,#eee); }
+  #pd-root td { padding:9px 10px; border-bottom:1px solid var(--gray-100,#eee); vertical-align:top; }
+  #pd-root .pd-badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; }
+  #pd-root .pd-badge-crit { background:var(--crit-50); color:var(--crit); }
+  #pd-root .pd-badge-warn { background:var(--warn-50); color:var(--warn); }
+  #pd-root .pd-badge-ok { background:var(--success-50); color:var(--success); }
+  #pd-root .pd-badge-muted { background:var(--gray-50); color:var(--gray-500); }
+  #pd-root .pd-link { color:var(--pllugo-red); background:none; border:none; font-family:inherit; font-size:12px; font-weight:600; cursor:pointer; padding:0; }
+</style>
+
 <div class="footer">
   <div class="container">
     Pllugo SLA & Torre de Controle · dados atualizados em <span class="ts" id="gen-ts">—</span> · use o botão <strong>Atualizar Dashboard</strong> no topo pra importar novos relatórios.
@@ -2099,7 +2228,10 @@ function processJtReal(rows) {
   }
 
   const out = {};
-  const allDays = [...new Set([...byDay.keys(), ...driversByRouteDay.keys(), ...receivedByDay.keys()])].sort();
+  // O SLA geral pertence exclusivamente ao dia previsto. Datas que aparecem
+  // apenas no recebimento ou na rota alimentam a base granular, mas não podem
+  // criar uma linha jt_real vazia e sobrescrever um SLA já consolidado.
+  const allDays = [...byDay.keys()].sort();
   for (const day of allDays) {
     const g = byDay.get(day) || [];
     // V2: erro de triagem / expedido mas não chegou deixam de "virar entrega".
@@ -2341,7 +2473,9 @@ function buildMonitoringDayResults(knowledgeList) {
   };
   const results = [];
   for (const [date, b] of buckets) {
-    if (!b.received.size && !b.route.size) continue;
+    // Recebimento sozinho atualiza orders/order_events e a Gestão de Base.
+    // A Visão Operação só pode ser substituída por um relatório que tenha OFD.
+    if (!b.route.size) continue;
     const data = pack(b);
     data.by_unit = {};
     for (const unit of ['maua', 'rbp']) {
@@ -2813,7 +2947,18 @@ async function upsertResults(results) {
   // total do dia pela soma das unidades existentes.
   const existingDays = await fetchExistingByDates('sla_days', dates);
   const existingDaysMap = new Map(existingDays.map(r => [`${r.date}|${r.source}`, r]));
-  const mergedDayRows = dayRows.map(r => mergeDayRowWithExisting(r, existingDaysMap.get(`${r.date}|${r.source}`)));
+  // Rede de segurança: um resultado vazio vindo de relatório parcial não pode
+  // derrubar um dia positivo já persistido. Correções reais continuam podendo
+  // atualizar qualquer dia quando o arquivo contém pedidos.
+  const protectedDaySourcePairs = new Set(dayRows.filter(r => {
+    const existing = existingDaysMap.get(`${r.date}|${r.source}`);
+    return existing && Number(existing.total) > 0 && Number(r.total) === 0;
+  }).map(r => `${r.date}|${r.source}`));
+  const mergedDayRows = dayRows.map(r => {
+    const key = `${r.date}|${r.source}`;
+    const existing = existingDaysMap.get(key);
+    return protectedDaySourcePairs.has(key) ? existing : mergeDayRowWithExisting(r, existing);
+  });
   const dayRowsToWrite = mergedDayRows.filter(r => {
     const existing = existingDaysMap.get(`${r.date}|${r.source}`);
     return !existing || !rowsEqual(existing, r, DAY_FIELDS);
@@ -2832,7 +2977,9 @@ async function upsertResults(results) {
   // existia antes nesse (data,fonte) mas sumiu do relatório reimportado (ex:
   // relatório corrigido sem aquele pacote) é apagado explicitamente, não só
   // deixado desatualizado.
-  const dedupedDriverRows = dedupeDriverRows(driverRows);
+  const dedupedDriverRows = dedupeDriverRows(driverRows).filter(r =>
+    !protectedDaySourcePairs.has(`${r.date}|${r.source}`)
+  );
   const existingDrivers = await fetchExistingByDates('sla_drivers', dates);
   const existingDriversMap = new Map(existingDrivers.map(r => [`${r.date}|${r.source}|${r.driver_name}`, r]));
   const newDriverKeys = new Set(dedupedDriverRows.map(r => `${r.date}|${r.source}|${r.driver_name}`));
@@ -2842,7 +2989,9 @@ async function upsertResults(results) {
   });
   const touchedDaySourcePairs = new Set(results.map(r => `${r.date}|${r.source}`));
   const driversToDelete = existingDrivers.filter(r =>
-    touchedDaySourcePairs.has(`${r.date}|${r.source}`) && !newDriverKeys.has(`${r.date}|${r.source}|${r.driver_name}`)
+    touchedDaySourcePairs.has(`${r.date}|${r.source}`) &&
+    !protectedDaySourcePairs.has(`${r.date}|${r.source}`) &&
+    !newDriverKeys.has(`${r.date}|${r.source}|${r.driver_name}`)
   );
   for (const row of driversToDelete) {
     const { error } = await sb.from('sla_drivers').delete().eq('date', row.date).eq('source', row.source).eq('driver_name', row.driver_name);
@@ -5927,7 +6076,85 @@ async function showApp(session) {
     dashboardLoaded = true;
     await loadDashboard();
   }
+  checkRobotAccess();
 }
+
+/* ==========================================================================
+ * MOTOR DE DADOS — painel do robô de relatórios (JMS/iMile).
+ * Escondido por padrão: só aparece pra quem estiver em public.robot_admins
+ * (checado no servidor via RPC, não confiar em esconder botão no front).
+ * Fica quieto — só acende o ponto vermelho quando algum flow precisa de
+ * atenção humana (captcha/verificação/erro).
+ * ========================================================================== */
+let robotPollTimer = null;
+
+async function checkRobotAccess() {
+  if (!sb) return;
+  try {
+    const { data, error } = await sb.rpc('is_robot_admin');
+    if (error || !data) { $('#robot-menu').style.display = 'none'; return; }
+    $('#robot-menu').style.display = '';
+    await refreshRobotPanel();
+    if (!robotPollTimer) robotPollTimer = setInterval(refreshRobotPanel, 60000);
+  } catch {
+    $('#robot-menu').style.display = 'none';
+  }
+}
+
+function robotTimeAgo(iso) {
+  const diffMin = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (diffMin < 1) return 'agora mesmo';
+  if (diffMin < 60) return `há ${diffMin} min`;
+  return `há ${Math.round(diffMin / 60)}h`;
+}
+
+async function refreshRobotPanel() {
+  if (!sb) return;
+  const body = $('#robot-panel-body');
+  const badge = $('#robot-badge');
+  const { data, error } = await sb.from('robot_flow_status').select('*').order('system').order('name');
+
+  if (error) {
+    body.innerHTML = '<div style="padding:8px 0; color:var(--gray-500);">Não consegui carregar.</div>';
+    return;
+  }
+  const rows = data || [];
+  badge.style.display = rows.some(f => f.status === 'needs_attention' || f.status === 'error') ? '' : 'none';
+
+  if (!rows.length) {
+    body.innerHTML = '<div style="padding:8px 0; color:var(--gray-500);">Nenhum relatório cadastrado ainda.</div>';
+    return;
+  }
+
+  body.innerHTML = rows.map(f => {
+    const needsHuman = f.status === 'needs_attention' || f.status === 'error';
+    const dotColor = needsHuman ? '#e5484d' : f.status === 'running' ? '#f5a623' : '#30a46c';
+    const rightSide = needsHuman
+      ? `<a href="${f.live_view_url || '#'}" target="_blank" rel="noopener" style="font-size:12px; color:var(--pllugo-red); white-space:nowrap; margin-left:8px;">Resolver agora</a>`
+      : `<span style="font-size:11px; color:var(--gray-500); white-space:nowrap; margin-left:8px;">${f.finished_at ? robotTimeAgo(f.finished_at) : 'nunca rodou'}</span>`;
+    return `<div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-top:1px solid var(--gray-100);">
+      <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+        <span style="width:7px; height:7px; border-radius:50%; background:${dotColor}; flex-shrink:0;"></span>
+        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${f.name}</span>
+      </div>
+      ${rightSide}
+    </div>`;
+  }).join('');
+}
+
+$('#btn-robot').addEventListener('click', () => {
+  const panel = $('#robot-panel');
+  const opening = panel.style.display === 'none';
+  panel.style.display = opening ? '' : 'none';
+  if (opening) refreshRobotPanel();
+});
+
+document.addEventListener('click', (e) => {
+  const menu = $('#robot-menu');
+  if (menu && menu.style.display !== 'none' && !menu.contains(e.target)) {
+    $('#robot-panel').style.display = 'none';
+  }
+});
 
 $('#login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -5976,5 +6203,310 @@ $('#btn-logout').addEventListener('click', async () => {
 </script>
 <script src="assets/gael/gael.config.js"></script>
 <script src="assets/gael/gael.js" defer></script>
+<script>
+/* ==========================================================================
+ * OPERAÇÃO DRIVER (Fase 7) — abas administrativas do PLLUGO DRIVER dentro
+ * da Torre. Usa o client `sb` já existente (mesma sessão/login), só
+ * escopado pro schema `app` via sb.schema('app'). Não toca em nenhuma
+ * variável ou função do dashboard original — bloco 100% aditivo.
+ * ========================================================================== */
+(function () {
+  function appDb() { return sb.schema('app'); }
+
+  var pdDriverIndex = {}; // "Nome Completo" -> driver_id, pra fila de conciliação
+
+  function pdEl(id) { return document.getElementById(id); }
+
+  function pdShowMsg(text, kind) {
+    var el = pdEl('pd-msg');
+    el.textContent = text;
+    el.style.display = 'block';
+    el.style.background = kind === 'error' ? 'var(--crit-50)' : 'var(--success-50)';
+    el.style.color = kind === 'error' ? 'var(--crit)' : 'var(--success)';
+    clearTimeout(pdShowMsg._t);
+    pdShowMsg._t = setTimeout(function () { el.style.display = 'none'; }, 5000);
+  }
+
+  function pdFmtDate(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function pdEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* -------------------------------------------------------------- KPIs -- */
+  function pdLoadKPIs() {
+    appDb().rpc('torre_metrics').then(function (res) {
+      if (res.error) { console.error('torre_metrics:', res.error); return; }
+      var m = (res.data && res.data[0]) || {};
+      var cards = [
+        ['Métrica-norte', (m.pendencias_no_prazo_pct == null ? '—' : m.pendencias_no_prazo_pct + '%'), 'pendências respondidas no prazo, no app'],
+        ['Adoção', (m.adocao_pwa_pct == null ? '—' : m.adocao_pwa_pct + '%'), 'motoristas ativos com PWA instalada'],
+        ['Push autorizado', (m.push_autorizado_pct == null ? '—' : m.push_autorizado_pct + '%'), 'motoristas com notificação ativa'],
+        ['Tempo de resposta', (m.tempo_resposta_mediana_h == null ? '—' : m.tempo_resposta_mediana_h + 'h'), 'mediana motorista → Pllugo'],
+      ];
+      pdEl('pd-kpis').innerHTML = cards.map(function (c) {
+        return '<div class="pd-kpi"><div class="pd-kpi-l">' + pdEsc(c[0]) + '</div><div class="pd-kpi-v">' + pdEsc(c[1]) + '</div><div style="font-size:11px;color:var(--gray-500);margin-top:2px;">' + pdEsc(c[2]) + '</div></div>';
+      }).join('') + '<div class="pd-kpi" style="background:var(--gray-50);"><div class="pd-kpi-l">Motoristas ativos</div><div class="pd-kpi-v">' + pdEsc(m.motoristas_ativos == null ? '—' : m.motoristas_ativos) + '</div></div>';
+    });
+  }
+
+  /* --------------------------------------------------------- Bases/drivers -- */
+  function pdLoadBasesAndDrivers() {
+    appDb().from('bases').select('id,code,name').eq('active', true).order('name').then(function (res) {
+      if (res.error) return;
+      var sel = pdEl('pd-ann-base');
+      res.data.forEach(function (b) {
+        var opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = b.name + ' (' + b.code + ')';
+        sel.appendChild(opt);
+      });
+    });
+    appDb().from('drivers').select('id,full_name,cpf,cnpj').eq('status', 'active').order('full_name').then(function (res) {
+      if (res.error) return;
+      pdDriverIndex = {};
+      var dl = document.getElementById('pd-driver-datalist');
+      if (!dl) {
+        dl = document.createElement('datalist');
+        dl.id = 'pd-driver-datalist';
+        document.body.appendChild(dl);
+      }
+      dl.innerHTML = '';
+      res.data.forEach(function (d) {
+        var doc = d.cpf || d.cnpj || '';
+        var label = d.full_name + (doc ? ' — ' + doc.slice(-4) : '');
+        pdDriverIndex[label] = d.id;
+        var opt = document.createElement('option');
+        opt.value = label;
+        dl.appendChild(opt);
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------- Comunicados -- */
+  function pdLoadAnnouncements() {
+    appDb().from('announcements').select('id,titulo,prioridade,created_at')
+      .is('archived_at', null).order('created_at', { ascending: false }).limit(20)
+      .then(function (res) {
+        var body = pdEl('pd-ann-body');
+        if (res.error) { body.innerHTML = '<tr><td colspan="5" style="color:var(--crit);">Erro ao carregar.</td></tr>'; return; }
+        if (!res.data.length) { body.innerHTML = '<tr><td colspan="5" style="color:var(--gray-500);">Nenhum comunicado publicado ainda.</td></tr>'; return; }
+        body.innerHTML = res.data.map(function (a) {
+          var badge = a.prioridade === 'importante' ? '<span class="pd-badge pd-badge-crit">Importante</span>' : '<span class="pd-badge pd-badge-muted">Normal</span>';
+          return '<tr><td>' + pdEsc(a.titulo) + '</td><td>' + badge + '</td><td>' + pdFmtDate(a.created_at) + '</td>' +
+            '<td id="pd-ann-read-' + a.id + '"><button class="pd-link" data-pd-ann-read="' + a.id + '">ver leitura</button></td><td></td></tr>';
+        }).join('');
+      });
+  }
+
+  function pdPublishAnnouncement() {
+    var titulo = pdEl('pd-ann-titulo').value.trim();
+    var corpo = pdEl('pd-ann-corpo').value.trim();
+    var prioridade = pdEl('pd-ann-prioridade').value;
+    var baseId = pdEl('pd-ann-base').value;
+    if (!titulo || !corpo) { pdShowMsg('Preencha título e texto do comunicado.', 'error'); return; }
+    if (!baseId) { pdShowMsg('Selecione a base de destino.', 'error'); return; }
+    appDb().rpc('create_announcement', {
+      p_titulo: titulo, p_corpo: corpo, p_base_ids: [baseId], p_driver_ids: [], p_prioridade: prioridade,
+    }).then(function (res) {
+      if (res.error) { pdShowMsg('Não foi possível publicar: ' + res.error.message, 'error'); return; }
+      pdShowMsg('Comunicado publicado.');
+      pdEl('pd-ann-titulo').value = '';
+      pdEl('pd-ann-corpo').value = '';
+      pdLoadAnnouncements();
+    });
+  }
+
+  function pdShowReadStatus(announcementId) {
+    appDb().rpc('announcement_read_status', { p_announcement_id: announcementId }).then(function (res) {
+      var cell = pdEl('pd-ann-read-' + announcementId);
+      if (res.error) { cell.textContent = 'erro'; return; }
+      var total = res.data.length;
+      var lidos = res.data.filter(function (r) { return r.read_at; }).length;
+      var naoLidos = res.data.filter(function (r) { return !r.read_at; }).map(function (r) { return r.full_name; });
+      cell.innerHTML = '<span class="pd-badge ' + (lidos === total ? 'pd-badge-ok' : 'pd-badge-warn') + '">' + lidos + ' de ' + total + ' leram</span>' +
+        (naoLidos.length ? '<div style="margin-top:4px; font-size:11px; color:var(--gray-500); max-width:220px;">Não leram: ' + pdEsc(naoLidos.slice(0, 8).join(', ')) + (naoLidos.length > 8 ? '…' : '') + '</div>' : '');
+    });
+  }
+
+  /* ---------------------------------------------------------- Conciliação -- */
+  function pdLoadConciliacao() {
+    appDb().from('unmatched_aliases')
+      .select('id,source,raw_alias,occurrences,total_orders,first_seen,last_seen')
+      .is('resolved_at', null).order('occurrences', { ascending: false }).limit(50)
+      .then(function (res) {
+        var body = pdEl('pd-conc-body');
+        if (res.error) { body.innerHTML = '<tr><td colspan="7" style="color:var(--crit);">Erro ao carregar.</td></tr>'; return; }
+        if (!res.data.length) { body.innerHTML = '<tr><td colspan="7" style="color:var(--success);">Fila vazia — tudo conciliado.</td></tr>'; return; }
+        body.innerHTML = res.data.map(function (a) {
+          return '<tr data-pd-alias-id="' + a.id + '">' +
+            '<td>' + pdEsc(a.raw_alias) + '</td>' +
+            '<td>' + pdEsc(a.source) + '</td>' +
+            '<td>' + a.occurrences + '</td>' +
+            '<td>' + a.total_orders + '</td>' +
+            '<td>' + pdEsc(a.last_seen) + '</td>' +
+            '<td><input type="text" list="pd-driver-datalist" class="pd-conc-input" placeholder="Nome do motorista…" style="width:180px; padding:6px 8px; border:1px solid var(--gray-300,#ccc); border-radius:var(--radius-sm); font-family:inherit; font-size:12px;"></td>' +
+            '<td><button class="pd-link" data-pd-link-alias="' + a.id + '">Vincular</button></td>' +
+            '</tr>';
+        }).join('');
+      });
+  }
+
+  function pdLinkAlias(aliasId, row) {
+    var input = row.querySelector('.pd-conc-input');
+    var driverId = pdDriverIndex[input.value];
+    if (!driverId) { pdShowMsg('Escolha um motorista da lista (digite o nome e selecione uma sugestão).', 'error'); return; }
+    appDb().rpc('link_alias', { p_unmatched_id: aliasId, p_driver_id: driverId }).then(function (res) {
+      if (res.error) { pdShowMsg('Não foi possível vincular: ' + res.error.message, 'error'); return; }
+      pdShowMsg('Vinculado — ' + (res.data || 0) + ' linha(s) de histórico atualizadas.');
+      pdLoadConciliacao();
+      pdLoadKPIs();
+    });
+  }
+
+  /* ---------------------------------------------------------- Pendências -- */
+  var pdCurrentTicketId = null;
+
+  function pdTicketStatusBadge(status) {
+    var map = {
+      aberto: ['pd-badge-crit', 'Aberto'], em_analise: ['pd-badge-warn', 'Em análise'],
+      respondido: ['pd-badge-ok', 'Respondido'], concluido: ['pd-badge-muted', 'Concluído'],
+    };
+    var m = map[status] || ['pd-badge-muted', status];
+    return '<span class="pd-badge ' + m[0] + '">' + m[1] + '</span>';
+  }
+
+  function pdLoadPendencias() {
+    appDb().from('tickets')
+      .select('id,motivo,tipo,prazo,status,drivers(full_name)')
+      .in('status', ['aberto', 'em_analise', 'respondido'])
+      .order('prazo', { ascending: true, nullsFirst: false }).limit(50)
+      .then(function (res) {
+        var body = pdEl('pd-tix-body');
+        if (res.error) { body.innerHTML = '<tr><td colspan="6" style="color:var(--crit);">Erro ao carregar.</td></tr>'; return; }
+        if (!res.data.length) { body.innerHTML = '<tr><td colspan="6" style="color:var(--success);">Nenhuma pendência em aberto.</td></tr>'; return; }
+        body.innerHTML = res.data.map(function (t) {
+          return '<tr>' +
+            '<td>' + pdEsc((t.drivers && t.drivers.full_name) || '—') + '</td>' +
+            '<td>' + pdEsc(t.tipo) + '</td>' +
+            '<td>' + pdEsc(t.motivo) + '</td>' +
+            '<td>' + pdFmtDate(t.prazo) + '</td>' +
+            '<td>' + pdTicketStatusBadge(t.status) + '</td>' +
+            '<td><button class="pd-link" data-pd-open-ticket="' + t.id + '">ver</button></td>' +
+            '</tr>';
+        }).join('');
+      });
+  }
+
+  function pdOpenTicket(ticketId) {
+    pdCurrentTicketId = ticketId;
+    var modal = pdEl('pd-ticket-modal');
+    pdEl('pd-ticket-modal-body').innerHTML = 'Carregando…';
+    pdEl('pd-ticket-modal-msg').value = '';
+    modal.style.display = 'flex';
+    appDb().from('ticket_events').select('id,tipo,mensagem,anexo_path,autor_role,created_at')
+      .eq('ticket_id', ticketId).order('created_at', { ascending: true })
+      .then(function (res) {
+        if (res.error) { pdEl('pd-ticket-modal-body').textContent = 'Erro ao carregar histórico.'; return; }
+        pdEl('pd-ticket-modal-body').innerHTML = res.data.map(function (e) {
+          return '<div style="padding:8px 0; border-bottom:1px solid var(--gray-100,#eee);">' +
+            '<div style="font-size:11px; color:var(--gray-500); text-transform:uppercase;">' + pdEsc(e.autor_role === 'driver' ? 'Motorista' : 'Operação') + ' · ' + pdFmtDate(e.created_at) + '</div>' +
+            (e.mensagem ? '<div style="margin-top:2px;">' + pdEsc(e.mensagem) + '</div>' : '') +
+            (e.anexo_path ? '<div style="margin-top:2px; font-size:11px; color:var(--pllugo-red);">📎 evidência anexada</div>' : '') +
+            '</div>';
+        }).join('') || '<p style="color:var(--gray-500);">Sem eventos ainda.</p>';
+      });
+  }
+
+  function pdRespondTicket(novoStatus) {
+    if (!pdCurrentTicketId) return;
+    var mensagem = pdEl('pd-ticket-modal-msg').value.trim() || (novoStatus === 'concluido' ? 'Pendência concluída pela operação.' : 'Em análise pela operação.');
+    appDb().rpc('staff_respond_ticket', { p_ticket_id: pdCurrentTicketId, p_mensagem: mensagem, p_novo_status: novoStatus }).then(function (res) {
+      if (res.error) { pdShowMsg('Não foi possível responder: ' + res.error.message, 'error'); return; }
+      pdShowMsg('Pendência atualizada.');
+      pdEl('pd-ticket-modal').style.display = 'none';
+      pdLoadPendencias();
+      pdLoadKPIs();
+    });
+  }
+
+  /* ------------------------------------------------------ Motoristas em risco -- */
+  function pdLoadRisco() {
+    appDb().from('alerts')
+      .select('id,titulo,mensagem,severidade,created_at,drivers(full_name)')
+      .in('severidade', ['atencao', 'critico']).order('created_at', { ascending: false }).limit(30)
+      .then(function (res) {
+        var body = pdEl('pd-risco-body');
+        if (res.error) { body.innerHTML = '<tr><td colspan="4" style="color:var(--crit);">Erro ao carregar.</td></tr>'; return; }
+        if (!res.data.length) { body.innerHTML = '<tr><td colspan="4" style="color:var(--success);">Nenhum alerta recente.</td></tr>'; return; }
+        body.innerHTML = res.data.map(function (a) {
+          var badge = a.severidade === 'critico' ? '<span class="pd-badge pd-badge-crit">Crítico</span>' : '<span class="pd-badge pd-badge-warn">Atenção</span>';
+          return '<tr>' +
+            '<td>' + pdEsc((a.drivers && a.drivers.full_name) || '—') + '</td>' +
+            '<td>' + pdEsc(a.titulo) + '<div style="font-size:11px; color:var(--gray-500);">' + pdEsc(a.mensagem) + '</div></td>' +
+            '<td>' + badge + '</td>' +
+            '<td>' + pdFmtDate(a.created_at) + '</td>' +
+            '</tr>';
+        }).join('');
+      });
+  }
+
+  /* ---------------------------------------------------------------- Tabs -- */
+  function pdSwitchTab(tab) {
+    document.querySelectorAll('.pd-tab').forEach(function (b) { b.classList.toggle('pd-tab-active', b.getAttribute('data-pd-tab') === tab); });
+    document.querySelectorAll('.pd-panel').forEach(function (p) { p.style.display = (p.id === 'pd-panel-' + tab) ? '' : 'none'; });
+  }
+
+  function pdRefreshAll() {
+    pdLoadKPIs();
+    pdLoadAnnouncements();
+    pdLoadConciliacao();
+    pdLoadPendencias();
+    pdLoadRisco();
+  }
+
+  function pdInit() {
+    if (pdInit._done) return;
+    pdInit._done = true;
+
+    pdLoadBasesAndDrivers();
+    pdRefreshAll();
+
+    pdEl('pd-refresh').addEventListener('click', pdRefreshAll);
+    pdEl('pd-ann-publicar').addEventListener('click', pdPublishAnnouncement);
+    pdEl('pd-ticket-modal-close').addEventListener('click', function () { pdEl('pd-ticket-modal').style.display = 'none'; });
+
+    document.querySelectorAll('.pd-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () { pdSwitchTab(btn.getAttribute('data-pd-tab')); });
+    });
+
+    document.querySelectorAll('[data-pd-ticket-action]').forEach(function (btn) {
+      btn.addEventListener('click', function () { pdRespondTicket(btn.getAttribute('data-pd-ticket-action')); });
+    });
+
+    document.getElementById('pd-root').addEventListener('click', function (ev) {
+      var readBtn = ev.target.closest('[data-pd-ann-read]');
+      if (readBtn) { pdShowReadStatus(readBtn.getAttribute('data-pd-ann-read')); return; }
+      var linkBtn = ev.target.closest('[data-pd-link-alias]');
+      if (linkBtn) { pdLinkAlias(linkBtn.getAttribute('data-pd-link-alias'), linkBtn.closest('tr')); return; }
+      var openBtn = ev.target.closest('[data-pd-open-ticket]');
+      if (openBtn) { pdOpenTicket(openBtn.getAttribute('data-pd-open-ticket')); return; }
+    });
+  }
+
+  // Só inicializa a Operação DRIVER depois de uma sessão autenticada real —
+  // antes disso, RLS bloquearia tudo mesmo (e sb ainda pode não ter sessão).
+  if (typeof sb !== 'undefined' && sb) {
+    sb.auth.getSession().then(function (r) { if (r.data.session) pdInit(); });
+    sb.auth.onAuthStateChange(function (_event, session) { if (session) pdInit(); });
+  }
+})();
+</script>
 </body>
 </html>
