@@ -5790,11 +5790,17 @@ function renderOccurrenceBreakdown(found) {
   `;
 }
 
+function driversForCurrentView(filtered) {
+  return driversForCarrier(state.carrier, filtered, {
+    operationalJt: state.mode === 'operacao' || state.mode === 'torre'
+  });
+}
+
 function showDriverDetail() {
   const detail = $('#driver-detail');
   if (!state.selectedDriver || !detail) return;
   const filtered = filteredHistory();
-  const drivers = driversForCarrier(state.carrier, filtered);
+  const drivers = driversForCurrentView(filtered);
   const selectedName = normalizeDriverName(state.selectedDriver.name);
   const found = drivers.find(d =>
     normalizeDriverName(d.name) === selectedName &&
@@ -5853,7 +5859,7 @@ function refresh() {
   if (state.unit !== 'all' && unitBreakdownMissingForCurrentRange().length) ensureUnitBreakdownForCurrentRange();
   const filtered = filteredHistory();
   const agg = aggregate(filtered, state.carrier);
-  const drivers = driversForCarrier(state.carrier, filtered, { operationalJt: state.mode === 'operacao' || state.mode === 'torre' });
+  const drivers = driversForCurrentView(filtered);
   $('#day-count').textContent = filtered.length;
   if (filtered.length > 0) {
     const dts = filtered.map(h => h.date).sort();
