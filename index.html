@@ -1637,7 +1637,7 @@
 
 <div class="footer">
   <div class="container">
-    Pllugo SLA & Torre de Controle · dados atualizados em <span class="ts" id="gen-ts">—</span> · use o botão <strong>Atualizar Dashboard</strong> no topo pra importar novos relatórios.
+    Pllugo SLA & Torre de Controle · dados atualizados em <span class="ts" id="gen-ts">—</span> · atualização automática a cada minuto enquanto esta página estiver aberta.
   </div>
 </div>
 
@@ -6066,7 +6066,53 @@ async function loadDashboard() {
  * ========================================================================== */
 let dashboardLoaded = false;
 
+// DASHBOARD_AUTO_SYNC_START
+let dashboardSyncTimer = null;
+let dashboardSyncBusy = false;
+let dashboardSyncEpoch = 0;
+
+async function refreshDashboardFromRobot() {
+  if (!sb || !dashboardLoaded || document.hidden || dashboardSyncBusy) return;
+  dashboardSyncBusy = true;
+  const epoch = dashboardSyncEpoch;
+  try {
+    const { data, error } = await sb.from('sla_days').select('updated_at').order('updated_at', { ascending: false }).limit(1).maybeSingle();
+    if (error || epoch !== dashboardSyncEpoch || !dashboardLoaded) return;
+    if (!data?.updated_at || data.updated_at === DASH_DATA.generated_at) return;
+    const next = await fetchHistoryFromSupabase();
+    if (epoch !== dashboardSyncEpoch || !dashboardLoaded) return;
+    DASH_DATA.history = next.history;
+    DASH_DATA.generated_at = next.generated_at;
+    await applyLoadedData();
+  } catch {
+    // Mantém os dados na tela e tenta novamente no próximo ciclo.
+  } finally {
+    if (epoch === dashboardSyncEpoch) dashboardSyncBusy = false;
+  }
+}
+
+function startDashboardSync() {
+  if (!dashboardSyncTimer) dashboardSyncTimer = setInterval(refreshDashboardFromRobot, 60000);
+}
+
+function stopDashboardSync() {
+  dashboardSyncEpoch++;
+  if (dashboardSyncTimer) clearInterval(dashboardSyncTimer);
+  dashboardSyncTimer = null;
+  dashboardSyncBusy = false;
+  DASH_DATA.history = [];
+  DASH_DATA.generated_at = null;
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) refreshDashboardFromRobot();
+});
+// DASHBOARD_AUTO_SYNC_END
+
+
 function showLogin(errorMsg) {
+  stopDashboardSync();
+  resetRobotPanel();
   $('#app-shell').style.display = 'none';
   $('#login-screen').style.display = 'flex';
   const errBox = $('#login-error');
@@ -6083,6 +6129,7 @@ async function showApp(session) {
     await loadDashboard();
   }
   checkRobotAccess();
+  startDashboardSync();
 }
 
 /* ==========================================================================
@@ -6093,63 +6140,98 @@ async function showApp(session) {
  * atenção humana (captcha/verificação/erro).
  * ========================================================================== */
 let robotPollTimer = null;
+let robotAccessEpoch = 0;
+let robotHasAccess = false;
+let robotPanelBusy = false;
+
+function resetRobotPanel() {
+  robotAccessEpoch++;
+  robotHasAccess = false;
+  if (robotPollTimer) clearInterval(robotPollTimer);
+  robotPollTimer = null;
+  for (const id of ['#robot-menu', '#robot-panel', '#robot-badge']) {
+    const el = $(id);
+    if (el) el.style.display = 'none';
+  }
+  const body = $('#robot-panel-body');
+  if (body) body.innerHTML = '';
+}
 
 async function checkRobotAccess() {
-  if (!sb) return;
+  if (!sb) { resetRobotPanel(); return; }
+  const epoch = ++robotAccessEpoch;
   try {
     const { data, error } = await sb.rpc('is_robot_admin');
-    if (error || !data) { $('#robot-menu').style.display = 'none'; return; }
-    $('#robot-menu').style.display = '';
+    if (epoch !== robotAccessEpoch) return;
+    if (error || data !== true) { resetRobotPanel(); return; }
+    robotHasAccess = true;
+    const menu = $('#robot-menu');
+    if (menu) menu.style.display = '';
     await refreshRobotPanel();
-    if (!robotPollTimer) robotPollTimer = setInterval(refreshRobotPanel, 60000);
+    if (robotHasAccess && epoch === robotAccessEpoch && !robotPollTimer) {
+      robotPollTimer = setInterval(checkRobotAccess, 60000);
+    }
   } catch {
-    $('#robot-menu').style.display = 'none';
+    if (epoch === robotAccessEpoch) resetRobotPanel();
   }
 }
 
+function robotLiveUrl(value) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || url.username || url.password) return null;
+    if (url.hostname !== 'browserbase.com' && !url.hostname.endsWith('.browserbase.com')) return null;
+    return url.href;
+  } catch { return null; }
+}
+
 function robotTimeAgo(iso) {
-  const diffMin = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  const diffMin = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (!Number.isFinite(diffMin)) return 'horário indisponível';
   if (diffMin < 1) return 'agora mesmo';
   if (diffMin < 60) return `há ${diffMin} min`;
   return `há ${Math.round(diffMin / 60)}h`;
 }
 
 async function refreshRobotPanel() {
-  if (!sb) return;
-  const body = $('#robot-panel-body');
-  const badge = $('#robot-badge');
-  const { data, error } = await sb.from('robot_flow_status').select('*').order('system').order('name');
-
-  if (error) {
-    body.innerHTML = '<div style="padding:8px 0; color:var(--gray-500);">Não consegui carregar.</div>';
-    return;
-  }
-  const rows = data || [];
-  badge.style.display = rows.some(f => f.status === 'needs_attention' || f.status === 'error') ? '' : 'none';
-
-  if (!rows.length) {
-    body.innerHTML = '<div style="padding:8px 0; color:var(--gray-500);">Nenhum relatório cadastrado ainda.</div>';
-    return;
-  }
-
-  body.innerHTML = rows.map(f => {
-    const needsHuman = f.status === 'needs_attention' || f.status === 'error';
-    const dotColor = needsHuman ? '#e5484d' : f.status === 'running' ? '#f5a623' : '#30a46c';
-    const rightSide = needsHuman
-      ? `<a href="${f.live_view_url || '#'}" target="_blank" rel="noopener" style="font-size:12px; color:var(--pllugo-red); white-space:nowrap; margin-left:8px;">Resolver agora</a>`
-      : `<span style="font-size:11px; color:var(--gray-500); white-space:nowrap; margin-left:8px;">${f.finished_at ? robotTimeAgo(f.finished_at) : 'nunca rodou'}</span>`;
-    return `<div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-top:1px solid var(--gray-100);">
-      <div style="display:flex; align-items:center; gap:8px; min-width:0;">
-        <span style="width:7px; height:7px; border-radius:50%; background:${dotColor}; flex-shrink:0;"></span>
-        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${f.name}</span>
-      </div>
-      ${rightSide}
-    </div>`;
-  }).join('');
+  if (!sb || !robotHasAccess || robotPanelBusy) return;
+  const body = $('#robot-panel-body'), badge = $('#robot-badge');
+  if (!body || !badge) return;
+  robotPanelBusy = true;
+  const epoch = robotAccessEpoch;
+  try {
+    const { data, error } = await sb.from('robot_flow_status').select('*').order('system').order('name');
+    if (epoch !== robotAccessEpoch || !robotHasAccess) return;
+    if (error) throw error;
+    const rows = (data || []).filter(flow => flow.enabled !== false);
+    const waiting = f => f.status === 'running' && f.message === 'Aguardando verificação de login.';
+    const stale = f => f.status === 'running' && Date.now() - Date.parse(f.started_at) > 3600000;
+    const needsHuman = f => ['needs_attention', 'error'].includes(f.status) || waiting(f) || stale(f);
+    badge.style.display = rows.some(needsHuman) ? '' : 'none';
+    if (!rows.length) {
+      body.innerHTML = '<div style="padding:8px 0; color:var(--gray-500);">Nenhum relatório cadastrado ainda.</div>';
+      return;
+    }
+    body.innerHTML = rows.map(f => {
+      const dotColor = needsHuman(f) ? '#e5484d' : f.status === 'running' ? '#f5a623' : '#30a46c';
+      const live = f.status === 'running' && !stale(f) ? robotLiveUrl(f.live_view_url) : null;
+      const label = stale(f) ? 'Execução antiga: verificar logs' : needsHuman(f) ? 'Verificar logs e iniciar nova execução' : f.finished_at ? robotTimeAgo(f.finished_at) : f.status === 'running' ? 'Em execução' : 'Nunca rodou';
+      const rightSide = live
+        ? `<a href="${escapeHTML(live)}" target="_blank" rel="noopener noreferrer" style="font-size:12px; color:var(--pllugo-red); white-space:nowrap; margin-left:8px;">${waiting(f) ? 'Resolver login' : 'Acompanhar sessão'}</a>`
+        : `<span style="font-size:11px; color:var(--gray-500); margin-left:8px;">${escapeHTML(label)}</span>`;
+      return `<div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-top:1px solid var(--gray-100);"><div style="display:flex; align-items:center; gap:8px; min-width:0;"><span style="width:7px; height:7px; border-radius:50%; background:${dotColor}; flex-shrink:0;"></span><span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHTML(f.name)}</span></div>${rightSide}</div>`;
+    }).join('');
+  } catch {
+    if (epoch === robotAccessEpoch && robotHasAccess) {
+      body.innerHTML = '<div style="padding:8px 0; color:var(--gray-500);">Não consegui carregar. Tente novamente.</div>';
+      badge.style.display = '';
+    }
+  } finally { robotPanelBusy = false; }
 }
 
-$('#btn-robot').addEventListener('click', () => {
+$('#btn-robot')?.addEventListener('click', () => {
   const panel = $('#robot-panel');
+  if (!robotHasAccess || !panel) return;
   const opening = panel.style.display === 'none';
   panel.style.display = opening ? '' : 'none';
   if (opening) refreshRobotPanel();
@@ -6158,9 +6240,11 @@ $('#btn-robot').addEventListener('click', () => {
 document.addEventListener('click', (e) => {
   const menu = $('#robot-menu');
   if (menu && menu.style.display !== 'none' && !menu.contains(e.target)) {
-    $('#robot-panel').style.display = 'none';
+    const panel = $('#robot-panel');
+    if (panel) panel.style.display = 'none';
   }
 });
+
 
 $('#login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -6516,3 +6600,4 @@ $('#btn-logout').addEventListener('click', async () => {
 </script>
 </body>
 </html>
+
