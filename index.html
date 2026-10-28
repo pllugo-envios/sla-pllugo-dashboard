@@ -2693,14 +2693,14 @@ function mergeUnitBreakdownRows(rows) {
 let UNIT_BREAKDOWN_LOADING = false;
 let UNIT_BREAKDOWN_TOKEN = 0;
 function unitBreakdownMissingForCurrentRange() {
-  if (!state || !state.unit || state.unit === 'all') return [];
+  if (!state || !state.unit) return [];
   return DASH_DATA.history
     .filter(day => dateInRange(day.date))
     .filter(day => ['jt', 'imile', 'jt_real'].some(src => day[src] && !day[src].by_unit))
     .map(day => day.date);
 }
 async function ensureUnitBreakdownForCurrentRange() {
-  if (!sb || !state || state.unit === 'all' || UNIT_BREAKDOWN_LOADING) return;
+  if (!sb || !state || UNIT_BREAKDOWN_LOADING) return;
   const dates = [...new Set(unitBreakdownMissingForCurrentRange())].sort();
   if (!dates.length) return;
   const token = ++UNIT_BREAKDOWN_TOKEN;
@@ -5856,7 +5856,7 @@ function applyModeVisibility() {
   vis('#ranking-section', mode==='operacao'&&state.operationView==='motoristas');
 }
 function refresh() {
-  if (state.unit !== 'all' && unitBreakdownMissingForCurrentRange().length) ensureUnitBreakdownForCurrentRange();
+  if (unitBreakdownMissingForCurrentRange().length) ensureUnitBreakdownForCurrentRange();
   const filtered = filteredHistory();
   const agg = aggregate(filtered, state.carrier);
   const drivers = driversForCurrentView(filtered);
