@@ -6204,7 +6204,7 @@ function robotBrasiliaDay(value) {
 }
 function robotDailyLoginDue(flow) {
   return robotJmsFlow(flow.id) && flow.status !== 'running'
-    && (flow.status !== 'completed' || robotBrasiliaDay(flow.finished_at)!==robotBrasiliaDay(Date.now()));
+    && (flow.status !== 'completed' || robotBrasiliaDay(flow.started_at || flow.finished_at)!==robotBrasiliaDay(Date.now()));
 }
 let robotLoginEpoch=0;
 const robotLoginPending=new Set(),robotLoginWindows=new Set();
