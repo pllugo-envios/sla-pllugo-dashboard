@@ -6203,7 +6203,7 @@ function robotBrasiliaDay(value) {
   return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
 }
 function robotDailyLoginDue(flow) {
-  return robotJmsFlow(flow.id) && flow.status !== 'running'
+  return robotJmsFlow(flow.id) && flow.status !== 'running' && flow.status !== 'error'
     && (flow.status !== 'completed' || robotBrasiliaDay(flow.started_at || flow.finished_at)!==robotBrasiliaDay(Date.now()));
 }
 let robotLoginEpoch=0;
@@ -6278,9 +6278,9 @@ async function refreshRobotPanel() {
       const dotColor = needsHuman(f) ? '#e5484d' : f.status === 'running' ? '#f5a623' : '#30a46c';
       const live = f.status === 'running' && !stale(f) ? robotLiveUrl(f.live_view_url) : null;
       const label = f.message?.startsWith('Acesso validado;') && !robotDailyLoginDue(f) ? 'Acesso validado hoje' : stale(f) ? 'Execução antiga: verificar logs' : needsHuman(f) ? 'Verificar logs e iniciar nova execução' : f.finished_at ? robotTimeAgo(f.finished_at) : f.status === 'running' ? 'Em execução' : 'Nunca rodou';
-      const canStart = robotJmsFlow(f.id) && (robotDailyLoginDue(f) || stale(f));
+      const canStart = robotJmsFlow(f.id) && (robotDailyLoginDue(f) || stale(f) || f.status === 'error');
       const rightSide = canStart
-        ? `<button type="button" data-robot-login="${escapeHTML(f.id)}" ${robotLoginPending.has(f.id) ? 'disabled' : ''} style="border:0; background:none; font:inherit; font-size:12px; color:var(--pllugo-red); cursor:pointer; margin-left:8px;">${robotLoginPending.has(f.id) ? 'Preparando…' : robotDailyLoginDue(f) ? 'Validar acesso / CAPTCHA' : 'Validar acesso'}</button>`
+        ? `<button type="button" data-robot-login="${escapeHTML(f.id)}" ${robotLoginPending.has(f.id) ? 'disabled' : ''} style="border:0; background:none; font:inherit; font-size:12px; color:var(--pllugo-red); cursor:pointer; margin-left:8px;">${robotLoginPending.has(f.id) ? 'Preparando…' : f.status === 'error' ? 'Tentar atualização' : f.status === 'needs_attention' ? 'Resolver acesso' : 'Validar acesso de hoje'}</button>`
         : live
         ? `<a href="${escapeHTML(live)}" target="_blank" rel="noopener noreferrer" style="font-size:12px; color:var(--pllugo-red); white-space:nowrap; margin-left:8px;">${waiting(f) ? 'Resolver login' : 'Acompanhar sessão'}</a>`
         : `<span style="font-size:11px; color:var(--gray-500); margin-left:8px;">${escapeHTML(label)}</span>`;
