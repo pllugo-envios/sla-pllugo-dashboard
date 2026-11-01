@@ -6146,6 +6146,9 @@ let robotPanelBusy = false;
 
 function resetRobotPanel() {
   robotAccessEpoch++;
+  robotLoginEpoch++;
+  for(const popup of robotLoginWindows)if(popup && !popup.closed)popup.close();
+  robotLoginWindows.clear();
   robotHasAccess = false;
   if (robotPollTimer) clearInterval(robotPollTimer);
   robotPollTimer = null;
@@ -6193,6 +6196,65 @@ function robotTimeAgo(iso) {
   return `há ${Math.round(diffMin / 60)}h`;
 }
 
+function robotJmsFlow(id) { return ['jms-sla-motorista','jms-sla-motorista-rbp'].includes(id); }
+function robotBrasiliaDay(value) {
+  const date=new Date(value);
+  if(!Number.isFinite(+date))return '';
+  return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
+}
+function robotDailyLoginDue(flow) {
+  return robotJmsFlow(flow.id) && flow.status !== 'running'
+    && (flow.status !== 'completed' || robotBrasiliaDay(flow.finished_at)!==robotBrasiliaDay(Date.now()));
+}
+let robotLoginEpoch=0;
+const robotLoginPending=new Set(),robotLoginWindows=new Set();
+async function requestRobotLogin(flowId) {
+  if(!robotHasAccess || !robotJmsFlow(flowId) || robotLoginPending.has(flowId))return;
+  const epoch=robotLoginEpoch;
+  const popup=window.open('about:blank','_blank');
+  if(popup){popup.opener=null;popup.document.title='Validação J&T';popup.document.body.textContent='Preparando a sessão da sua unidade. Aguarde; esta aba abrirá a validação automaticamente.';robotLoginWindows.add(popup);}
+  robotLoginPending.add(flowId);void refreshRobotPanel();
+  try {
+    const {data,error}=await sb.rpc('robot_request_jms_login',{target_flow_id:flowId});
+    if(error)throw new Error(error.message || 'Não foi possível iniciar a validação.');
+    const deadline=Date.now()+120000;
+    while(Date.now()<deadline){
+      if(!robotHasAccess || epoch!==robotLoginEpoch){popup?.close();return;}
+      const result=await sb.from('robot_flow_status').select('id,status,live_view_url,started_at,finished_at').eq('id',flowId).single();
+      if(!robotHasAccess || epoch!==robotLoginEpoch){popup?.close();return;}
+      if(result.error)throw new Error('Não foi possível acompanhar a sessão. Tente novamente.');
+      const live=result.data?.status==='running' && Date.now()-Date.parse(result.data.started_at)<1200000?robotLiveUrl(result.data.live_view_url):null;
+      if(live){
+        if(popup && !popup.closed)popup.location.replace(live);
+        else alert('A sessão está pronta. Permita pop-ups ou clique em “Resolver login” no painel.');
+        return;
+      }
+      if(data?.request_id){
+        const request=await sb.from('robot_login_requests').select('status,message').eq('id',data.request_id).single();
+        if(!robotHasAccess || epoch!==robotLoginEpoch){popup?.close();return;}
+        if(request.error)throw new Error('Não foi possível acompanhar a solicitação.');
+        if(request.data?.status==='error')throw new Error(request.data.message || 'A sessão não abriu. Tente novamente.');
+        if(request.data?.status==='completed'){
+          if(popup && !popup.closed)popup.document.body.textContent='Acesso validado. Você pode fechar esta aba; a programação automática está mantida.';
+          return;
+        }
+      }
+      await new Promise(resolve=>setTimeout(resolve,2000));
+    }
+    throw new Error('A abertura está demorando. Consulte o painel novamente; não é necessário clicar várias vezes.');
+  }catch(error){
+    if(robotHasAccess && epoch===robotLoginEpoch){
+      if(popup && !popup.closed)popup.document.body.textContent=error.message;
+      else alert(error.message);
+    }
+  }finally{robotLoginWindows.delete(popup);robotLoginPending.delete(flowId);void refreshRobotPanel();}
+}
+$('#robot-panel-body')?.addEventListener('click',event=>{
+  const button=event.target.closest('[data-robot-login]');
+  if(button){event.preventDefault();void requestRobotLogin(button.dataset.robotLogin);}
+});
+
+
 async function refreshRobotPanel() {
   if (!sb || !robotHasAccess || robotPanelBusy) return;
   const body = $('#robot-panel-body'), badge = $('#robot-badge');
@@ -6205,8 +6267,8 @@ async function refreshRobotPanel() {
     if (error) throw error;
     const rows = (data || []).filter(flow => flow.enabled !== false);
     const waiting = f => f.status === 'running' && f.message === 'Aguardando verificação de login.';
-    const stale = f => f.status === 'running' && Date.now() - Date.parse(f.started_at) > 3600000;
-    const needsHuman = f => ['needs_attention', 'error'].includes(f.status) || waiting(f) || stale(f);
+    const stale = f => f.status === 'running' && Date.now() - Date.parse(f.started_at) > 1200000;
+    const needsHuman = f => ['needs_attention', 'error'].includes(f.status) || waiting(f) || stale(f) || robotDailyLoginDue(f);
     badge.style.display = rows.some(needsHuman) ? '' : 'none';
     if (!rows.length) {
       body.innerHTML = '<div style="padding:8px 0; color:var(--gray-500);">Nenhum relatório cadastrado ainda.</div>';
@@ -6215,8 +6277,11 @@ async function refreshRobotPanel() {
     body.innerHTML = rows.map(f => {
       const dotColor = needsHuman(f) ? '#e5484d' : f.status === 'running' ? '#f5a623' : '#30a46c';
       const live = f.status === 'running' && !stale(f) ? robotLiveUrl(f.live_view_url) : null;
-      const label = stale(f) ? 'Execução antiga: verificar logs' : needsHuman(f) ? 'Verificar logs e iniciar nova execução' : f.finished_at ? robotTimeAgo(f.finished_at) : f.status === 'running' ? 'Em execução' : 'Nunca rodou';
-      const rightSide = live
+      const label = f.message?.startsWith('Acesso validado;') && !robotDailyLoginDue(f) ? 'Acesso validado hoje' : stale(f) ? 'Execução antiga: verificar logs' : needsHuman(f) ? 'Verificar logs e iniciar nova execução' : f.finished_at ? robotTimeAgo(f.finished_at) : f.status === 'running' ? 'Em execução' : 'Nunca rodou';
+      const canStart = robotJmsFlow(f.id) && (robotDailyLoginDue(f) || stale(f));
+      const rightSide = canStart
+        ? `<button type="button" data-robot-login="${escapeHTML(f.id)}" ${robotLoginPending.has(f.id) ? 'disabled' : ''} style="border:0; background:none; font:inherit; font-size:12px; color:var(--pllugo-red); cursor:pointer; margin-left:8px;">${robotLoginPending.has(f.id) ? 'Preparando…' : robotDailyLoginDue(f) ? 'Validar acesso / CAPTCHA' : 'Validar acesso'}</button>`
+        : live
         ? `<a href="${escapeHTML(live)}" target="_blank" rel="noopener noreferrer" style="font-size:12px; color:var(--pllugo-red); white-space:nowrap; margin-left:8px;">${waiting(f) ? 'Resolver login' : 'Acompanhar sessão'}</a>`
         : `<span style="font-size:11px; color:var(--gray-500); margin-left:8px;">${escapeHTML(label)}</span>`;
       return `<div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-top:1px solid var(--gray-100);"><div style="display:flex; align-items:center; gap:8px; min-width:0;"><span style="width:7px; height:7px; border-radius:50%; background:${dotColor}; flex-shrink:0;"></span><span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHTML(f.name)}</span></div>${rightSide}</div>`;
