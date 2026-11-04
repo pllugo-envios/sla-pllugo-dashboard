@@ -716,6 +716,7 @@ function gaelInstallOfficialStyle() {
   const css = document.createElement('style');
   css.id = 'gael-official-style';
   css.textContent = `
+    #gael-root{display:none!important}
     #gael-dock{right:18px!important;left:auto!important;bottom:18px!important;transform:none!important;width:min(386px,calc(100vw - 120px));display:grid!important;grid-template-columns:1fr auto!important;gap:8px!important;padding:9px!important;border-radius:16px!important;box-shadow:0 16px 42px rgba(20,20,24,.15)!important}
     #gael-dock[data-pos="center"],#gael-dock[data-pos="right"]{right:18px!important;left:auto!important;transform:none!important}
     #gael-dock[data-open="false"]{width:292px!important;grid-template-columns:1fr!important;cursor:pointer!important;padding:8px 10px!important}
