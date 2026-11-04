@@ -30,7 +30,7 @@ window.GAEL_CONFIG = {
     minTalkGap: 25000    // intervalo mínimo entre comentários automáticos (ms)
   },
 
-  sound: { enabled: true, volume: 1 },
+  sound: { enabled: false, volume: 1 },
 
   dock: {
     enabled: true,
@@ -245,15 +245,7 @@ window.GAEL_CONFIG = {
      Ele espera o dado aparecer (até greetingWaitMs) antes de falar.
      ================================================================ */
   greetingWaitMs: 14000,
-  greeting: d => {
-    if (d.sla == null) return { text:'Olá! Eu sou o Gael. Assim que você importar os relatórios, eu começo a acompanhar a operação.', type:'normal' };
-    const critico = (d.criticos||0) > 0;
-    return {
-      text: 'Olá! Eu sou o Gael. ' + window.GAEL_CONFIG.summary(d)
-          + (critico ? ` Já tem <b>${d.criticos}</b> motorista(s) crítico(s) na Torre.` : ''),
-      type: critico ? 'warning' : (d.sla >= d.meta ? 'success' : 'info')
-    };
-  },
+  greeting: null,
 
   /* frases quando clicam nele sem ter dado */
   tapLines: ['Pode falar, estou aqui.','O que você quer ver?','Manda a pergunta na barra ali do lado.'],
@@ -716,7 +708,7 @@ function gaelInstallOfficialStyle() {
   const css = document.createElement('style');
   css.id = 'gael-official-style';
   css.textContent = `
-    #gael-root{display:none!important}
+    #gael-root,#gael-bubble{display:none!important}
     #gael-dock{right:18px!important;left:auto!important;bottom:18px!important;transform:none!important;width:min(386px,calc(100vw - 120px));display:grid!important;grid-template-columns:1fr auto!important;gap:8px!important;padding:9px!important;border-radius:16px!important;box-shadow:0 16px 42px rgba(20,20,24,.15)!important}
     #gael-dock[data-pos="center"],#gael-dock[data-pos="right"]{right:18px!important;left:auto!important;transform:none!important}
     #gael-dock[data-open="false"]{width:292px!important;grid-template-columns:1fr!important;cursor:pointer!important;padding:8px 10px!important}
