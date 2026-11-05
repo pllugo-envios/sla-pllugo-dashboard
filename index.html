@@ -6147,6 +6147,7 @@ let robotPanelBusy = false;
 function resetRobotPanel() {
   robotAccessEpoch++;
   robotLoginEpoch++;
+  globalThis.PllugoMobileLogin?.close();
   for(const popup of robotLoginWindows)if(popup && !popup.closed)popup.close();
   robotLoginWindows.clear();
   robotHasAccess = false;
@@ -6208,7 +6209,27 @@ function robotDailyLoginDue(flow) {
 }
 let robotLoginEpoch=0;
 const robotLoginPending=new Set(),robotLoginWindows=new Set();
+function robotMobileAvailable() {
+  return !!window.PllugoMobileLogin && typeof window.matchMedia==='function' && window.matchMedia('(pointer: coarse)').matches;
+}
+async function openRobotMobile(flowId,startNew=false) {
+  if(!robotHasAccess || !robotJmsFlow(flowId) || robotLoginPending.has(flowId))return;
+  const epoch=robotLoginEpoch,started=Date.now();
+  robotLoginPending.add(flowId);
+  try {
+    if(startNew){const result=await sb.rpc('robot_request_jms_login',{target_flow_id:flowId});if(result.error)throw new Error('Não foi possível iniciar a validação.');}
+    if(!robotHasAccess || epoch!==robotLoginEpoch)return;
+    await window.PllugoMobileLogin.open({client:sb,flow:flowId,isAllowed:()=>robotHasAccess && epoch===robotLoginEpoch,
+      onClose:()=>void refreshRobotPanel(),getRunStatus:async()=>{
+        const result=await sb.from('robot_flow_status').select('status,started_at,finished_at').eq('id',flowId).single();
+        if(result.error || Date.parse(result.data?.finished_at || result.data?.started_at)<started-2000)return null;
+        return result.data?.status;
+      }});
+  }catch(error){if(robotHasAccess && epoch===robotLoginEpoch)alert(error.message);}
+  finally{robotLoginPending.delete(flowId);void refreshRobotPanel();}
+}
 async function requestRobotLogin(flowId) {
+  if(robotMobileAvailable())return openRobotMobile(flowId,true);
   if(!robotHasAccess || !robotJmsFlow(flowId) || robotLoginPending.has(flowId))return;
   const epoch=robotLoginEpoch;
   const popup=window.open('about:blank','_blank');
@@ -6250,6 +6271,8 @@ async function requestRobotLogin(flowId) {
   }finally{robotLoginWindows.delete(popup);robotLoginPending.delete(flowId);void refreshRobotPanel();}
 }
 $('#robot-panel-body')?.addEventListener('click',event=>{
+  const mobile=event.target.closest('[data-robot-mobile]');
+  if(mobile && robotMobileAvailable()){event.preventDefault();void openRobotMobile(mobile.dataset.robotMobile);return;}
   const button=event.target.closest('[data-robot-login]');
   if(button){event.preventDefault();void requestRobotLogin(button.dataset.robotLogin);}
 });
@@ -6282,7 +6305,7 @@ async function refreshRobotPanel() {
       const rightSide = canStart
         ? `<button type="button" data-robot-login="${escapeHTML(f.id)}" ${robotLoginPending.has(f.id) ? 'disabled' : ''} style="border:0; background:none; font:inherit; font-size:12px; color:var(--pllugo-red); cursor:pointer; margin-left:8px;">${robotLoginPending.has(f.id) ? 'Preparando…' : f.status === 'error' ? 'Tentar atualização' : f.status === 'needs_attention' ? 'Resolver acesso' : 'Validar acesso de hoje'}</button>`
         : live
-        ? `<a href="${escapeHTML(live)}" target="_blank" rel="noopener noreferrer" style="font-size:12px; color:var(--pllugo-red); white-space:nowrap; margin-left:8px;">${waiting(f) ? 'Resolver login' : 'Acompanhar sessão'}</a>`
+        ? `<a data-robot-mobile="${escapeHTML(f.id)}" href="${escapeHTML(live)}" target="_blank" rel="noopener noreferrer" style="font-size:12px; color:var(--pllugo-red); white-space:nowrap; margin-left:8px;">${waiting(f) ? 'Resolver login' : 'Acompanhar sessão'}</a>`
         : `<span style="font-size:11px; color:var(--gray-500); margin-left:8px;">${escapeHTML(label)}</span>`;
       return `<div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-top:1px solid var(--gray-100);"><div style="display:flex; align-items:center; gap:8px; min-width:0;"><span style="width:7px; height:7px; border-radius:50%; background:${dotColor}; flex-shrink:0;"></span><span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHTML(f.name)}</span></div>${rightSide}</div>`;
     }).join('');
@@ -6356,6 +6379,7 @@ $('#btn-logout').addEventListener('click', async () => {
   });
 })();
 </script>
+<script src="assets/mobile-jms.js?v=20261105-1"></script>
 <script src="assets/gael/gael.config.js"></script>
 <script src="assets/gael/gael.js" defer></script>
 <script>
