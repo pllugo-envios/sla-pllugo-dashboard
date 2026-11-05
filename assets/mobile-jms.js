@@ -14,7 +14,7 @@ async function open({client,flow,isAllowed=()=>true,onClose=()=>{},getRunStatus=
   const previousOverflow=document.body.style.overflow;document.body.style.overflow='hidden';
   const img=modal.querySelector('.screen'),status=modal.querySelector('.status');
   const device=crypto.randomUUID();let id,closed=false,stopped=false,pointer=null,events=[],sending=false,pan=false,objectUrl=null,gesture=false;
-  let frameTimer,inputTimer;
+  let frameTimer,inputTimer,lastPoint,lastHeartbeat=0;
   const headers=async()=>{
     if(!isAllowed())throw new Error('Acesso encerrado. Entre novamente.');
     const result=await client.auth.getSession();
@@ -47,7 +47,7 @@ async function open({client,flow,isAllowed=()=>true,onClose=()=>{},getRunStatus=
     if(events.length>=40){stop('Conexão lenta. Feche e abra novamente para continuar.');return;}
     events.push(e);if(e.type!=='move')void flush();
   }
-  function point(event,type){const r=img.getBoundingClientRect();return {type,x:Math.max(0,Math.min(1,(event.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(event.clientY-r.top)/r.height))};}
+  function point(event,type){const r=img.getBoundingClientRect();lastPoint={type,x:Math.max(0,Math.min(1,(event.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(event.clientY-r.top)/r.height))};lastHeartbeat=Date.now();return lastPoint;}
   img.addEventListener('pointerdown',event=>{
     if(pan||pointer!==null||!id||!img.naturalWidth)return;
     event.preventDefault();pointer=event.pointerId;gesture=true;img.setPointerCapture(pointer);enqueue(point(event,'down'));
@@ -88,7 +88,7 @@ async function open({client,flow,isAllowed=()=>true,onClose=()=>{},getRunStatus=
     }
     if(closed){void leave();return;}
     if(!id)throw new Error('A validação não apareceu. Consulte o painel; o acesso pode ter sido liberado automaticamente.');
-    inputTimer=setInterval(()=>void flush(),100);void frame();
+    inputTimer=setInterval(()=>{if(gesture&&lastPoint&&Date.now()-lastHeartbeat>500){lastHeartbeat=Date.now();enqueue({...lastPoint,type:'move'});}void flush();},100);void frame();
   }catch(error){if(!closed)stop(error.message);}
 }
 })();
